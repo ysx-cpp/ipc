@@ -22,8 +22,8 @@ using SegmentManager = managed_shared_memory::segment_manager;
 template <typename T, typename SegmentManager = SegmentManager>
 using Allocator = boost::interprocess::allocator<T, SegmentManager>;
 
-managed_shared_memory g_shm_manager(boost::interprocess::open_or_create, "DefaultName", 0x80000000);
-Allocator<void> g_shm_allocator(g_shm_manager.get_segment_manager());
+static managed_shared_memory g_shm_manager(boost::interprocess::open_or_create, "DefaultName", 0x80000000);
+static Allocator<void> g_shm_allocator(g_shm_manager.get_segment_manager());
 
 
 //string
@@ -34,8 +34,7 @@ using String = boost::interprocess::basic_string<char
 class CString : public String
 {
 public:
-	CString()
-		: String(g_shm_allocator)
+	CString() : String(g_shm_allocator)
 	{
 	}
 
@@ -135,8 +134,7 @@ template <typename First, typename Second, typename PairAllocator = Allocator < 
 class CMap : public Map<First, Second>
 {
 public:
-	CMap()
-		: Map<First, Second>(g_shm_allocator)
+	CMap() : Map<First, Second>(g_shm_allocator)
 	{
 	}
 
