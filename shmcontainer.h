@@ -38,7 +38,7 @@ public:
 	{
 	}
 
-	CString(const CString&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CString(const CString&) = default; //Ä¬ï¿½Ïµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	CString(CString&&) = default;
 
 	String& operator=(const CString& other)
@@ -70,12 +70,19 @@ public:
 	{
 	}
 
-	CVector(const CVector&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CVector(const CVector&) = default; //Ä¬ï¿½Ïµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	CVector(CVector&&) = default;
 
 	CVector& operator=(const CVector& other)
 	{
-		return Vector::operator=(other);
+		Vector<T>::operator=(other);
+		return *this;
+	}
+
+	CVector& operator=(CVector &&other)
+	{
+		Vector<T>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -92,12 +99,19 @@ public:
 	{
 	}
 
-	CList(const CList&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CList(const CList&) = default; //Ä¬ï¿½Ïµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	CList(CList&&) = default;
 
 	CList& operator=(const CList& other)
 	{
-		return List::operator=(other.c_str());
+		List<T>::operator=(other);
+		return *this;
+	}
+
+	CList& operator=(CList &&other)
+	{
+		List<T>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -114,12 +128,19 @@ public:
 	{
 	}
 
-	CPair(const CPair&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CPair(const CPair&) = default; //Ä¬ï¿½Ïµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	CPair(CPair&&) = default;
 
 	CPair& operator=(const CPair& other)
 	{
-		return Pair::operator=(other.c_str());
+		Pair<First, Second>::operator=(other);
+		return *this;
+	}
+
+	CPair &operator=(CPair &&other)
+	{
+		Pair<First, Second>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -138,12 +159,19 @@ public:
 	{
 	}
 
-	CMap(const CMap&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CMap(const CMap&) = default; //Ä¬ï¿½Ïµï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	CMap(CMap&&) = default;
 
 	CMap& operator=(const CMap& other)
 	{
-		return Map::operator=(other.c_str());
+		Map<First, Second>::operator=(other);
+		return *this;
+	}
+
+	CMap& operator=(CMap &&other)
+	{
+		Map<First, Second>::operator=(std::move(other));
+		return *this;
 	}
 };
 
