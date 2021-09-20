@@ -75,7 +75,14 @@ public:
 
 	CVector& operator=(const CVector& other)
 	{
-		return Vector::operator=(other);
+		Vector<T>::operator=(other);
+		return *this;
+	}
+
+	CVector& operator=(CVector &&other)
+	{
+		Vector<T>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -97,7 +104,14 @@ public:
 
 	CList& operator=(const CList& other)
 	{
-		return List::operator=(other.c_str());
+		List<T>::operator=(other);
+		return *this;
+	}
+
+	CList& operator=(CList &&other)
+	{
+		List<T>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -119,7 +133,14 @@ public:
 
 	CPair& operator=(const CPair& other)
 	{
-		return Pair::operator=(other.c_str());
+		Pair<First, Second>::operator=(other);
+		return *this;
+	}
+
+	CPair &operator=(CPair &&other)
+	{
+		Pair<First, Second>::operator=(std::move(other));
+		return *this;
 	}
 };
 
@@ -143,7 +164,14 @@ public:
 
 	CMap& operator=(const CMap& other)
 	{
-		return Map::operator=(other.c_str());
+		Map<First, Second>::operator=(other);
+		return *this;
+	}
+
+	CMap& operator=(CMap &&other)
+	{
+		Map<First, Second>::operator=(std::move(other));
+		return *this;
 	}
 };
 
