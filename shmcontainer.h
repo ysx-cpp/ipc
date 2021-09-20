@@ -38,7 +38,7 @@ public:
 	{
 	}
 
-	CString(const CString&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CString(const CString&) = default; //é»˜è®¤è°ƒç”¨åŸºç±»çš„æ‹·è´æ„é€ 
 	CString(CString&&) = default;
 
 	String& operator=(const CString& other)
@@ -70,7 +70,7 @@ public:
 	{
 	}
 
-	CVector(const CVector&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CVector(const CVector&) = default; //é»˜è®¤è°ƒç”¨åŸºç±»çš„æ‹·è´æ„é€ 
 	CVector(CVector&&) = default;
 
 	CVector& operator=(const CVector& other)
@@ -92,7 +92,7 @@ public:
 	{
 	}
 
-	CList(const CList&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CList(const CList&) = default; //é»˜è®¤è°ƒç”¨åŸºç±»çš„æ‹·è´æ„é€ 
 	CList(CList&&) = default;
 
 	CList& operator=(const CList& other)
@@ -114,7 +114,7 @@ public:
 	{
 	}
 
-	CPair(const CPair&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CPair(const CPair&) = default; //é»˜è®¤è°ƒç”¨åŸºç±»çš„æ‹·è´æ„é€ 
 	CPair(CPair&&) = default;
 
 	CPair& operator=(const CPair& other)
@@ -138,7 +138,7 @@ public:
 	{
 	}
 
-	CMap(const CMap&) = default; //Ä¬ÈÏµ÷ÓÃ»ùÀàµÄ¿½±´¹¹Ôì
+	CMap(const CMap&) = default; //é»˜è®¤è°ƒç”¨åŸºç±»çš„æ‹·è´æ„é€ 
 	CMap(CMap&&) = default;
 
 	CMap& operator=(const CMap& other)
