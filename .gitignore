@@ -1,1 +1,3 @@
-ipc/
+build/
+*.pb.h
+*.pb.cc

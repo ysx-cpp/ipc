@@ -1,0 +1,56 @@
+syntax = 'proto3';
+package ipc.util.messages;
+
+/*
+String field contains invalid UTF-8 data when parsing a protocol buffer.
+Use the 'bytes' type if you intend to send raw bytes.
+*/
+
+////////////////////////////////////////////////////////////////////////////////
+// service config
+
+message MessagesConfig {
+    // server addr
+    bytes server_rep_addr   = 1;
+    bytes server_pub_addr   = 2;
+    bytes server_req_addr   = 3;
+    bytes server_sub_addr   = 4;
+
+    // topic start port
+    int32 topic_start_port  = 5;
+
+    // buffer and waiting
+    int32 zmq_send_queue    = 6;
+    int32 zmq_recv_queue    = 7;
+    int32 zmq_close_wait    = 8;
+    int32 zmq_pool_timeout  = 9;
+
+    // thread-pool
+    int32 thread_workers    = 10;
+    int32 thread_queue_size = 11;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// routing protocol
+
+message RoutingNode {
+    int32 node_type         = 1; // 1:pub, 2:sub
+    bytes message_topic     = 2;
+    bytes socket_addr       = 3; // zmq socket addr of topic
+    bytes client_id         = 4;
+    bytes client_ip         = 5;
+}
+
+message RoutingMessage {
+    int32 action            = 1; // online, offline, request, etc
+    RoutingNode node        = 2;
+}
+
+message RoutingMessageList {
+    int32 action                    = 1; // online, offline, request, etc
+    repeated RoutingNode node_list  = 2;
+}
+
+message SubscribeNodeList {
+    repeated RoutingNode node_list = 1;
+}

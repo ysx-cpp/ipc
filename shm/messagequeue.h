@@ -11,7 +11,6 @@
 #include <string>
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/asio/streambuf.hpp>
-#include "util/singleton.hpp"
 
 namespace util {
 namespace ipc {
