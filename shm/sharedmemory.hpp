@@ -13,7 +13,7 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
-#include "ipc/shmcontainer.h"
+#include "shmcontainer.h"
 
 namespace common {
 namespace ipc {
