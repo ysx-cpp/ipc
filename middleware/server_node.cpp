@@ -36,7 +36,7 @@ void log_init(const char* program_name) {
         umask(mode);
 
     }
-    char *cur_dir = "./";//getcwd(NULL, 0);
+    char *cur_dir = getcwd(NULL, 0);
 
     std::string temp(cur_dir);
     free(cur_dir);
