@@ -10,7 +10,7 @@
 #include "package.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 
@@ -82,5 +82,5 @@ void Package::Decode(const ByteArray &data)
     data_.assign(data.begin() + phead->head_size, data.end());
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

@@ -15,7 +15,7 @@
 #endif
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 
@@ -108,5 +108,5 @@ size_t ConnectionMgr::Index() const
 	return index++ % connection_pool_.size();
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

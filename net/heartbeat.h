@@ -14,7 +14,7 @@
 #include <boost/enable_shared_from_this.hpp>
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 class Heartbeat : public boost::enable_shared_from_this<Heartbeat>
 {
@@ -36,7 +36,7 @@ private:
 	boost::posix_time::ptime last_ping_;
 };
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 
 #endif // NET_HEARBEAT_H

@@ -13,7 +13,7 @@
 #include <boost/asio/ip/tcp.hpp>
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace std;
 using namespace boost::asio;
@@ -73,5 +73,5 @@ void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_co
     connection->Start();
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

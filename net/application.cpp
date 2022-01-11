@@ -16,7 +16,7 @@
 #include <boost/make_unique.hpp>
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 
@@ -85,5 +85,5 @@ void Application::Signalhandle(const boost::system::error_code& /*err*/, int sig
 	}
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

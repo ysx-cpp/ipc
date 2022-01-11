@@ -14,7 +14,7 @@
 
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 
@@ -107,5 +107,5 @@ void UdpHandler::Disconnect()
 {
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

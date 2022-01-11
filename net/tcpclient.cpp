@@ -12,7 +12,7 @@
 #include "package.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 TcpClient::TcpClient(boost::asio::io_context &ioc)
     : Connection(ioc),
@@ -69,5 +69,5 @@ void TcpClient::Disconnect()
     Connection::Disconnect();
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

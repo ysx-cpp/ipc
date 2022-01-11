@@ -15,7 +15,7 @@
 #include "connectionmgr.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 Connection::Connection(boost::asio::io_context &ioc) :
 	TcpHandler(ioc),
@@ -98,5 +98,5 @@ void Connection::Disconnect()
 	this->Stop();
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

@@ -13,7 +13,7 @@
 #include "connection.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 struct ConnectOption
 {
@@ -39,7 +39,7 @@ private:
     ConnectOption option_;
 };
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 
 #endif // NET_TCPCLIENT_H

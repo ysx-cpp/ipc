@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.15)
 
-project("ipc")
+project("net")
 
 aux_source_directory(. SRCS)
 

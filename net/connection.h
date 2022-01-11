@@ -13,7 +13,7 @@
 #include "heartbeat.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 class ConnectionMgr;
 class Connection : public TcpHandler
@@ -45,7 +45,7 @@ private:
 };
 using ConnectionPtr = std::shared_ptr<Connection>;
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 
 #endif // NET_CONNECTION_H

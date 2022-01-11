@@ -11,7 +11,7 @@
 #include "heartbeat.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 
@@ -129,5 +129,5 @@ void TcpHandler::ReadUntilHandler(const boost::system::error_code &/*ec*/, const
 {
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

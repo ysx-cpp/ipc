@@ -14,7 +14,7 @@
 #include "sockethandler.hpp"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 class MatchWhitespace
 {
@@ -62,7 +62,7 @@ private:
 	boost::asio::streambuf send_buff_;
 };
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 
 #endif // NET_TCP_HANDLER_H

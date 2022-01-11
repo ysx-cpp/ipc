@@ -16,7 +16,7 @@
 
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 template<class T>
 class SocketHandler :
@@ -156,7 +156,7 @@ protected:
     T socket_;
 };
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 
 #endif // NET_SOCKET_WRAPPER_HPP

@@ -13,7 +13,7 @@
 #include "application.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 class TcpServer : public ConnectionMgr
 {   
@@ -37,6 +37,6 @@ private:
     boost::asio::ip::tcp::acceptor acceptor_;
 };
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 #endif // NET_TCPSERVER_H

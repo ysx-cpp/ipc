@@ -13,7 +13,7 @@
 
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 using namespace boost::asio;
 using namespace boost::posix_time;
@@ -58,5 +58,5 @@ void Heartbeat::TimerHandle(const boost::system::error_code &ec)
 		this->Stop();
 }
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink

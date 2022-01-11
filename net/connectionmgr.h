@@ -16,7 +16,7 @@
 #include "connection.h"
 
 namespace fastlink {
-namespace ipc {
+namespace net {
 
 class ConnectionMgr : private boost::noncopyable
 {
@@ -44,6 +44,6 @@ private:
 };
 using ConnectionMgrPtr = boost::shared_ptr<ConnectionMgr>;
 
-} // namespace ipc
+} // namespace net
 } // namespace fastlink
 #endif // NET_CONNECTION_MGR_H
