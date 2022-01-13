@@ -4,7 +4,6 @@
 #include "zmq/messages_interface.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 class MessageFactory {
@@ -21,6 +20,5 @@ private:
 };
 
 } //messages
-} //util
 } //ipc
 #endif //RECORDER_MESSAGES_FACTORY_H

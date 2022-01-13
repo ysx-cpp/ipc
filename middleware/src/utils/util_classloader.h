@@ -2,7 +2,7 @@
 #include <dlfcn.h>
 #include <string>
 #include <memory>
-#include "ipc_string.h"
+#include "util_string.h"
 
 namespace ipc {
 namespace util {

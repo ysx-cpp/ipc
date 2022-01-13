@@ -8,7 +8,6 @@
 #include <stdint.h>
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 class MessageNodeManager {
@@ -93,7 +92,6 @@ private:
     //std::set<std::string> _address_set;
 };
 
-}
 }
 }
 #endif //RECORDER_MESSAGES_NODE_H

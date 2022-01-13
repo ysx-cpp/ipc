@@ -29,7 +29,6 @@ namespace zmq {
 #define ROUTING_NODE_LIST   5
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 // forward declaration for hiding messages_protos.pb.h
@@ -116,5 +115,4 @@ private:
 };
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

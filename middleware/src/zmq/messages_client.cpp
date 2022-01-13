@@ -13,7 +13,6 @@
 //DEFINE_string(home_dir, "", "eda home dir");
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 static MessagesConfig s_config;
@@ -177,7 +176,7 @@ bool MessagesClient::unsubscribe(const std::string& topic) {
 void MessagesClient::spin() {
     // do nothing now
     while (!m_exit_signal) {
-        sleep_ms(1000);
+        util::sleep_ms(1000);
     }
 }
 
@@ -350,5 +349,4 @@ std::mutex& MessagesClient::pub_mutex(const std::string& topic) {
 }
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

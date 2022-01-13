@@ -4,7 +4,6 @@
 #include "zmq_envelope.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -57,9 +56,9 @@ void MessageEnvelope::fill(const std::string& topic, const std::string& publishe
 // send & recv
 bool MessageEnvelope::send(zmq::socket_t& zmq_socket) {
     // send time stamp in microseconds
-    int64_t _now_ms = now_ms();
+    int64_t _now_ms = util::now_ms();
     std::string _send_time_ms = std::to_string(_now_ms);
-    int64_t _now_us = now_ms();
+    int64_t _now_us = util::now_ms();
     std::string _send_time_us = std::to_string(_now_us);
     std::string _serial = std::to_string(m_serial);
 
@@ -156,13 +155,13 @@ bool MessageEnvelope::recv(zmq::socket_t& zmq_socket) {
         m_topic = std::string(static_cast<char*>(topic.data()), topic.size());
         m_publisher = std::string(static_cast<char*>(publisher.data()), publisher.size());
         m_payload = std::string(static_cast<char*>(payload.data()), payload.size());
-        m_serial = safe_stoll(std::string(static_cast<char*>(serial.data()), serial.size()));
-        m_send_time_ms = safe_stoll(std::string(static_cast<char*>(send_time_ms.data()),
+        m_serial = util::safe_stoll(std::string(static_cast<char*>(serial.data()), serial.size()));
+        m_send_time_ms = util::safe_stoll(std::string(static_cast<char*>(send_time_ms.data()),
                                                 send_time_ms.size()));
-        m_send_time_us = safe_stoll(std::string(static_cast<char*>(send_time_us.data()),
+        m_send_time_us = util::safe_stoll(std::string(static_cast<char*>(send_time_us.data()),
                                                 send_time_us.size()));
-        m_recv_time_ms = now_ms();
-        m_recv_time_us = now_us();
+        m_recv_time_ms = util::now_ms();
+        m_recv_time_us = util::now_us();
 
         return true;
 
@@ -173,5 +172,4 @@ bool MessageEnvelope::recv(zmq::socket_t& zmq_socket) {
 }
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

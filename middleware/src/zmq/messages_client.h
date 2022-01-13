@@ -21,7 +21,6 @@ namespace zmq {
 }
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 // forward declaration for hiding messages_protos.pb.h
@@ -147,5 +146,4 @@ http://www.open-std.org/jtc1/sc22/wg21/docs/standards
 */
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

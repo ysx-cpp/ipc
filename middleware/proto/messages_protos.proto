@@ -1,5 +1,5 @@
 syntax = 'proto3';
-package ipc.util.messages;
+package ipc.messages;
 
 /*
 String field contains invalid UTF-8 data when parsing a protocol buffer.

@@ -1,7 +1,6 @@
 #include "messages_interface.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -22,7 +21,7 @@ ZmqMessagesClient::ZmqMessagesClient(const std::string& client_id, const std::st
 
 bool ZmqMessagesClient::start() {
     if (m_started == false) {
-        m_client_ptr = std::make_shared<ipc::util::messages::MessagesClient>(m_id, m_addr, m_port);
+        m_client_ptr = std::make_shared<ipc::messages::MessagesClient>(m_id, m_addr, m_port);
         m_started = true;
     }
     return true;
@@ -68,7 +67,7 @@ ZmqMessagesServer::ZmqMessagesServer(std::string name, uint16_t port) {
 }
 
 bool ZmqMessagesServer::start() {
-    m_server_ptr = std::make_shared<ipc::util::messages::RoutingServer>(m_port);
+    m_server_ptr = std::make_shared<ipc::messages::RoutingServer>(m_port);
     m_server_ptr->run();
     return true;
 }
@@ -77,6 +76,5 @@ void ZmqMessagesServer::stop() {
     m_server_ptr->stop();
 }
 
-}
 }
 }

@@ -7,7 +7,6 @@
 #include "zmq.hpp"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 class ContextManager {
@@ -28,5 +27,4 @@ private:
 };
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

@@ -14,7 +14,6 @@ namespace zmq {
 }
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -110,5 +109,4 @@ private:
 };
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

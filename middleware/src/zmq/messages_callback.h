@@ -6,7 +6,6 @@
 #include "utils/util_serializer.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 struct MessageHeader {
@@ -74,5 +73,4 @@ private:
 };
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

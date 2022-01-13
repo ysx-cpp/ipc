@@ -5,7 +5,7 @@
 #include "messages_factory.h"
 
 using namespace ipc::util;
-using ipc::util::messages::ZmqMessagesClient;
+using ipc::messages::ZmqMessagesClient;
 
 void callback_echo(const std::string& message) {
     DEBUG_INFO("recv msg[%s]", message.c_str());
@@ -22,8 +22,8 @@ int main(int argc, char** argv) {
     std::string action = argv[3];
     std::string topic = argv[4];
 
-    ipc::util::messages::MessageFactory factory("zmq");
-    ipc::util::messages::IClientNode* client = factory.create_client("util-messages-debuger", server, port);
+    ipc::messages::MessageFactory factory("zmq");
+    ipc::messages::IClientNode* client = factory.create_client("util-messages-debuger", server, port);
 
     if (action == "pub") {
         if (argc < 8) {

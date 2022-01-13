@@ -1,7 +1,6 @@
 #include "messages_factory.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 IServerNode* MessageFactory::create_server(const std::string& name, uint16_t port) {
@@ -13,6 +12,5 @@ IClientNode* MessageFactory::create_client(const std::string& name,
     return new ZmqMessagesClient(name, ip, port);
 }
 
-}
 }
 }

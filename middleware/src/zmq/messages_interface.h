@@ -6,7 +6,6 @@
 #include "messages_client.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +93,7 @@ private:
     std::string m_id;
     std::string m_addr;
     uint16_t m_port;
-    std::shared_ptr<ipc::util::messages::MessagesClient> m_client_ptr;
+    std::shared_ptr<ipc::messages::MessagesClient> m_client_ptr;
 };
 
 //////////////////////////////////////////////////////////////////////////////////
@@ -119,9 +118,8 @@ public:
 private:
     std::string m_name;
     uint16_t m_port;
-    std::shared_ptr<ipc::util::messages::RoutingServer> m_server_ptr;
+    std::shared_ptr<ipc::messages::RoutingServer> m_server_ptr;
 };
 
-}
 }
 }

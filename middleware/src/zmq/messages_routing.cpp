@@ -10,7 +10,6 @@
 #include "utils/util_string.h"
 
 namespace ipc {
-namespace util {
 namespace messages {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -484,5 +483,4 @@ bool RoutingClient::node_list(SubscribeNodeList& node_list) {
 }
 
 } // namespace messages
-} // namespace util
 } // namespace ipc

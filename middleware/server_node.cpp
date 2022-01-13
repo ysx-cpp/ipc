@@ -81,9 +81,9 @@ int main(int argc, char* argv[]) {
     int policy = SCHED_RR;
     set_task_priority(pid, policy, priority);
 
-    ipc::util::messages::MessageFactory factory(type);
+    ipc::messages::MessageFactory factory(type);
 
-    ipc::util::messages::IServerNode* server = factory.create_server(name, port);
+    ipc::messages::IServerNode* server = factory.create_server(name, port);
 
     LOG_FIRST_N(ERROR, 2) << name << " start begin";
 
