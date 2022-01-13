@@ -16,7 +16,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 class ThreadPool {
 
@@ -106,7 +105,7 @@ private:
             lock.unlock();
 
             if (task.first != "") {
-                ipc::util::common::set_thread_name(task.first);
+                ipc::util::set_thread_name(task.first);
             }
 
             // run
@@ -124,6 +123,5 @@ private:
     std::atomic<bool> m_exit_signal;
 };
 
-} // namespace common
 } // namespace util
 } // namespace ipc

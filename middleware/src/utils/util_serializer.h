@@ -8,7 +8,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 ////////////////////////////////////////////////////////////////////////////////
 // disabled
@@ -117,6 +116,5 @@ bool load_config(const std::string& file_name, T& config) {
     return parse_prototxt(config_path+"/"+file_name, config);
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

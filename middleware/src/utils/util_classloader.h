@@ -6,7 +6,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 template<typename T>
 class ClassLoader {
@@ -73,6 +72,5 @@ extern "C" void ipc_class_loader_destory_##class_name(class_name* ptr) { \
     delete ptr; \
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

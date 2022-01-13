@@ -5,7 +5,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 std::string string_trim(const std::string& str) {
     std::string s(str);
@@ -117,6 +116,5 @@ bool string_load(const std::string& file, std::string& content) {
     return true;
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

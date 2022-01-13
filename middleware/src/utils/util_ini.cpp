@@ -6,7 +6,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 IniParser::IniParser(const std::string& file) {
     assert(file != "");
@@ -68,6 +67,5 @@ void IniParser::parse(const std::string& text) {
     }
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

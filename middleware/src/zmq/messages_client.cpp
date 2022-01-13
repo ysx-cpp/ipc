@@ -287,7 +287,7 @@ bool MessagesClient::register_subscription(const std::string& topic, CallbackInt
 }
 
 void MessagesClient::listen_thread() {
-    ipc::util::common::set_thread_name("iml-" + m_id);
+    ipc::util::set_thread_name("iml-" + m_id);
 
     zmq::pollitem_t zmq_pool_item = {*m_sub_socket, 0, ZMQ_POLLIN, 0};
     while (!m_exit_signal) {

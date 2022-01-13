@@ -45,7 +45,7 @@ public:
     }
 
 private:
-    ipc::util::common::Serializer<T> m_serializer;
+    ipc::util::Serializer<T> m_serializer;
     std::function<void(const T&)> m_func;
 };
 
@@ -69,7 +69,7 @@ public:
     }
 
 private:
-    ipc::util::common::Serializer<T> m_serializer;
+    ipc::util::Serializer<T> m_serializer;
     std::function<void(const T&, const MessageHeader&)> m_func;
 };
 

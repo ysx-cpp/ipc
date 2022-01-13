@@ -35,7 +35,7 @@ enum class CallbackMode {
 
 using CallbackInterface = std::shared_ptr<VirtualMessageCallback>;
 using CallbackFuncType = bool (*)(const std::string&, const MessageHeader&);
-using ipc::util::common::ThreadPool;
+using ipc::util::ThreadPool;
 
 class MessagesClient {
 
@@ -49,7 +49,7 @@ public:
         assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
         std::string buffer;
-        ipc::util::common::Serializer<T> serializer;
+        ipc::util::Serializer<T> serializer;
         serializer.to_string(message, buffer);
         return this->publish<std::string>(topic, buffer);
     }

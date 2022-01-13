@@ -7,7 +7,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 std::string level_to_color(const int32_t level) {
     switch (level) {
@@ -47,6 +46,5 @@ void ipc_debug(const int32_t level, const std::string& file, const int32_t line,
     fprintf(stderr, "%s\n", content.c_str());
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

@@ -6,7 +6,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 // sleep in milliseconds
 void sleep_ms(const int64_t ms) {
@@ -97,6 +96,5 @@ std::string now_datetime() {
     return datetime_str;
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

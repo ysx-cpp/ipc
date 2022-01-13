@@ -23,7 +23,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 std::string get_process_name() {
     std::string name;
@@ -76,6 +75,5 @@ std::string safe_getenv(const std::string& env) {
     return val;
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

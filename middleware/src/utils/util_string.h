@@ -5,7 +5,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 // trim string
 std::string string_trim(const std::string& str);
@@ -30,6 +29,5 @@ void string_append(const std::string& file, const char* format, ...);
 // load string to content from file
 bool string_load(const std::string& file, std::string& content);
 
-} // namespace common
 } // namespace util
 } // namespace ipc

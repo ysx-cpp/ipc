@@ -20,7 +20,7 @@ RoutingServer::RoutingServer(const uint16_t port) {
     /*
     // load config
     MessagesConfig config;
-    bool parse_result = ipc::util::common::load_config<MessagesConfig>(ipc_CONFIG_MESSAGES, config);
+    bool parse_result = ipc::util::load_config<MessagesConfig>(ipc_CONFIG_MESSAGES, config);
     if (parse_result == false) {
         DEBUG_ERROR("config [%s] lost", ipc_CONFIG_MESSAGES);
         return;
@@ -40,14 +40,14 @@ RoutingServer::RoutingServer(const uint16_t port) {
     m_rep_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     m_rep_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_rep_addr = ipc::util::common::string_sprintf("tcp://%s:%d", ipc_SERVER_REP_ADDR, port);
+    std::string server_rep_addr = ipc::util::string_sprintf("tcp://%s:%d", ipc_SERVER_REP_ADDR, port);
     m_rep_socket->bind(server_rep_addr.c_str());
 
     m_pub_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
     m_pub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_pub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_pub_addr = ipc::util::common::string_sprintf("tcp://%s:%d", ipc_SERVER_PUB_ADDR, port + 1);
+    std::string server_pub_addr = ipc::util::string_sprintf("tcp://%s:%d", ipc_SERVER_PUB_ADDR, port + 1);
     m_pub_socket->bind(server_pub_addr.c_str());
 }
 
@@ -61,7 +61,7 @@ void RoutingServer::stop() {
 
 void RoutingServer::run() {
     RoutingMessage request;
-    ipc::util::common::Serializer<RoutingMessage> serializer;
+    ipc::util::Serializer<RoutingMessage> serializer;
     zmq::pollitem_t zmq_pool_item = {*m_rep_socket, 0, ZMQ_POLLIN, 0};
     while (!m_exit_signal) {
         try {
@@ -123,7 +123,7 @@ void RoutingServer::publisher_online(const RoutingMessage& request) {
 
     // assign port
     int32_t next_port = m_current_port++;
-    std::string pub_addr = ipc::util::common::string_sprintf("tcp://%s:%d",
+    std::string pub_addr = ipc::util::string_sprintf("tcp://%s:%d",
         request.node().client_ip().c_str(), next_port);
 
     // reponse publisher addr, only one node
@@ -273,7 +273,7 @@ RoutingClient::RoutingClient(const std::string& client_id, const std::string ser
     /*
     // load config
     MessagesConfig config;
-    bool parse_result = ipc::util::common::load_config<MessagesConfig>(ipc_CONFIG_MESSAGES, config);
+    bool parse_result = ipc::util::load_config<MessagesConfig>(ipc_CONFIG_MESSAGES, config);
     if (parse_result == false) {
         DEBUG_ERROR("config [%s] lost", ipc_CONFIG_MESSAGES);
         return;
@@ -292,14 +292,14 @@ RoutingClient::RoutingClient(const std::string& client_id, const std::string ser
     m_req_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     m_req_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_req_addr = ipc::util::common::string_sprintf("tcp://%s:%d", server_addr.c_str(), server_port);
+    std::string server_req_addr = ipc::util::string_sprintf("tcp://%s:%d", server_addr.c_str(), server_port);
     m_req_socket->connect(server_req_addr.c_str());
 
     m_sub_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
     m_sub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_sub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_sub_addr = ipc::util::common::string_sprintf("tcp://%s:%d", server_addr.c_str(), server_port + 1);
+    std::string server_sub_addr = ipc::util::string_sprintf("tcp://%s:%d", server_addr.c_str(), server_port + 1);
     m_sub_socket->connect(server_sub_addr.c_str());
 
     m_sub_socket->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
@@ -368,7 +368,7 @@ bool RoutingClient::lookup_sub_addr(const std::string& topic, std::vector<std::s
 
 ////////////////////////////////////////////////////////////////////////////////
 void RoutingClient::listen_thread() {
-    ipc::util::common::set_thread_name("imr-" + m_client_id);
+    ipc::util::set_thread_name("imr-" + m_client_id);
 
     RoutingMessage message;
     zmq::pollitem_t zmq_pool_item = {*m_sub_socket, 0, ZMQ_POLLIN, 0};

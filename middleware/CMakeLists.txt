@@ -5,17 +5,17 @@ find_package(Boost REQUIRED  filesystem system regex)
 find_package(BZip2 REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(Glog REQUIRED)
-find_package(ZeroMQ REQUIRED)
+#find_package(ZeroMQ REQUIRED)
 
 ## load in pkg-config support
-#find_package(PkgConfig)
+find_package(PkgConfig)
 ## use pkg-config to get hints for 0mq locations
-#pkg_check_modules(PC_ZeroMQ QUIET zmq)
+pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-#find_library(ZeroMQ_LIBRARY
-#    NAMES zmq
-#    PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-#)
+find_library(ZeroMQ_LIBRARY
+    NAMES zmq
+    PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
+)
 
 file(GLOB PROTO_FILES "proto/*.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${PROTO_FILES}")

@@ -4,7 +4,7 @@
 
 #include "messages_factory.h"
 
-using namespace ipc::util::common;
+using namespace ipc::util;
 using ipc::util::messages::ZmqMessagesClient;
 
 void callback_echo(const std::string& message) {

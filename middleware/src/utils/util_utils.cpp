@@ -9,7 +9,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 bool int_to_bool(const int32_t i, bool zero_as_false) {
     bool res = false;
@@ -95,6 +94,5 @@ bool glob_files(const std::string& pattern, std::vector<std::string>& files) {
     return true;
 }
 
-} // namespace common
 } // namespace util
 } // namespace ipc

@@ -9,7 +9,6 @@
 
 namespace ipc {
 namespace util {
-namespace common {
 
 // default 0=false
 bool int_to_bool(const int32_t i, bool zero_as_false=true);
@@ -25,6 +24,5 @@ std::string basename(const std::string& filename);
 // glob files
 bool glob_files(const std::string& pattern, std::vector<std::string>& files);
 
-} // namespace common
 } // namespace util
 } // namespace ipc

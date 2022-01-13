@@ -17,8 +17,6 @@ namespace ipc {
 namespace util {
 namespace messages {
 
-using namespace ipc::util::common;
-
 ////////////////////////////////////////////////////////////////////////////////
 // send & recv utility
 
@@ -30,7 +28,7 @@ bool send_message(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, con
     assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
     std::string buffer;
-    ipc::util::common::Serializer<T> serializer;
+    ipc::util::Serializer<T> serializer;
     if (serializer.to_string(message, buffer) == true) {
         return send_zmq(socket, mutex, buffer);
     } else {
@@ -46,7 +44,7 @@ bool recv_message(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, T& 
     if (recv_zmq(socket, mutex, buffer) == false) {
         return false;
     }
-    ipc::util::common::Serializer<T> serializer;
+    ipc::util::Serializer<T> serializer;
     return serializer.from_string(buffer, message);
 }
 

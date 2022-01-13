@@ -30,7 +30,7 @@ public:
         //assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
         std::string buffer;
-        ipc::util::common::Serializer<T> serializer;
+        ipc::util::Serializer<T> serializer;
         serializer.to_string(message, buffer);
         return publish(topic, buffer);
     };
@@ -41,7 +41,7 @@ public:
         //assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
         std::string buffer;
-        ipc::util::common::Serializer<T> serializer;
+        ipc::util::Serializer<T> serializer;
         serializer.to_string(*message, buffer);
         return publish(topic, buffer);
     };
