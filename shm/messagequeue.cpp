@@ -9,8 +9,8 @@
 #include <iostream>
 #include <boost/interprocess/mapped_region.hpp>
 
-namespace util {
 namespace ipc {
+namespace shm {
 
 using namespace boost::interprocess;
 
@@ -86,15 +86,15 @@ size_t MessageQueue::DoReceive(std::string & data)
 {
 	try
 	{
-        boost::asio::mutable_buffer buffer = send_buff_.prepare(mq_.get_max_msg_size());
+        boost::asio::mutable_buffer buffer = recv_buff_.prepare(mq_.get_max_msg_size());
 		size_t recvd_size;
 		unsigned int priority;
 		mq_.receive(buffer.data(), mq_.get_max_msg_size(), recvd_size, priority);
 
-		send_buff_.commit(recvd_size);
+		recv_buff_.commit(recvd_size);
 		auto p = reinterpret_cast<const char*>(buffer.data());
 		data.assign(p, p + recvd_size);
-		send_buff_.consume(recvd_size);
+		recv_buff_.consume(recvd_size);
 
 		return recvd_size;
 	}
@@ -105,5 +105,5 @@ size_t MessageQueue::DoReceive(std::string & data)
     return 0;
 }
 
+} // namespace shm
 } // namespace ipc 
-} // namespace util

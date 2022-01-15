@@ -15,8 +15,8 @@
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include "shmcontainer.h"
 
-namespace common {
 namespace ipc {
+namespace shm {
 
 using namespace boost::interprocess;
 
@@ -148,7 +148,7 @@ private:
     managed_shared_memory &managed_shm_;
 };
 
+} // namespace shm
 } // namespace ipc
-} // namespace common
 
 #endif // ICP_SHARED_MEMORY_H

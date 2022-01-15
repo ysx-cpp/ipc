@@ -12,10 +12,8 @@
 #include <boost/interprocess/ipc/message_queue.hpp>
 #include <boost/asio/streambuf.hpp>
 
-namespace util {
 namespace ipc {
-
-using namespace boost::interprocess;
+namespace shm {
 
 class MessageQueue
 {
@@ -32,12 +30,12 @@ private:
 	
 private:
 	enum { MAX_MSG_SIZE = 8192 };
-	message_queue mq_;
+	boost::interprocess::message_queue mq_;
 	boost::asio::streambuf recv_buff_;
 	boost::asio::streambuf send_buff_;
 };
 
+} // namespace shm
 } // namespace ipc
-} // namespace util
 
 #endif // ICP_MESSAGE_QUEUE_H

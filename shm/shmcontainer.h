@@ -15,6 +15,7 @@
 #include <boost/interprocess/containers/string.hpp>
 
 namespace ipc {
+namespace shm {
 
 using boost::interprocess::managed_shared_memory;
 using SegmentManager = managed_shared_memory::segment_manager;
@@ -175,6 +176,7 @@ public:
 	}
 };
 
+} //namespace shm
 } //namespace ipc 
 
 #endif //ICP_SHM_CONTAINER_H
