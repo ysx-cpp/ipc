@@ -106,7 +106,7 @@ public:
 		return std::make_pair(nullptr, 0);
 	}
 
-    T *Open(uint32_t key)
+    T *Open(int64_t key)
     {
         return Open(std::to_string(key));
     }
@@ -120,7 +120,7 @@ public:
 		return nullptr;
 	}
 
-    T const *OnlyReadOpen(uint32_t key)
+    T const *OnlyReadOpen(int64_t key)
     {
         return Open(std::to_string(key));
     }
