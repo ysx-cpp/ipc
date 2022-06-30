@@ -29,7 +29,7 @@ public:
 	{
 	}
 
-    T *Construct(uint32_t key)
+    T *Construct(int64_t key)
     {
         return Construct(std::to_string(key));
     }
