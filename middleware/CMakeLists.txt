@@ -2,20 +2,20 @@ cmake_minimum_required(VERSION 3.15)
 project("middleware")
 
 find_package(Boost REQUIRED  filesystem system regex)
-find_package(BZip2 REQUIRED)
+#find_package(BZip2 REQUIRED)
 find_package(Protobuf REQUIRED)
 find_package(Glog REQUIRED)
-#find_package(ZeroMQ REQUIRED)
+find_package(ZeroMQ REQUIRED)
 
 ## load in pkg-config support
-find_package(PkgConfig)
+#find_package(PkgConfig)
 ## use pkg-config to get hints for 0mq locations
-pkg_check_modules(PC_ZeroMQ QUIET zmq)
+#pkg_check_modules(PC_ZeroMQ QUIET zmq)
 
-find_library(ZeroMQ_LIBRARY
-    NAMES zmq
-    PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-)
+#find_library(ZeroMQ_LIBRARY
+#    NAMES zmq
+#    PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
+#)
 
 file(GLOB PROTO_FILES "proto/*.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${PROTO_FILES}")
@@ -26,7 +26,10 @@ include_directories("${PROTO_DIR}"
     ${PROJECT_SOURCE_DIR}/src
 )
 
-set(LIBS ${ZeroMQ_LIBRARIES} ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${Boost_LIBRARIES} ${GLOG_LIBRARIES} glog)
+message("ZeroMQ_LIBRARIES:${ZeroMQ_LIBRARIES} ZeroMQ_LIBRARY:${ZeroMQ_LIBRARY} ZeroMQ_INCLUDE_DIR:${ZeroMQ_INCLUDE_DIR}")
+
+#target_include_directories(middleware PUBLIC ${ZeroMQ_INCLUDE_DIR})
+set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${Boost_LIBRARIES} ${GLOG_LIBRARIES} glog)
 
 file(GLOB_RECURSE SRCS src/*.cpp)
 add_library(middleware SHARED ${SRCS} ${PROTO_SRCS})
