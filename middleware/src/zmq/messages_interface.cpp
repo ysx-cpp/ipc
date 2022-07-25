@@ -2,78 +2,128 @@
 
 namespace ipc {
 namespace messages {
-
+    
 //////////////////////////////////////////////////////////////////////////////////
-ZmqMessagesClient::ZmqMessagesClient(const std::string& client_id) {
-    m_id = client_id;
-    m_addr = ipc_SERVER_REQ_ADDR;
-    m_port = 7712;
-    m_started = false;
-    start();
-}
-ZmqMessagesClient::ZmqMessagesClient(const std::string& client_id, const std::string& server, uint16_t port) {
-    m_id = client_id;
-    m_addr = server;
-    m_port = port;
-    m_started = false;
-    start();
-}
-
-bool ZmqMessagesClient::start() {
-    if (m_started == false) {
-        m_client_ptr = std::make_shared<ipc::messages::MessagesClient>(m_id, m_addr, m_port);
-        m_started = true;
+class ZmqMessagesServer : public IServerNode
+{
+public:
+    ZmqMessagesServer() :
+    m_name("ZMQServer"),
+    m_port(7712)
+    {
     }
-    return true;
-}
 
-void ZmqMessagesClient::spin() {
-    m_client_ptr->spin();
-}
+    ZmqMessagesServer(std::string name, uint16_t port) :
+    m_name("name"),
+    m_port(port)
+    {
+    }
 
-void ZmqMessagesClient::stop() {
-    m_client_ptr->stop();
-}
+    bool start() override
+    {
+        m_server_ptr = std::make_shared<ipc::messages::RoutingServer>(m_port);
+        m_server_ptr->run();
+        return true;
+    }
 
-bool ZmqMessagesClient::connected() {
-    return m_client_ptr->connected();
-}
+    void spin() override
+    {
+    }
 
-bool ZmqMessagesClient::publish(const std::string& topic, const std::string& message) {
-    return m_client_ptr->publish<std::string>(topic, message);
-}
+    void stop() override
+    {
+        m_server_ptr->stop();
+    }
 
-bool ZmqMessagesClient::publish(const std::string& topic, const std::shared_ptr<std::string>& message) {
-    return m_client_ptr->publish<std::string>(topic, *message);
-}
+private:
+    std::string m_name;
+    uint16_t m_port;
+    std::shared_ptr<ipc::messages::RoutingServer> m_server_ptr;
+};
 
-bool ZmqMessagesClient::subscribe(const std::string& topic, std::function<void(const std::string&)> callback_func) {
-    return m_client_ptr->subscribe<std::string>(topic, callback_func);
-}
-
-bool ZmqMessagesClient::register_subscription(const std::string& topic, CallbackInterface callback) {
-    return m_client_ptr->register_subscription(topic, callback);
+IServerNode* CreateServerNode(const std::string& name, uint16_t port)
+{
+    return new ZmqMessagesServer(name, port);
 }
 
 //////////////////////////////////////////////////////////////////////////////////
-ZmqMessagesServer::ZmqMessagesServer() {
-    m_name = "ZMQServer";
-    m_port = 7712;
-}
+class ZmqMessagesClient : public IClientNode
+{
+public:
+    ZmqMessagesClient(const std::string &client_id) :
+    m_started(false),
+    m_id(client_id),
+    m_addr(ipc_SERVER_REQ_ADDR),
+    m_port(7712)
+    {
+        start();
+    }
+    ZmqMessagesClient(const std::string &client_id, const std::string &server, uint16_t port) :
+    m_started(false),
+    m_id(client_id),
+    m_addr(server),
+    m_port(port)
+    {
+        start();
+    }
 
-ZmqMessagesServer::ZmqMessagesServer(std::string name, uint16_t port) {
-    m_name = name;
-    m_port = port;
-}
+    bool start() override
+    {
+        if (m_started == false)
+        {
+            m_client_ptr = std::make_shared<ipc::messages::MessagesClient>(m_id, m_addr, m_port);
+            m_started = true;
+        }
+        return true;
+    }
 
-bool ZmqMessagesServer::start() {
-    m_server_ptr = std::make_shared<ipc::messages::RoutingServer>(m_port);
-    m_server_ptr->run();
-    return true;
-}
+    void spin() override
+    {
+        m_client_ptr->spin();
+    }
 
-void ZmqMessagesServer::stop() {
-    m_server_ptr->stop();
+    void stop() override
+    {
+        m_client_ptr->stop();
+    }
+
+    bool connected() override
+    {
+        return m_client_ptr->connected();
+    }
+
+    bool publish(const std::string &topic, const std::string &message) override
+    {
+        return m_client_ptr->publish<std::string>(topic, message);
+    }
+
+    bool publish(const std::string &topic, const std::shared_ptr<std::string> &message) override
+    {
+        return m_client_ptr->publish<std::string>(topic, *message);
+    }
+
+    bool subscribe(const std::string &topic, std::function<void(const std::string &)> callback_func) override
+    {
+        return m_client_ptr->subscribe<std::string>(topic, callback_func);
+    }
+
+    bool register_subscription(const std::string &topic, CallbackInterface callback) override
+    {
+        return m_client_ptr->register_subscription(topic, callback);
+    }
+
+private:
+    std::atomic<bool> m_started;
+    std::string m_id;
+    std::string m_addr;
+    uint16_t m_port;
+    std::shared_ptr<ipc::messages::MessagesClient> m_client_ptr;
+};
+
+IClientNode* CreateClientNode(const std::string& name,
+    const std::string& ip, uint16_t port)
+{
+    return new ZmqMessagesClient(name, ip, port);
 }
 
 }

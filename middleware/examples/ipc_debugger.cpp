@@ -5,7 +5,6 @@
 #include "messages_factory.h"
 
 using namespace ipc::util;
-using ipc::messages::ZmqMessagesClient;
 
 void callback_echo(const std::string& message) {
     DEBUG_INFO("recv msg[%s]", message.c_str());
