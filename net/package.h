@@ -35,8 +35,8 @@ struct PackageHead
     std::uint16_t data_size      = 0;
     std::uint64_t uid            = 0;
     std::uint16_t cmd            = 0;
-    std::uint16_t src            = 0; //from server ID
-    std::uint16_t dst           = 0; //destination is server ID
+    std::uint32_t src            = 0; //from server ID
+    std::uint32_t dst            = 0; //destination is server ID
 };
 
 class Package : public boost::enable_shared_from_this<Package>
@@ -61,15 +61,15 @@ public:
     void set_data_size(std::uint16_t data_size) {head_.data_size = data_size;}
     void set_uid(std::uint64_t uid) {head_.uid = uid;}
     void set_cmd(std::uint16_t cmd) {head_.cmd = cmd;}
-    void set_src(std::uint16_t src) {head_.src = src;}
-    void set_dst(std::uint16_t dst) {head_.dst = dst;}
+    void set_src(std::uint32_t src) {head_.src = src;}
+    void set_dst(std::uint32_t dst) {head_.dst = dst;}
 
     std::uint16_t head_size() const {return head_.head_size;}
     std::uint16_t data_size() const {return head_.data_size;}
     std::uint64_t uid() const {return head_.uid;}
     std::uint16_t cmd() const {return head_.cmd;}
-    std::uint16_t src() const {return head_.src;}
-    std::uint16_t dst() const {return head_.dst;}
+    std::uint32_t src() const {return head_.src;}
+    std::uint32_t dst() const {return head_.dst;}
 
 public:
     PackageHead head_;
