@@ -22,15 +22,11 @@ void Head::Encode(ByteArray &data)
 	data.insert(data.begin(), phead, phead + this->head_size);
 }
 
-void Head::Decode(ByteArray &data)
-{
-	if (data.size() >= sizeof(Head))
-		data.assign(data.begin() + this->head_size, data.end());
-}
-
 void Head::Decode(const ByteArray &data, std::string &msg)
 {
-	if (data.size() >= sizeof(Head))
+    this->head_size = static_cast<uint16_t>(sizeof(Head));
+	this->data_size = static_cast<uint16_t>(data.size());
+	if (data.size() >= this->head_size)
 		msg.assign(data.begin() + this->head_size, data.end());
 }
 
