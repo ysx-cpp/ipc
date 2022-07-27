@@ -10,7 +10,7 @@ namespace ipc {
 namespace messages {
 namespace zmqcopy {
 
-bool send_zmq(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex,
+bool send_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex,
               const std::string& buffer) {
     try {
         zmq::message_t message(buffer.c_str(), buffer.length());
@@ -22,7 +22,7 @@ bool send_zmq(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex,
     }
 }
 
-bool recv_zmq(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, std::string& buffer) {
+bool recv_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, std::string& buffer) {
     try {
         zmq::message_t message;
         {
@@ -40,7 +40,7 @@ bool recv_zmq(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, std::st
     }
 }
 
-bool send_message(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) {
+bool send_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) {
     // assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
     std::string buffer;
@@ -51,7 +51,7 @@ bool send_message(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, con
     }
 }
 
-bool recv_message(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex, ::google::protobuf::Message& message) {
+bool recv_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, ::google::protobuf::Message& message) {
     // assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
     std::string buffer;
@@ -72,7 +72,7 @@ std::string splice(const std::string& protocol, const std::string& ip, int port)
 //class PublisherImpl
 PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 {
-    m_pub_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
+    m_pub_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
     m_pub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_pub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
@@ -146,7 +146,7 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     stop_ = false;
     m_pool_timeout = ipc_ZMQ_POOL_TIMEOUT;
 
-    m_sub_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
+    m_sub_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
     m_sub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_sub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
@@ -212,12 +212,12 @@ ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
     stop_ = false;
     m_pool_timeout = ipc_ZMQ_POOL_TIMEOUT;
     m_current_port = ipc_TOPIC_START_PORT;
-    sub_list_ = std::make_shared<SubscribeNodeList>();
+    sub_list_ = std::make_unique<SubscribeNodeList>();
 
     // init zmq
     // static zmq::context_t zmq_ctx = zmq::context_t(1);
 
-    m_rep_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_REP);
+    m_rep_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
     m_rep_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     m_rep_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
@@ -382,7 +382,7 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
     // init zmq
     // zmq::context_t& zmq_ctx = ContextManager::instance();
 
-    m_req_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
+    m_req_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
     m_req_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     m_req_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 

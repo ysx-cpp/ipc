@@ -49,7 +49,7 @@ private:
     std::atomic<int32_t> m_current_port;
 
     std::mutex m_pub_mutex;
-    std::shared_ptr<zmq::socket_t> m_pub_socket;
+    std::unique_ptr<zmq::socket_t> m_pub_socket;
 
     // topic + pub addr
     std::mutex m_topic_mutex;
@@ -74,7 +74,7 @@ private:
     int32_t m_pool_timeout;
 
     std::mutex m_sub_mutex;
-    std::shared_ptr<zmq::socket_t> m_sub_socket;
+    std::unique_ptr<zmq::socket_t> m_sub_socket;
 };
 
 class ResponseImpl
@@ -95,11 +95,11 @@ private:
 
 private:
     std::mutex m_rep_mutex;
-    std::shared_ptr<zmq::socket_t> m_rep_socket;
+    std::unique_ptr <zmq::socket_t> m_rep_socket;
 
     // topic -> sub list
     std::mutex m_topic_mutex;
-    std::shared_ptr<SubscribeNodeList> sub_list_;
+    std::unique_ptr<SubscribeNodeList> sub_list_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ private:
     std::vector<std::pair<std::string, std::string>> m_subscribed_topic;
 
     std::mutex m_req_mutex;
-    std::shared_ptr<zmq::socket_t> m_req_socket;
+    std::unique_ptr<zmq::socket_t> m_req_socket;
 
     std::string m_client_id;
 };
