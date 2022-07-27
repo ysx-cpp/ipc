@@ -8,14 +8,13 @@
 #ifndef NET_TCPSERVER_H
 #define NET_TCPSERVER_H
 
-#include <set>
-#include "connectionmgr.h"
+#include "connectionpool.h"
 #include "application.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
-class TcpServer : public ConnectionMgr
+class TcpServer : public ConnectionPool
 {   
 public:
     TcpServer(const std::string &host, unsigned short port);
@@ -31,12 +30,12 @@ public:
 protected:
     void DoAccept();
     void OnAccept(ConnectionPtr connection,  const boost::system::error_code &ec);
-	Application app_;
+	Application &app_;
 
 private:
     boost::asio::ip::tcp::acceptor acceptor_;
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 #endif // NET_TCPSERVER_H

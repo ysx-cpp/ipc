@@ -11,35 +11,19 @@
 #include <boost/system/error_code.hpp>
 #include <boost/asio/streambuf.hpp>
 #include "package.h"
-#include "sockethandler.hpp"
+// #include "sockethandler.hpp"
+#include "socketsettings.hpp"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
-class MatchWhitespace
+class TcpHandler : public std::enable_shared_from_this<TcpHandler>
 {
-public:
-    explicit MatchWhitespace(char c) : c_(c) {}
-
-    template <typename Iterator>
-    std::pair<Iterator, bool> operator()(
-        Iterator begin, Iterator end) const
-    {
-        Iterator i = begin;
-        while (i != end)
-            if (c_ == *i++)
-                return std::make_pair(i, true);
-        return std::make_pair(i, false);
-    }
-
-private:
-  char c_;
-};
-
-class TcpHandler : public SocketHandler<boost::asio::ip::tcp::socket>
-{
+    using TcpSocket = boost::asio::ip::tcp::socket;
+    using TcpEndpoint = boost::asio::ip::tcp::endpoint;
 public:
 	explicit TcpHandler(boost::asio::io_context &ioc);
+    virtual ~TcpHandler() = default;
 
     void Write(const ByteArray &data);
     void Read();
@@ -50,12 +34,18 @@ protected:
     void ReadSome();
     void ReadSomeHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
 
-
-    void ReadUntil(MatchWhitespace &match_whitespace);
-    void ReadUntilHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
-
+    void ReadUntil(const std::string& string_regex);
+    void ReadUntilHandler(const std::string& string_regex, const boost::system::error_code &ec, const std::size_t &read_bytes);
+    
     virtual void Complete(const ByteArrayPtr data) = 0;
-    virtual void Disconnect() = 0;
+    virtual void Successfully(const std::size_t &write_bytes) = 0;
+    virtual void Shutdown() = 0;
+
+protected:
+    friend class TcpServer;
+    friend class HttpServer;
+    TcpSocket socket_;
+    SocketSettings<TcpSocket> impl_;
 
 private:
     boost::asio::streambuf recv_buff_;
@@ -63,6 +53,6 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_TCP_HANDLER_H

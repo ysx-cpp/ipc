@@ -10,42 +10,59 @@
 
 #include <memory>
 #include "tcphandler.h"
-#include "heartbeat.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
-class ConnectionMgr;
+class Heartbeat;
+class ConnectionPool;
 class Connection : public TcpHandler
 {
 public:
 	explicit Connection(boost::asio::io_context &ioc);
-	~Connection() = default;
+	explicit Connection(boost::asio::io_context &ioc, ConnectionPool *connction_pool);
+	~Connection() override = default;
 
 	void Start();
     void Stop();
-	void SetManager(ConnectionMgr *manager);
-	bool Connect(const std::string &host, unsigned short port);
-	void Send(ByteArray &data);
-	void EnableHeartbeat();
-	int OnHeartbeat();
+	bool Connect(const std::string& host, unsigned short port);
+	void SendData(Package& pkg, const std::string &data);
+	void SendData(Package& pkg, const ByteArray &data);
+	bool Connected() const {return impl_.Connected();}
 
-	bool connected() const { return connected_; }
-	void set_connected(bool connected) { connected_ = connected; }
-	
+protected:
+	virtual int OnReceveData(const PackagePtr package) {return 0;}
+	virtual void OnSendData(const std::size_t& write_bytes) {}
+	virtual int OnConnect() {return 0;}
+	virtual int OnDisconnect() {return 0;}
+    void Complete(const ByteArrayPtr data) override;
+
 protected:
 	std::shared_ptr<Connection> ShaerdSelf();
-    void Complete(const ByteArrayPtr data) override;
-	void Disconnect() override;
+    ConnectionPool *connction_pool_;
 
 private:
-    ConnectionMgr *manager_;
-	std::unique_ptr<Heartbeat> heartbeat_;
-	bool connected_ = false;
+	void Successfully(const std::size_t& write_bytes) override  final;
+	void Shutdown() override final;
+
+private:
+	void StartHeartbeat();
+	void SendHeartbeat();
+	void OnHeartbeat();
+
+private:
+	void IncrRecvSeq();
+	void IncrSendSeq(const PackagePtr package);
+	uint64_t GenerateVerify(const ByteArray &data);
+
+private:
+	std::shared_ptr<Heartbeat> heartbeat_;
+	std::atomic<uint64_t> send_seq_;
+	std::atomic<uint64_t> recv_seq_;
 };
 using ConnectionPtr = std::shared_ptr<Connection>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_CONNECTION_H

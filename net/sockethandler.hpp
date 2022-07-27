@@ -13,9 +13,9 @@
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
 #include <boost/noncopyable.hpp>
+#include "logdefine.h"
 
-
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 template<class T>
@@ -110,6 +110,11 @@ public:
         return static_cast<int>(socket_.native_handle());
     }
 
+    bool Connected() const 
+    {
+        return socket_.is_open();
+    }
+
     int CheckErrorCode(const boost::system::error_code &ec)
     {
         switch (ec.value())
@@ -139,7 +144,7 @@ public:
 
     void Close()
     {
-        std::cout << "close fd:" << socketfd() << std::endl;
+        NET_LOGERR("close fd:" << socketfd());
         if (socket_.is_open())
         {
             boost::system::error_code ec;
@@ -157,6 +162,6 @@ protected:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_SOCKET_WRAPPER_HPP

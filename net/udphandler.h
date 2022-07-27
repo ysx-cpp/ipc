@@ -5,8 +5,8 @@
  * @github https://github.com/ysx-cpp
  * @date Oct 08 2019
  */
-#ifndef NET_SOCKET_HANDLER_H
-#define NET_SOCKET_HANDLER_H
+#ifndef NET_TCP_HANDLER_H
+#define NET_TCP_HANDLER_H
 
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
@@ -14,7 +14,7 @@
 #include "package.h"
 #include "sockethandler.hpp"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class UdpHandler : public SocketHandler<boost::asio::ip::udp::socket>
@@ -40,6 +40,6 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
-#endif // NET_SOCKET_HANDLER_H
+#endif // NET_TCP_HANDLER_H

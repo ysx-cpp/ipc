@@ -12,32 +12,37 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/function.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
-class Heartbeat : public boost::enable_shared_from_this<Heartbeat>
+class Connection;
+class Heartbeat : public std::enable_shared_from_this<Heartbeat>
 {
 public:
     explicit Heartbeat(boost::asio::io_context &ioc);
 
 public:
-	void Run();
-	void CheckPing();
+	void Ping(std::shared_ptr<Connection> connection, const boost::system::error_code &ec);
+	void Ping(std::shared_ptr<Connection> connection);
+	void StartTimer();
+	void UpdateTimer();
 	void TimerHandle(const boost::system::error_code &ec);
-	void Stop() { stopped_ = true; }
 	bool Stopped() const { return stopped_; }
+	void Stop();
 
 private:
 	int expire() const { return 10; }
 
-    boost::asio::deadline_timer timer_;
-	bool stopped_ = false;
+    boost::asio::deadline_timer request_timer_;
+    boost::asio::deadline_timer reply_timer_;
+	std::atomic<bool> stopped_;
 	boost::posix_time::ptime last_ping_;
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_HEARBEAT_H
 

@@ -9,7 +9,7 @@
 #include <boost/asio/streambuf.hpp>
 #include "package.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
@@ -44,18 +44,21 @@ void Package::Encode(const std::string &data)
 
 void Package::Encode(const ByteArray &data)
 {
-    size_t head_size = sizeof(PackageHead);
-    size_t data_size = static_cast<uint16_t>(data.size());
-	
-    data_.resize(head_size + data_size);
-    PackageHead *phead   = reinterpret_cast<PackageHead*>(&data_[0]);
-    phead->head_size	 = head_size;
-    phead->data_size     = data_size;
-    phead->uid           = this->uid();
-    phead->cmd           = this->cmd();
-    phead->src           = this->src();
-    phead->dst          = this->dst();
+    uint16_t head_size = sizeof(PackageHead);
+    uint16_t data_size = static_cast<uint16_t>(data.size());
 
+    data_.reserve(head_size + data_size);
+    data_.resize(head_size);
+    PackageHead *phead = reinterpret_cast<PackageHead *>(&data_[0]);
+    phead->head_size = head_size;
+    phead->data_size = data_size;
+    phead->uid = this->uid();
+    phead->cmd = this->cmd();
+    phead->src = this->src();
+    phead->dst = this->dst();
+    phead->seq = this->seq();
+    phead->verify = this->verify();
+    
     data_.insert(data_.begin() + phead->head_size, data.begin(), data.end());
 }
 
@@ -74,9 +77,21 @@ void Package::Decode(const ByteArray &data)
     this->set_cmd(phead->cmd);
     this->set_src(phead->src);
     this->set_dst(phead->dst);
-
+    this->set_seq(phead->seq);
+    this->set_verify(phead->verify);
+    
     data_.assign(data.begin() + phead->head_size, data.end());
 }
 
+void Package::FullData(const std::string &data)
+{
+    data_.assign(data.begin(), data.end());
+}
+
+void Package::FullData(const ByteArray &data) 
+{ 
+    data_.assign(data.begin(), data.end()); 
+}
+
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
