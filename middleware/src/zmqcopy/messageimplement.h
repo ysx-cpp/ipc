@@ -36,16 +36,13 @@ class SubscribeNodeList;
 
 namespace zmqcopy {
 
-// messages_client.callback(topic, addr)
-using RoutingEventCallback = std::function<void(const std::string&, const std::string&)>;
-
 ////////////////////////////////////////////////////////////////////////////////
 class PublisherImpl
 {
 public:
     explicit PublisherImpl(zmq::context_t& zmq_ctx);
     void PublisherOnline(const RoutingMessage& request);
-    void PublisherOffline(const RoutingMessage &request);
+    void PublisherOffline(const RoutingMessage& request);
 
 private:
     std::atomic<int32_t> m_current_port;
@@ -61,55 +58,32 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 class SubscriberImpl
 {
+    // EventCallback(topic, addr)
+    using EventCallback = std::function<void(const RoutingMessage&)>;
 public:
     explicit SubscriberImpl(zmq::context_t& zmq_ctx);
     ~SubscriberImpl();
     bool Connected() const;
-    void ListenThread();
-    void EventCallback(RoutingEventCallback publisher_online, RoutingEventCallback publisher_offline);
-    bool LookupSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list);
+    void Stop();
+    void Run(EventCallback&& callback);
 
 private:
-    RoutingEventCallback m_notify_online;
-    RoutingEventCallback m_notify_offline;
+    std::atomic<bool> stop_;
+    int32_t m_pool_timeout;
 
     std::mutex m_sub_mutex;
     std::shared_ptr<zmq::socket_t> m_sub_socket;
-
-    std::atomic<bool> stop_;
-    int32_t m_pool_timeout;
-    std::thread m_listen_thread;
 };
 
-////////////////////////////////////////////////////////////////////////////////
-// class ServerInterface 
-// {
-// public:
-//     virtual ~ServerInterface() = 0;
-//     virtual void Run() = 0;
-//     virtual void Stop() = 0;
-
-//     // virtual void PublisherOnline(const RoutingMessage& request) = 0;
-//     // virtual void PublisherOffline(const RoutingMessage& request) = 0;
-//     // virtual void SubscriberOnline(const RoutingMessage& request) = 0;
-//     // virtual void SubscriberOffline(const RoutingMessage& request) = 0;
-//     // virtual void NodeList() = 0;
-
-// protected:
-//     std::atomic<bool> stop_;
-//     std::atomic<int32_t> m_current_port;
-//     int32_t m_pool_timeout;
-// };
-
-class ServerImpl
+class ResponseImpl
 {
 public:
-    explicit ServerImpl(zmq::context_t& zmq_ctx);
-    ~ServerImpl();
+    explicit ResponseImpl(zmq::context_t& zmq_ctx);
+    ~ResponseImpl();
     void Run();
     void Stop();
-    void ResponseOnline(const RoutingMessage &request);
-    void ResponseOffline(const RoutingMessage &request);
+    void ResponseOnline(const RoutingMessage& request);
+    void ResponseOffline(const RoutingMessage& request);
     void ResponseNodeList();
 private:
     std::atomic<bool> stop_;
@@ -129,11 +103,11 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-class ReqClient
+class RequestImpl
 {
 public:
-    explicit ReqClient(zmq::context_t& zmq_ctx);
-    virtual ~ReqClient();
+    explicit RequestImpl(zmq::context_t& zmq_ctx);
+    virtual ~RequestImpl();
     bool Connected() const;
     void Stop();
     bool LookupPubAddr(const std::string &topic, std::string &pub_addr);

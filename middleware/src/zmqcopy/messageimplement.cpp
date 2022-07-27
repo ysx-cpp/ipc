@@ -1,6 +1,6 @@
 // zeromq messages service procotol implement
 
-#include "routinginterface.h"
+#include "messageimplement.h"
 #include <algorithm>
 #include <glog/logging.h>
 #include "zmq/zmq_config.h"
@@ -72,13 +72,11 @@ std::string splice(const std::string& protocol, const std::string& ip, int port)
 //class PublisherImpl
 PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 {
-    m_current_port = ipc_TOPIC_START_PORT;
-
     m_pub_socket = std::make_shared<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
     m_pub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_pub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, m_current_port + 1);
+    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     m_pub_socket->bind(server_pub_addr.c_str());
 }
 
@@ -89,7 +87,7 @@ void PublisherImpl::PublisherOnline(const RoutingMessage &request)
 
     // assign port
     std::string pub_addr;
-    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, m_current_port++);
+    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
 
     // reponse publisher addr, only one node
     std::string topic = request.node().message_topic();
@@ -145,19 +143,11 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     m_sub_socket->connect(server_sub_addr.c_str());
 
     m_sub_socket->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
-
-    // subscribe boardcast
-    m_listen_thread = std::thread(&SubscriberImpl::ListenThread, this);
 }
 
 SubscriberImpl::~SubscriberImpl()
 {
-    // quit boardcast listen thread
-    stop_ = true;
-    if (m_listen_thread.joinable())
-    {
-        m_listen_thread.join();
-    }
+    Stop();
 }
 
 bool SubscriberImpl::Connected() const
@@ -165,7 +155,12 @@ bool SubscriberImpl::Connected() const
     return m_sub_socket != nullptr;
 }
 
-void SubscriberImpl::ListenThread()
+void SubscriberImpl::Stop()
+{
+    stop_ = true;
+}
+
+void SubscriberImpl::Run(EventCallback&& callback)
 {
     // ipc::util::set_thread_name("imr-" + m_client_id);
 
@@ -188,23 +183,7 @@ void SubscriberImpl::ListenThread()
                     continue;
                 }
 
-                std::string topic = message.node().message_topic();
-                std::string addr = message.node().socket_addr();
-
-                if (message.action() == ROUTING_PUB_ONLINE)
-                {
-                    // notify messages client
-                    m_notify_online(topic, addr);
-                }
-                else if (message.action() == ROUTING_PUB_OFFLINE)
-                {
-                    // notify messages client
-                    m_notify_offline(topic, addr);
-                }
-                else
-                {
-                    LOG(ERROR) << ("unknown boardcast message");
-                }
+                callback(message);
             }
         }
         catch (zmq::error_t &e)
@@ -214,15 +193,9 @@ void SubscriberImpl::ListenThread()
     }
 }
 
-void SubscriberImpl::EventCallback(RoutingEventCallback publisher_online, RoutingEventCallback publisher_offline)
-{
-    m_notify_online = publisher_online;
-    m_notify_offline = publisher_offline;
-}
-
 ////////////////////////////////////////////////////////////////////////////////
 // routing server
-ServerImpl::ServerImpl(zmq::context_t &zmq_ctx) : pub_impl_(zmq_ctx)
+ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx) : pub_impl_(zmq_ctx)
 {
     // init status
     stop_ = false;
@@ -241,12 +214,12 @@ ServerImpl::ServerImpl(zmq::context_t &zmq_ctx) : pub_impl_(zmq_ctx)
     m_rep_socket->bind(server_rep_addr.c_str());
 }
 
-ServerImpl::~ServerImpl()
+ResponseImpl::~ResponseImpl()
 {
     this->Stop();
 }
 
-void ServerImpl::Run()
+void ResponseImpl::Run()
 {
     RoutingMessage request;
     zmq::pollitem_t zmq_pool_item = {*m_rep_socket, 0, ZMQ_POLLIN, 0};
@@ -314,12 +287,12 @@ void ServerImpl::Run()
     }
 }
 
-void ServerImpl::Stop()
+void ResponseImpl::Stop()
 {
     stop_ = true;
 }
 
-void ServerImpl::ResponseOnline(const RoutingMessage &request)
+void ResponseImpl::ResponseOnline(const RoutingMessage &request)
 {
     // notify
     LOG(WARNING) << "subscriber_online id: " << request.node().client_id() << " topic: " << request.node().message_topic();
@@ -343,7 +316,7 @@ void ServerImpl::ResponseOnline(const RoutingMessage &request)
     sub_node->set_client_ip(request.node().client_ip());
 }
 
-void ServerImpl::ResponseOffline(const RoutingMessage &request)
+void ResponseImpl::ResponseOffline(const RoutingMessage &request)
 {
     // notify
     LOG(WARNING) << "subscriber_offline id: " << request.node().client_id() << " topic: " << request.node().message_topic();
@@ -370,7 +343,7 @@ void ServerImpl::ResponseOffline(const RoutingMessage &request)
     }
 }
 
-void ServerImpl::ResponseNodeList()
+void ResponseImpl::ResponseNodeList()
 {
     // response offline
     send_message(m_rep_socket, m_rep_mutex, *m_node_list);
@@ -378,7 +351,7 @@ void ServerImpl::ResponseNodeList()
 
 ////////////////////////////////////////////////////////////////////////////////
 // routing client
-ReqClient::ReqClient(zmq::context_t& zmq_ctx) 
+RequestImpl::RequestImpl(zmq::context_t& zmq_ctx) 
 {
     /*
     // load config
@@ -401,7 +374,7 @@ ReqClient::ReqClient(zmq::context_t& zmq_ctx)
     m_req_socket->connect(server_req_addr.c_str());
 }
 
-ReqClient::~ReqClient() 
+RequestImpl::~RequestImpl() 
 {
     // offline all pub & sub addr
     for (auto& topic : m_advertised_topic) 
@@ -415,12 +388,12 @@ ReqClient::~ReqClient()
     }
 }
 
-bool ReqClient::Connected() const 
+bool RequestImpl::Connected() const 
 {
     return m_req_socket != nullptr;
 }
 
-bool ReqClient::LookupPubAddr(const std::string &topic, std::string &pub_addr)
+bool RequestImpl::LookupPubAddr(const std::string &topic, std::string &pub_addr)
 {
     assert(topic != "");
 
@@ -435,7 +408,7 @@ bool ReqClient::LookupPubAddr(const std::string &topic, std::string &pub_addr)
     return res;
 }
 
-bool ReqClient::LookupSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list)
+bool RequestImpl::LookupSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list)
 {
     assert(topic != "");
 
@@ -450,7 +423,7 @@ bool ReqClient::LookupSubAddr(const std::string &topic, std::vector<std::string>
     return res;
 }
 
-bool ReqClient:: RequestNodeOnline(const int32_t action, const std::string& topic,
+bool RequestImpl:: RequestNodeOnline(const int32_t action, const std::string& topic,
     std::vector<std::string>& addr_list) {
     assert(action > 0);
     assert(topic != "");
@@ -484,7 +457,7 @@ bool ReqClient:: RequestNodeOnline(const int32_t action, const std::string& topi
     }
 }
 
-bool ReqClient::RequstNodeOffline(const int32_t action, const std::string& topic, const std::string& addr) {
+bool RequestImpl::RequstNodeOffline(const int32_t action, const std::string& topic, const std::string& addr) {
     assert(action > 0);
     assert(topic != "");
 
@@ -509,7 +482,7 @@ bool ReqClient::RequstNodeOffline(const int32_t action, const std::string& topic
     return true;
 }
 
-bool ReqClient::RequestNodeList(SubscribeNodeList& node_list) {
+bool RequestImpl::RequestNodeList(SubscribeNodeList& node_list) {
     RoutingMessage message;
     message.set_action(ROUTING_NODE_LIST);
     message.mutable_node()->clear_message_topic();
