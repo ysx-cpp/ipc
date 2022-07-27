@@ -76,6 +76,8 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
     m_pub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     m_pub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
+    pub_list_ = std::make_unique<SubscribeNodeList>();
+
     std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     m_pub_socket->bind(server_pub_addr.c_str());
 }
@@ -101,7 +103,12 @@ void PublisherImpl::PublisherOnline(const RoutingMessage &request)
     std::lock_guard<std::mutex> lock(m_topic_mutex);
 
     // append topic list
-    m_pub_list.push_back(std::make_pair(topic, pub_addr));
+    auto pub_node = pub_list_->add_node_list();
+    pub_node->set_node_type(ROUTING_NODE_PUB);
+    pub_node->set_message_topic(topic);
+    pub_node->set_socket_addr(request.node().socket_addr());
+    pub_node->set_client_id(request.node().client_id());
+    pub_node->set_client_ip(request.node().client_ip());
 }
 
 void PublisherImpl::PublisherOffline(const RoutingMessage &request)
@@ -121,10 +128,14 @@ void PublisherImpl::PublisherOffline(const RoutingMessage &request)
     std::string client_id = request.node().client_id();
     std::string client_ip = request.node().client_ip();
 
-    auto iter = std::find(m_pub_list.begin(), m_pub_list.end(), std::make_pair(topic, socket_addr));
-    if (iter != m_pub_list.end())
+    auto node_list = pub_list_->mutable_node_list();
+    auto iter = std::find_if(node_list->begin(), node_list->end(), [topic](const RoutingNode& item){
+        return topic == item.message_topic();
+    });
+
+    if (iter != node_list->end())
     {
-        m_pub_list.erase(iter);
+        node_list->erase(iter);
     }
 }
 
@@ -195,13 +206,13 @@ void SubscriberImpl::Run(EventCallback&& callback)
 
 ////////////////////////////////////////////////////////////////////////////////
 // routing server
-ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx) : pub_impl_(zmq_ctx)
+ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
 {
     // init status
     stop_ = false;
     m_pool_timeout = ipc_ZMQ_POOL_TIMEOUT;
     m_current_port = ipc_TOPIC_START_PORT;
-    m_node_list = std::make_shared<SubscribeNodeList>();
+    sub_list_ = std::make_shared<SubscribeNodeList>();
 
     // init zmq
     // static zmq::context_t zmq_ctx = zmq::context_t(1);
@@ -253,31 +264,7 @@ void ResponseImpl::Run()
                 // client ip
                 request.mutable_node()->set_client_ip(message.gets("Peer-Address"));
 
-                switch (request.action())
-                {
-                case ROUTING_PUB_ONLINE:
-                    request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
-                    pub_impl_.PublisherOnline(request);
-                    break;
-                case ROUTING_PUB_OFFLINE:
-                    request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
-                    pub_impl_.PublisherOffline(request);
-                    break;
-                case ROUTING_SUB_ONLINE:
-                    request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
-                    ResponseOnline(request);
-                    break;
-                case ROUTING_SUB_OFFLINE:
-                    request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
-                    ResponseOffline(request);
-                    break;
-                case ROUTING_NODE_LIST:
-                    ResponseNodeList();
-                    break;
-                default:
-                    LOG(ERROR) << ("unknown protocol request");
-                    break;
-                }
+                OnRequest(request);
             }
         }
         catch (zmq::error_t &e)
@@ -292,7 +279,36 @@ void ResponseImpl::Stop()
     stop_ = true;
 }
 
-void ResponseImpl::ResponseOnline(const RoutingMessage &request)
+void ResponseImpl::OnRequest(const RoutingMessage& request)
+{
+    switch (request.action())
+    {
+    // case ROUTING_PUB_ONLINE:
+    //     // request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
+    //     pub_impl_.PublisherOnline(request);
+    //     break;
+    // case ROUTING_PUB_OFFLINE:
+    //     // request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
+    //     pub_impl_.PublisherOffline(request);
+    //     break;
+    case ROUTING_SUB_ONLINE:
+        // request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
+        OnRequestSubOnline(request);
+        break;
+    case ROUTING_SUB_OFFLINE:
+        // request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
+        OnRequestSubOffline(request);
+        break;
+    case ROUTING_NODE_LIST:
+        OnRequestNodeList();
+        break;
+    default:
+        LOG(ERROR) << ("unknown protocol request");
+        break;
+    }
+}
+
+void ResponseImpl::OnRequestSubOnline(const RoutingMessage &request)
 {
     // notify
     LOG(WARNING) << "subscriber_online id: " << request.node().client_id() << " topic: " << request.node().message_topic();
@@ -308,7 +324,7 @@ void ResponseImpl::ResponseOnline(const RoutingMessage &request)
     std::lock_guard<std::mutex> lock(m_topic_mutex);
 
     // append subscriber node list
-    auto sub_node = m_node_list->add_node_list();
+    auto sub_node = sub_list_->add_node_list();
     sub_node->set_node_type(ROUTING_NODE_SUB);
     sub_node->set_message_topic(topic);
     sub_node->set_socket_addr(request.node().socket_addr());
@@ -316,7 +332,7 @@ void ResponseImpl::ResponseOnline(const RoutingMessage &request)
     sub_node->set_client_ip(request.node().client_ip());
 }
 
-void ResponseImpl::ResponseOffline(const RoutingMessage &request)
+void ResponseImpl::OnRequestSubOffline(const RoutingMessage &request)
 {
     // notify
     LOG(WARNING) << "subscriber_offline id: " << request.node().client_id() << " topic: " << request.node().message_topic();
@@ -331,7 +347,7 @@ void ResponseImpl::ResponseOffline(const RoutingMessage &request)
     std::lock_guard<std::mutex> lock(m_topic_mutex);
 
     // delete subscriber node
-    auto node_list = m_node_list->mutable_node_list();
+    auto node_list = sub_list_->mutable_node_list();
     for (auto iter = node_list->begin(); iter != node_list->end(); ++iter)
     {
         if ((iter->node_type() == ROUTING_NODE_SUB) && (iter->message_topic() == topic) &&
@@ -343,10 +359,10 @@ void ResponseImpl::ResponseOffline(const RoutingMessage &request)
     }
 }
 
-void ResponseImpl::ResponseNodeList()
+void ResponseImpl::OnRequestNodeList()
 {
     // response offline
-    send_message(m_rep_socket, m_rep_mutex, *m_node_list);
+    send_message(m_rep_socket, m_rep_mutex, *sub_list_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +409,7 @@ bool RequestImpl::Connected() const
     return m_req_socket != nullptr;
 }
 
-bool RequestImpl::LookupPubAddr(const std::string &topic, std::string &pub_addr)
+bool RequestImpl::GetPubAddr(const std::string &topic, std::string &pub_addr)
 {
     assert(topic != "");
 
@@ -408,7 +424,7 @@ bool RequestImpl::LookupPubAddr(const std::string &topic, std::string &pub_addr)
     return res;
 }
 
-bool RequestImpl::LookupSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list)
+bool RequestImpl::GetSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list)
 {
     assert(topic != "");
 

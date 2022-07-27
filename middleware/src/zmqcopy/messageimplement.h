@@ -9,6 +9,7 @@
 #include <thread>
 #include <utility>
 #include <functional>
+#include <unordered_map>
 #include "zmq/zmq.hpp"
 
 // forward declaration for hiding zmq.hpp
@@ -52,7 +53,8 @@ private:
 
     // topic + pub addr
     std::mutex m_topic_mutex;
-    std::vector<std::pair<std::string, std::string>> m_pub_list;
+    // std::unordered_map<std::string, std::string> pub_list_;
+    std::unique_ptr<SubscribeNodeList> pub_list_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -82,24 +84,22 @@ public:
     ~ResponseImpl();
     void Run();
     void Stop();
-    void ResponseOnline(const RoutingMessage& request);
-    void ResponseOffline(const RoutingMessage& request);
-    void ResponseNodeList();
+    void OnRequest(const RoutingMessage& request);
+    void OnRequestSubOnline(const RoutingMessage& request);
+    void OnRequestSubOffline(const RoutingMessage& request);
+    void OnRequestNodeList();
 private:
     std::atomic<bool> stop_;
     std::atomic<int32_t> m_current_port;
     int32_t m_pool_timeout;
 
 private:
-    // topic -> pub
-    PublisherImpl pub_impl_;
-
     std::mutex m_rep_mutex;
     std::shared_ptr<zmq::socket_t> m_rep_socket;
 
     // topic -> sub list
     std::mutex m_topic_mutex;
-    std::shared_ptr<SubscribeNodeList> m_node_list;
+    std::shared_ptr<SubscribeNodeList> sub_list_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -110,8 +110,8 @@ public:
     virtual ~RequestImpl();
     bool Connected() const;
     void Stop();
-    bool LookupPubAddr(const std::string &topic, std::string &pub_addr);
-    bool LookupSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list);
+    bool GetPubAddr(const std::string &topic, std::string &pub_addr);
+    bool GetSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list);
     bool RequestNodeList(SubscribeNodeList &node_list);
 
 private:
