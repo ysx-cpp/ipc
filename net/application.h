@@ -9,15 +9,16 @@
 #define NET_REACTOR_H
 
 #include <memory>
+#include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/io_service_strand.hpp>
 #include <boost/thread/detail/singleton.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
-class Application
+class Application : private boost::noncopyable
 {
 public:
 	Application() : io_context_(std::make_shared<boost::asio::io_context>()) {}
@@ -38,8 +39,8 @@ private:
 	std::shared_ptr<boost::asio::io_context> io_context_;
     boost::thread_group thread_group_;
 };
-using ApplicationSgl = boost::detail::thread::singleton<Application>;
+using ApplicationSingle = boost::detail::thread::singleton<Application>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 #endif // NET_REACTOR_H

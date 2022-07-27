@@ -1,0 +1,42 @@
+syntax = 'proto3';
+package ipc.messages;
+
+/*
+String field contains invalid UTF-8 data when parsing a protocol buffer.
+Use the 'bytes' type if you intend to send raw bytes.
+*/
+
+////////////////////////////////////////////////////////////////////////////////
+// routing protocol
+
+enum MessageAction
+{
+    MSG_ACTION_PING				    = 0; 	//心跳
+    MSG_ACTION_SUB_ONLINE			= 1000; //登录
+    MSG_ACTION_SUB_OFFLINE          = 1002; //登出
+    MSG_ACTION_REQUEST				= 1004; //请求
+    MSG_ACTION_ECT				    = 1003; //etc
+    MSG_ACTION_END					= 1999;
+}
+
+message RoutingNode {
+    int32 node_type         = 1; // 1:pub, 2:sub
+    bytes message_topic     = 2;
+    bytes socket_addr       = 3; // zmq socket addr of topic
+    bytes client_id         = 4;
+    bytes client_ip         = 5;
+}
+
+message RoutingMessage {
+    int32 action            = 1; // online, offline, request, etc
+    RoutingNode node        = 2;
+}
+
+message RoutingMessageList {
+    int32 action                    = 1; // online, offline, request, etc
+    repeated RoutingNode node_list  = 2;
+}
+
+message SubscribeNodeList {
+    repeated RoutingNode node_list = 1;
+}

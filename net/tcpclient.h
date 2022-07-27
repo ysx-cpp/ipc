@@ -12,7 +12,7 @@
 #include "tcphandler.h"
 #include "connection.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 struct ConnectOption
@@ -25,21 +25,17 @@ struct ConnectOption
 class TcpClient : public Connection
 {
 public:
-    TcpClient(boost::asio::io_context &ioc);
+    explicit TcpClient(boost::asio::io_context &ioc);
     void CreateConnect(const std::string &host, uint16_t port, int timeout = 200);
-    void Ping();
-    void SendData(const std::string &msg);
-    void Disconnect() override;
+    void SendPackage(PackagePtr package, const std::string &msg);
 
 private:
-	int expire() const { return 3; }
     boost::asio::io_context &ioc_;
     boost::asio::deadline_timer timer_;
-    boost::asio::deadline_timer timer_conn_;
     ConnectOption option_;
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_TCPCLIENT_H

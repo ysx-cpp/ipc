@@ -7,16 +7,20 @@
  */
 #include "tcphandler.h"
 #include <iostream>
+#include <memory>
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 #include "heartbeat.h"
+#include "logdefine.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
 
 TcpHandler::TcpHandler(boost::asio::io_context &ioc)
-	: SocketHandler(ioc)
+	: socket_(ioc),
+	impl_(socket_)
 {
 }
 
@@ -32,6 +36,9 @@ void TcpHandler::Read()
 
 void TcpHandler::WriteSome(const ByteArray &data)
 {
+	if (!impl_.Connected())
+		return;
+
 	if (data.size() > send_buff_.max_size())
 		return;
 
@@ -39,7 +46,7 @@ void TcpHandler::WriteSome(const ByteArray &data)
 	std::copy(data.cbegin(), data.cend(), static_cast<unsigned char *>(buffer.data()));
 
 	socket_.async_write_some(buffer,
-							 boost::bind(&TcpHandler::WriteSomeHandler, this,
+							 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this(),
 										 boost::asio::placeholders::error,
 										 boost::asio::placeholders::bytes_transferred));
 
@@ -53,25 +60,36 @@ void TcpHandler::WriteSomeHandler(const boost::system::error_code &ec, const std
 {
 	if (ec || !write_bytes)
 	{
-		std::cerr << "ERROR write_bytes:" << write_bytes << std::endl;
-		return Disconnect();
+		NET_LOGERR("ERROR write_bytes:" << write_bytes);
+		return Shutdown();
 	}
 
 	send_buff_.consume(write_bytes);
 
 	if (send_buff_.size() > 0)
 	{
+		if (!impl_.Connected())
+			return;
+
 		socket_.async_write_some(send_buff_.prepare(send_buff_.size()),
-								 boost::bind(&TcpHandler::WriteSomeHandler, this,
+								 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this(),
 											 boost::asio::placeholders::error,
 											 boost::asio::placeholders::bytes_transferred));
+	}
+	else
+	{
+		Successfully(write_bytes);
 	}
 }
 
 void TcpHandler::ReadSome()
 {
-	socket_.async_read_some(recv_buff_.prepare(GetReciveBuffSize()),
-							boost::bind(&TcpHandler::ReadSomeHandler, this,
+	auto shared_from_this = std::dynamic_pointer_cast<TcpHandler>(this->shared_from_this());
+	if (shared_from_this == nullptr) 
+		return;
+
+	socket_.async_read_some(recv_buff_.prepare(impl_.GetReciveBuffSize()),
+							boost::bind(&TcpHandler::ReadSomeHandler, shared_from_this,
 										boost::asio::placeholders::error,
 										boost::asio::placeholders::bytes_transferred));
 
@@ -87,21 +105,27 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 {
 	try
 	{
-		CheckErrorCode(ec);
+		impl_.CheckErrorCode(ec);
 		if (!ec && read_bytes)
 		{
-			recv_buff_.commit(read_bytes);
-			boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
-			const Head *phead = reinterpret_cast<const Head *>(buff.data());
-			uint32_t packet_size = phead->head_size + phead->data_size;
-			if (phead->head_size > 0)
+			size_t min_size = sizeof(Head);
+			if (read_bytes >= min_size)
 			{
-				if (recv_buff_.size() >= packet_size)
+				recv_buff_.commit(min_size);
+				boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
+				const Head *phead = reinterpret_cast<const Head *>(buff.data());
+				uint32_t packet_size = phead->head_size + phead->data_size;
+				if (phead->head_size > 0)
 				{
-					ByteArrayPtr data = std::make_shared<ByteArray>();
-					data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
-					Complete(data);
-					recv_buff_.consume(packet_size);
+					recv_buff_.commit(packet_size - min_size);
+					buff = recv_buff_.data();
+					if (recv_buff_.size() >= packet_size)
+					{
+						ByteArrayPtr data = std::make_shared<ByteArray>();
+						data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
+						Complete(data);
+						recv_buff_.consume(packet_size);
+					}
 				}
 			}
 		}
@@ -109,18 +133,25 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	}
 	catch (const boost::system::system_error &e)
 	{
-		std::cerr << e.what() << std::endl;
-		Disconnect();
+		NET_LOGERR(e.what());
+		Shutdown();
+	}
+	catch (...)
+	{
+		NET_LOGERR("Unknown error");
 	}
 }
 
-void TcpHandler::ReadUntil(MatchWhitespace &/*match_whitespace*/)
+void TcpHandler::ReadUntil(const std::string& string_regex)
 {
+	if (!impl_.Connected())
+		return;
+
 	boost::asio::streambuf recv_buf;
 	boost::asio::async_read_until(socket_,
 								  recv_buf,
-								  "q",//MatchWhitespace('a'),
-								  boost::bind(&TcpHandler::ReadUntilHandler, this,
+								  boost::regex(string_regex),
+								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this(),
 											  boost::asio::placeholders::error,
 											  boost::asio::placeholders::bytes_transferred));
 }
@@ -130,4 +161,4 @@ void TcpHandler::ReadUntilHandler(const boost::system::error_code &/*ec*/, const
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

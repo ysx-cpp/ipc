@@ -12,15 +12,15 @@
 #include <boost/make_shared.hpp>
 #include <boost/asio/ip/tcp.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace std;
 using namespace boost::asio;
 
 TcpServer::TcpServer(const std::string & host, unsigned short port) : 
-    acceptor_(app_.io_context(), 
-              ip::tcp::endpoint(ip::address::from_string(host), port))
+app_(ApplicationSingle::instance()),
+acceptor_(app_.io_context(), ip::tcp::endpoint(ip::address::from_string(host), port))
 {
 }
 
@@ -32,13 +32,13 @@ TcpServer::~TcpServer()
 void TcpServer::Start()
 {
     DoAccept();
-    app_.RunThreadPool();
+    app_.Run();
 }
 
 void TcpServer::StartThreadPool()
 {
     DoAccept();
-    app_.Run();
+    app_.RunThreadPool();
 }
 
 void TcpServer::Stop()
@@ -50,18 +50,15 @@ void TcpServer::Stop()
 
 void TcpServer::DoAccept()
 {
-    auto connection = CreateConnection(app_.io_context());
-    //connection->SetSendBuffSize(8192);
-    //connection->SetReciveBuffSize(8192);
-    
-    connection->SetManager(this);
-    acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, _1));
+    auto connection = CreateConnection(app_.io_context(), this);
+    connection->StartHeartbeat();
+    acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
 }
 
 void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_code &ec)
 {  
-    int fd = connection->socketfd();
-    std::cout << "OnAccept error_code:" << ec << " fd:" << fd << std::endl;
+    int fd = connection->impl_.GetSocketFD();
+    std::cout << __FUNCTION__ << "|OnAccept error_code:" << ec << " fd:" << fd << std::endl;
     if (ec)
     {
         std::cout << "delete session" << std::endl;    
@@ -74,4 +71,4 @@ void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_co
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

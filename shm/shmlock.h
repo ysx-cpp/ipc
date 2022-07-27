@@ -9,12 +9,16 @@
 #define ICP_SHM_LOCK_H
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_condition.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 namespace ipc {
+namespace shm {
 
 using ShmMutex = boost::interprocess::interprocess_mutex;
 using ShmCondition = boost::interprocess::interprocess_condition;
 using ShmScopedLock = boost::interprocess::scoped_lock<ShmMutex>;
 
+} //namespace shm
 } //namespace ipc
+
 #endif //ICP_SHM_LOCK_H
