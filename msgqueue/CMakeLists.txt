@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.15)
-project("middleware")
+project("msgqueue")
 
 find_package(Boost REQUIRED  filesystem system regex)
 find_package(Protobuf REQUIRED)
@@ -27,26 +27,26 @@ include_directories("${PROTO_DIR}"
     ${PROJECT_SOURCE_DIR}/src
 )
 
-#target_include_directories(middleware PUBLIC ${ZeroMQ_INCLUDE_DIR})
+#target_include_directories(${PROJECT_NAME} PUBLIC ${ZeroMQ_INCLUDE_DIR})
 set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${Boost_LIBRARIES} ${GLOG_LIBRARIES} glog)
 
 file(GLOB_RECURSE SRCS src/*.cpp)
-add_library(middleware SHARED ${SRCS} ${PROTO_SRCS})
-target_link_libraries(middleware ${LIBS})
+add_library(${PROJECT_NAME} SHARED ${SRCS} ${PROTO_SRCS})
+target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 # target
 set(name "middleware_server")
 add_executable(${name} server_node.cpp)
-add_dependencies(${name} middleware)
-target_link_libraries(${name} middleware ${LIBS})
+add_dependencies(${name} ${PROJECT_NAME})
+target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
 
 # target
 set(name "middleware_debugger")
 add_executable(${name} examples/ipc_debugger.cpp)
-add_dependencies(${name} middleware)
-target_link_libraries(${name} middleware ${LIBS})
+add_dependencies(${name} ${PROJECT_NAME})
+target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
 
-set(targets middleware middleware_server middleware_debugger)
+set(targets ${PROJECT_NAME} middleware_server middleware_debugger)
 
 install(TARGETS ${targets}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
