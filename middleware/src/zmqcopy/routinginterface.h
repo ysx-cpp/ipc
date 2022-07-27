@@ -34,6 +34,8 @@ namespace messages {
 class RoutingMessage;
 class SubscribeNodeList;
 
+namespace zmqcopy {
+
 // messages_client.callback(topic, addr)
 using RoutingEventCallback = std::function<void(const std::string&, const std::string&)>;
 
@@ -80,25 +82,26 @@ private:
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-class ServerInterface 
-{
-public:
-    virtual ~ServerInterface() = 0;
-    virtual void Run() = 0;
-    virtual void Stop() = 0;
+// class ServerInterface 
+// {
+// public:
+//     virtual ~ServerInterface() = 0;
+//     virtual void Run() = 0;
+//     virtual void Stop() = 0;
 
-    // virtual void PublisherOnline(const RoutingMessage& request) = 0;
-    // virtual void PublisherOffline(const RoutingMessage& request) = 0;
-    // virtual void SubscriberOnline(const RoutingMessage& request) = 0;
-    // virtual void SubscriberOffline(const RoutingMessage& request) = 0;
-    // virtual void NodeList() = 0;
+//     // virtual void PublisherOnline(const RoutingMessage& request) = 0;
+//     // virtual void PublisherOffline(const RoutingMessage& request) = 0;
+//     // virtual void SubscriberOnline(const RoutingMessage& request) = 0;
+//     // virtual void SubscriberOffline(const RoutingMessage& request) = 0;
+//     // virtual void NodeList() = 0;
 
-protected:
-    std::atomic<bool> stop_;
-    std::atomic<int32_t> m_current_port;
-    int32_t m_pool_timeout;
-};
-class ServerImpl : public ServerInterface
+// protected:
+//     std::atomic<bool> stop_;
+//     std::atomic<int32_t> m_current_port;
+//     int32_t m_pool_timeout;
+// };
+
+class ServerImpl
 {
 public:
     explicit ServerImpl(zmq::context_t& zmq_ctx);
@@ -153,6 +156,6 @@ private:
 
     std::string m_client_id;
 };
-
+} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

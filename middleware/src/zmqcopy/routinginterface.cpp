@@ -8,7 +8,7 @@
 
 namespace ipc {
 namespace messages {
-
+namespace zmqcopy {
 
 bool send_zmq(std::shared_ptr<zmq::socket_t>& socket, std::mutex& mutex,
               const std::string& buffer) {
@@ -529,6 +529,6 @@ bool ReqClient::RequestNodeList(SubscribeNodeList& node_list) {
 
     return true;
 }
-
+} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

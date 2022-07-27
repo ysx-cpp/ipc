@@ -9,6 +9,17 @@ namespace ipc {
 namespace messages {
 
 //////////////////////////////////////////////////////////////////////////////////
+//server node interface
+class IServerNode {
+public:
+    virtual bool start() = 0;
+    virtual void spin() = 0;
+    virtual void stop() = 0;
+};
+
+IServerNode* CreateServerNode(const std::string& name, uint16_t port);
+
+//////////////////////////////////////////////////////////////////////////////////
 class IClientNode {
 public:
     virtual ~IClientNode() {}
@@ -55,71 +66,8 @@ public:
     }
 };
 
-//////////////////////////////////////////////////////////////////////////////////
-class ZmqMessagesClient : public IClientNode {
-public:
-    ZmqMessagesClient(const std::string& client_id);
-    ZmqMessagesClient(const std::string& client_id, const std::string& server, uint16_t port);
-
-    bool start();
-    void spin();
-    void stop();
-    bool connected();
-
-    bool publish(const std::string& topic, const std::string& message);
-    bool publish(const std::string& topic, const std::shared_ptr<std::string>& message);
-    bool subscribe(const std::string& topic, std::function<void(const std::string&)> callback_func);
-    bool register_subscription(const std::string& topic, CallbackInterface callback);
-/*
-
-    template<typename T>
-    bool publish(const std::string& topic, const T& message) {
-        return m_client_ptr->publish<T>(topic, message);
-    };
-
-    template<typename T>
-    bool publish(const std::string& topic, std::shared_ptr<T>& message) {
-        return m_client_ptr->publish<T>(topic, *message);
-    };
-
-    template<typename T>
-    bool subscribe(const std::string& topic, std::function<void(const T&)> callback_func) {
-        return m_client_ptr->subscribe<T>(topic, callback_func);
-    }
-*/
-
-private:
-    std::atomic<bool> m_started;
-    std::string m_id;
-    std::string m_addr;
-    uint16_t m_port;
-    std::shared_ptr<ipc::messages::MessagesClient> m_client_ptr;
-};
-
-//////////////////////////////////////////////////////////////////////////////////
-//server node interface
-class IServerNode {
-public:
-    virtual bool start() = 0;
-    virtual void spin() = 0;
-    virtual void stop() = 0;
-};
-
-//////////////////////////////////////////////////////////////////////////////////
-class ZmqMessagesServer : public IServerNode {
-public:
-    ZmqMessagesServer();
-    ZmqMessagesServer(std::string name, uint16_t port);
-
-    bool start();
-    void spin() {}
-    void stop();
-
-private:
-    std::string m_name;
-    uint16_t m_port;
-    std::shared_ptr<ipc::messages::RoutingServer> m_server_ptr;
-};
+IClientNode* CreateClientNode(const std::string& name,
+    const std::string& ip, uint16_t port);
 
 }
 }

@@ -28,7 +28,7 @@ public:
         std::string ip;
         uint16_t port = 0;
         if (decodeurl(url, type, ip, port) == false) {
-            ipc::pavaro::log_error("decode url error", url);
+            ipc::log_error("decode url error", url);
             return nullptr;
         }
         std::stringstream ss;
@@ -36,14 +36,14 @@ public:
         /*
         auto iter2 = _address_set.find(ss.str());
         if (iter2 != _address_set.end()) {
-            ipc::pavaro::log_error("address is already in use", url);
+            ipc::log_error("address is already in use", url);
             return nullptr;
         }
         */
         MessageFactory factory(type);
         IClientNode* node = factory.create_client(url, ip, port);
         if (node == nullptr) {
-            ipc::pavaro::log_error("create client node error", url);
+            ipc::log_error("create client node error", url);
             return nullptr;
         }
         _node_list.push_back(node);
@@ -69,7 +69,7 @@ public:
         } else {
             return false;
         }
-        ipc::pavaro::log_info("decode", url, "type:", type, "ip:", ip, "port:", port);
+        ipc::log_info("decode", url, "type:", type, "ip:", ip, "port:", port);
         return true;
     }
 
