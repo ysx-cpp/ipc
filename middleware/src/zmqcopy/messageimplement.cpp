@@ -72,71 +72,30 @@ std::string splice(const std::string& protocol, const std::string& ip, int port)
 //class PublisherImpl
 PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 {
-    m_pub_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
-    m_pub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
-    m_pub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-
-    pub_list_ = std::make_unique<SubscribeNodeList>();
+    pub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
+    pub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
+    pub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
     std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-    m_pub_socket->bind(server_pub_addr.c_str());
+    pub_socket_->bind(server_pub_addr.c_str());
 }
 
-void PublisherImpl::PublisherOnline(const RoutingMessage &request)
+void PublisherImpl::Publish(const RoutingMessage &message)
 {
     // notify
-    LOG(INFO) << "id:" << request.node().client_id() << " topic:" << request.node().message_topic();
+    LOG(INFO) << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
 
     // assign port
     std::string pub_addr;
     std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
 
     // reponse publisher addr, only one node
-    std::string topic = request.node().message_topic();
+    std::string topic = message.node().message_topic();
 
     // boardcast publisher online
-    RoutingMessage pub_message(request);
+    RoutingMessage pub_message(message);
     pub_message.mutable_node()->set_socket_addr(pub_addr);
-    send_message(m_pub_socket, m_pub_mutex, pub_message);
-
-    // sync
-    std::lock_guard<std::mutex> lock(m_topic_mutex);
-
-    // append topic list
-    auto pub_node = pub_list_->add_node_list();
-    pub_node->set_node_type(ROUTING_NODE_PUB);
-    pub_node->set_message_topic(topic);
-    pub_node->set_socket_addr(request.node().socket_addr());
-    pub_node->set_client_id(request.node().client_id());
-    pub_node->set_client_ip(request.node().client_ip());
-}
-
-void PublisherImpl::PublisherOffline(const RoutingMessage &request)
-{
-    // notify
-    LOG(INFO) << "publisher_offline id: " << request.node().client_id() << " topic: " << request.node().message_topic();
-
-    // boardcast publisher offline
-    send_message(m_pub_socket, m_pub_mutex, request);
-
-    // sync
-    std::lock_guard<std::mutex> lock(m_topic_mutex);
-
-    // delete topic node
-    std::string topic = request.node().message_topic();
-    std::string socket_addr = request.node().socket_addr();
-    std::string client_id = request.node().client_id();
-    std::string client_ip = request.node().client_ip();
-
-    auto node_list = pub_list_->mutable_node_list();
-    auto iter = std::find_if(node_list->begin(), node_list->end(), [topic](const RoutingNode& item){
-        return topic == item.message_topic();
-    });
-
-    if (iter != node_list->end())
-    {
-        node_list->erase(iter);
-    }
+    send_message(pub_socket_, pub_mutex_, pub_message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -144,16 +103,16 @@ void PublisherImpl::PublisherOffline(const RoutingMessage &request)
 SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
 {
     stop_ = false;
-    m_pool_timeout = ipc_ZMQ_POOL_TIMEOUT;
+    pool_timeout_ = ipc_ZMQ_POOL_TIMEOUT;
 
-    m_sub_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
-    m_sub_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
-    m_sub_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    sub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
+    sub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
+    sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
     std::string server_sub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-    m_sub_socket->connect(server_sub_addr.c_str());
+    sub_socket_->connect(server_sub_addr.c_str());
 
-    m_sub_socket->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
+    sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
 }
 
 SubscriberImpl::~SubscriberImpl()
@@ -163,7 +122,7 @@ SubscriberImpl::~SubscriberImpl()
 
 bool SubscriberImpl::Connected() const
 {
-    return m_sub_socket != nullptr;
+    return sub_socket_ != nullptr;
 }
 
 
@@ -172,12 +131,12 @@ void SubscriberImpl::Run(SubscriberCallback&& callback)
     // ipc::util::set_thread_name("imr-" + m_client_id);
 
     RoutingMessage message;
-    zmq::pollitem_t zmq_pool_item = {*m_sub_socket, 0, ZMQ_POLLIN, 0};
+    zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
     while (!stop_)
     {
         try
         {
-            int rc = zmq::poll(&zmq_pool_item, 1, m_pool_timeout);
+            int rc = zmq::poll(&zmq_pool_item, 1, pool_timeout_);
             if (rc < 0)
             {
                 continue;
@@ -185,7 +144,7 @@ void SubscriberImpl::Run(SubscriberCallback&& callback)
 
             if (zmq_pool_item.revents & ZMQ_POLLIN)
             {
-                if (recv_message(m_sub_socket, m_sub_mutex, message) == false)
+                if (recv_message(sub_socket_, sub_mutex_, message) == false)
                 {
                     continue;
                 }
@@ -215,12 +174,12 @@ ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
     // init zmq
     // static zmq::context_t zmq_ctx = zmq::context_t(1);
 
-    m_rep_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
-    m_rep_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
-    m_rep_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    rep_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
+    rep_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
+    rep_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
     std::string server_rep_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-    m_rep_socket->bind(server_rep_addr.c_str());
+    rep_socket_->bind(server_rep_addr.c_str());
 }
 
 ResponseImpl::~ResponseImpl()
@@ -230,8 +189,7 @@ ResponseImpl::~ResponseImpl()
 
 void ResponseImpl::Run(RequestCallback&& callback)
 {
-    RoutingMessage request;
-    zmq::pollitem_t zmq_pool_item = {*m_rep_socket, 0, ZMQ_POLLIN, 0};
+    zmq::pollitem_t zmq_pool_item = {*rep_socket_, 0, ZMQ_POLLIN, 0};
     while (!stop_)
     {
         try
@@ -246,14 +204,15 @@ void ResponseImpl::Run(RequestCallback&& callback)
                 zmq::message_t message;
                 // sync block
                 {
-                    std::lock_guard<std::mutex> lock(m_rep_mutex);
-                    if (m_rep_socket->recv(&message, ZMQ_DONTWAIT) == false)
+                    std::lock_guard<std::mutex> lock(rep_mutex_);
+                    if (rep_socket_->recv(&message, ZMQ_DONTWAIT) == false)
                     {
                         continue;
                     }
                 }
                 // deserialization
                 std::string buffer = std::string(static_cast<char *>(message.data()), message.size());
+                RoutingMessage request;
                 if (request.ParseFromString(buffer) == false)
                 {
                     continue;
@@ -294,12 +253,12 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
     // init zmq
     // zmq::context_t& zmq_ctx = ContextManager::instance();
 
-    m_req_socket = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
-    m_req_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
-    m_req_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    req_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
+    req_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
+    req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
     std::string server_req_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-    m_req_socket->connect(server_req_addr.c_str());
+    req_socket_->connect(server_req_addr.c_str());
 }
 
 RequestImpl::~RequestImpl() 
@@ -308,19 +267,18 @@ RequestImpl::~RequestImpl()
 
 bool RequestImpl::Connected() const 
 {
-    return m_req_socket != nullptr;
+    return req_socket_ != nullptr;
 }
 
-bool RequestImpl::Request(const RoutingMessage& message) 
+bool RequestImpl::Request(const RoutingMessage& request, RoutingMessage& response) 
 {
     // request
-    return send_message(m_req_socket, m_req_mutex, message);
-}
+    auto ret = send_message(req_socket_, req_mutex_, request);
 
-bool RequestImpl::Response(RoutingMessage& response) 
-{
     // response
-    return recv_message(m_req_socket, m_req_mutex, response);
+    ret = recv_message(req_socket_, req_mutex_, response);
+
+    return ret;
 }
 
 } // namespace zmqcopy 

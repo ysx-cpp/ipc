@@ -42,19 +42,11 @@ class PublisherImpl
 {
 public:
     explicit PublisherImpl(zmq::context_t& zmq_ctx);
-    void PublisherOnline(const RoutingMessage& request);
-    void PublisherOffline(const RoutingMessage& request);
+    void Publish(const RoutingMessage& message);
 
 private:
-    std::atomic<int32_t> m_current_port;
-
-    std::mutex m_pub_mutex;
-    std::unique_ptr<zmq::socket_t> m_pub_socket;
-
-    // topic + pub addr
-    std::mutex m_topic_mutex;
-    // std::unordered_map<std::string, std::string> pub_list_;
-    std::unique_ptr<SubscribeNodeList> pub_list_;
+    std::mutex pub_mutex_;
+    std::unique_ptr<zmq::socket_t> pub_socket_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -70,10 +62,10 @@ public:
 
 private:
     std::atomic<bool> stop_;
-    int32_t m_pool_timeout;
+    int32_t pool_timeout_;
 
-    std::mutex m_sub_mutex;
-    std::unique_ptr<zmq::socket_t> m_sub_socket;
+    std::mutex sub_mutex_;
+    std::unique_ptr<zmq::socket_t> sub_socket_;
 };
 
 class ResponseImpl
@@ -89,8 +81,8 @@ private:
     std::atomic<bool> stop_;
     int32_t m_pool_timeout;
 
-    std::mutex m_rep_mutex;
-    std::unique_ptr <zmq::socket_t> m_rep_socket;
+    std::mutex rep_mutex_;
+    std::unique_ptr <zmq::socket_t> rep_socket_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -101,12 +93,11 @@ public:
     virtual ~RequestImpl();
 
     bool Connected() const;
-    bool Request(const RoutingMessage& message);
-    bool Response(RoutingMessage& response);
+    bool Request(const RoutingMessage& message, RoutingMessage& response);
 
 private:
-    std::mutex m_req_mutex;
-    std::unique_ptr<zmq::socket_t> m_req_socket;
+    std::mutex req_mutex_;
+    std::unique_ptr<zmq::socket_t> req_socket_;
 };
 } // namespace zmqcopy 
 } // namespace messages
