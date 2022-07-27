@@ -166,12 +166,8 @@ bool SubscriberImpl::Connected() const
     return m_sub_socket != nullptr;
 }
 
-void SubscriberImpl::Stop()
-{
-    stop_ = true;
-}
 
-void SubscriberImpl::Run(EventCallback&& callback)
+void SubscriberImpl::Run(SubscriberCallback&& callback)
 {
     // ipc::util::set_thread_name("imr-" + m_client_id);
 
@@ -204,15 +200,17 @@ void SubscriberImpl::Run(EventCallback&& callback)
     }
 }
 
+void SubscriberImpl::Stop()
+{
+    stop_ = true;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 // routing server
 ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
 {
     // init status
     stop_ = false;
-    m_pool_timeout = ipc_ZMQ_POOL_TIMEOUT;
-    m_current_port = ipc_TOPIC_START_PORT;
-    sub_list_ = std::make_unique<SubscribeNodeList>();
 
     // init zmq
     // static zmq::context_t zmq_ctx = zmq::context_t(1);
@@ -221,7 +219,7 @@ ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
     m_rep_socket->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     m_rep_socket->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_rep_addr = splice("tcp://", ipc_SERVER_REP_ADDR, m_current_port);
+    std::string server_rep_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     m_rep_socket->bind(server_rep_addr.c_str());
 }
 
@@ -230,7 +228,7 @@ ResponseImpl::~ResponseImpl()
     this->Stop();
 }
 
-void ResponseImpl::Run()
+void ResponseImpl::Run(RequestCallback&& callback)
 {
     RoutingMessage request;
     zmq::pollitem_t zmq_pool_item = {*m_rep_socket, 0, ZMQ_POLLIN, 0};
@@ -264,7 +262,7 @@ void ResponseImpl::Run()
                 // client ip
                 request.mutable_node()->set_client_ip(message.gets("Peer-Address"));
 
-                OnRequest(request);
+                callback(request);
             }
         }
         catch (zmq::error_t &e)
@@ -279,94 +277,8 @@ void ResponseImpl::Stop()
     stop_ = true;
 }
 
-void ResponseImpl::OnRequest(const RoutingMessage& request)
-{
-    switch (request.action())
-    {
-    // case ROUTING_PUB_ONLINE:
-    //     // request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
-    //     pub_impl_.PublisherOnline(request);
-    //     break;
-    // case ROUTING_PUB_OFFLINE:
-    //     // request.mutable_node()->set_node_type(ROUTING_NODE_PUB);
-    //     pub_impl_.PublisherOffline(request);
-    //     break;
-    case ROUTING_SUB_ONLINE:
-        // request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
-        OnRequestSubOnline(request);
-        break;
-    case ROUTING_SUB_OFFLINE:
-        // request.mutable_node()->set_node_type(ROUTING_NODE_SUB);
-        OnRequestSubOffline(request);
-        break;
-    case ROUTING_NODE_LIST:
-        OnRequestNodeList();
-        break;
-    default:
-        LOG(ERROR) << ("unknown protocol request");
-        break;
-    }
-}
-
-void ResponseImpl::OnRequestSubOnline(const RoutingMessage &request)
-{
-    // notify
-    LOG(WARNING) << "subscriber_online id: " << request.node().client_id() << " topic: " << request.node().message_topic();
-
-    // reponse publisher addr list
-    RoutingMessageList response;
-    response.set_action(request.action());
-
-    std::string topic = request.node().message_topic();
-    send_message(m_rep_socket, m_rep_mutex, response);
-
-    // sync
-    std::lock_guard<std::mutex> lock(m_topic_mutex);
-
-    // append subscriber node list
-    auto sub_node = sub_list_->add_node_list();
-    sub_node->set_node_type(ROUTING_NODE_SUB);
-    sub_node->set_message_topic(topic);
-    sub_node->set_socket_addr(request.node().socket_addr());
-    sub_node->set_client_id(request.node().client_id());
-    sub_node->set_client_ip(request.node().client_ip());
-}
-
-void ResponseImpl::OnRequestSubOffline(const RoutingMessage &request)
-{
-    // notify
-    LOG(WARNING) << "subscriber_offline id: " << request.node().client_id() << " topic: " << request.node().message_topic();
-    // response offline
-    send_message(m_rep_socket, m_rep_mutex, request);
-
-    std::string topic = request.node().message_topic();
-    std::string client_id = request.node().client_id();
-    std::string client_ip = request.node().client_ip();
-
-    // sync
-    std::lock_guard<std::mutex> lock(m_topic_mutex);
-
-    // delete subscriber node
-    auto node_list = sub_list_->mutable_node_list();
-    for (auto iter = node_list->begin(); iter != node_list->end(); ++iter)
-    {
-        if ((iter->node_type() == ROUTING_NODE_SUB) && (iter->message_topic() == topic) &&
-            (iter->client_id() == client_id) && (iter->client_ip() == client_ip))
-        {
-            node_list->erase(iter);
-            break;
-        }
-    }
-}
-
-void ResponseImpl::OnRequestNodeList()
-{
-    // response offline
-    send_message(m_rep_socket, m_rep_mutex, *sub_list_);
-}
-
 ////////////////////////////////////////////////////////////////////////////////
-// routing client
+// class RequestImpl
 RequestImpl::RequestImpl(zmq::context_t& zmq_ctx) 
 {
     /*
@@ -392,16 +304,6 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
 
 RequestImpl::~RequestImpl() 
 {
-    // offline all pub & sub addr
-    for (auto& topic : m_advertised_topic) 
-    {
-        this->RequstNodeOffline(ROUTING_PUB_OFFLINE, topic.first, topic.second);
-    }
-
-    for (auto &topic : m_subscribed_topic)
-    {
-        this->RequstNodeOffline(ROUTING_SUB_OFFLINE, topic.first, topic.second);
-    }
 }
 
 bool RequestImpl::Connected() const 
@@ -409,115 +311,18 @@ bool RequestImpl::Connected() const
     return m_req_socket != nullptr;
 }
 
-bool RequestImpl::GetPubAddr(const std::string &topic, std::string &pub_addr)
+bool RequestImpl::Request(const RoutingMessage& message) 
 {
-    assert(topic != "");
-
-    std::vector<std::string> pub_addr_list;
-    bool res = RequestNodeOnline(ROUTING_PUB_ONLINE, topic, pub_addr_list);
-    if (res && (pub_addr_list.size() > 0))
-    {
-        // only one response
-        m_advertised_topic[topic] = pub_addr_list[0];
-        pub_addr = pub_addr_list[0];
-    }
-    return res;
+    // request
+    return send_message(m_req_socket, m_req_mutex, message);
 }
 
-bool RequestImpl::GetSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list)
+bool RequestImpl::Response(RoutingMessage& response) 
 {
-    assert(topic != "");
-
-    bool res = this->RequestNodeOnline(ROUTING_SUB_ONLINE, topic, sub_addr_list);
-    if (res)
-    {
-        for (auto &addr : sub_addr_list)
-        {
-            m_subscribed_topic.push_back(std::make_pair(topic, addr));
-        }
-    }
-    return res;
-}
-
-bool RequestImpl:: RequestNodeOnline(const int32_t action, const std::string& topic,
-    std::vector<std::string>& addr_list) {
-    assert(action > 0);
-    assert(topic != "");
-
-    RoutingMessage message;
-    message.set_action(action);
-    message.mutable_node()->clear_node_type();
-    message.mutable_node()->set_message_topic(topic);
-    message.mutable_node()->set_client_id(m_client_id);
-    message.mutable_node()->clear_client_ip();
-    message.mutable_node()->clear_socket_addr();
-
-    // request
-    if (send_message(m_req_socket, m_req_mutex, message) == false) {
-        return false;
-    }
-
     // response
-    RoutingMessageList response;
-    if (recv_message(m_req_socket, m_req_mutex, response) == false) {
-        return false;
-    }
-
-    if (response.node_list_size() > 0) {
-        for (auto& node : response.node_list()) {
-            addr_list.push_back(node.socket_addr()) ;
-        }
-        return true;
-    } else {
-        return false;
-    }
+    return recv_message(m_req_socket, m_req_mutex, response);
 }
 
-bool RequestImpl::RequstNodeOffline(const int32_t action, const std::string& topic, const std::string& addr) {
-    assert(action > 0);
-    assert(topic != "");
-
-    RoutingMessage message;
-    message.set_action(action);
-    message.mutable_node()->clear_node_type();
-    message.mutable_node()->set_message_topic(topic);
-    message.mutable_node()->set_client_id(m_client_id);
-    message.mutable_node()->clear_client_ip();
-    message.mutable_node()->set_socket_addr(addr);
-
-    // request
-    if (send_message(m_req_socket, m_req_mutex, message) == false) {
-        return false;
-    }
-
-    // response
-    if (recv_message(m_req_socket, m_req_mutex, message) == false) {
-        return false;
-    }
-
-    return true;
-}
-
-bool RequestImpl::RequestNodeList(SubscribeNodeList& node_list) {
-    RoutingMessage message;
-    message.set_action(ROUTING_NODE_LIST);
-    message.mutable_node()->clear_message_topic();
-    message.mutable_node()->set_client_id(m_client_id);
-    message.mutable_node()->clear_client_ip();
-    message.mutable_node()->clear_socket_addr();
-
-    // request
-    if (send_message(m_req_socket, m_req_mutex, message) == false) {
-        return false;
-    }
-
-    // response
-    if (recv_message(m_req_socket, m_req_mutex, node_list) == false) {
-        return false;
-    }
-
-    return true;
-}
 } // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

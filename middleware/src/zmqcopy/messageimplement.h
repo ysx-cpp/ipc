@@ -60,14 +60,13 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 class SubscriberImpl
 {
-    // EventCallback(topic, addr)
-    using EventCallback = std::function<void(const RoutingMessage&)>;
+    using SubscriberCallback = std::function<void(const RoutingMessage&)>;
 public:
     explicit SubscriberImpl(zmq::context_t& zmq_ctx);
     ~SubscriberImpl();
     bool Connected() const;
+    void Run(SubscriberCallback&& callback);
     void Stop();
-    void Run(EventCallback&& callback);
 
 private:
     std::atomic<bool> stop_;
@@ -79,27 +78,19 @@ private:
 
 class ResponseImpl
 {
+    using RequestCallback = std::function<void(const RoutingMessage&)>;
 public:
     explicit ResponseImpl(zmq::context_t& zmq_ctx);
     ~ResponseImpl();
-    void Run();
+    void Run(RequestCallback&& callback);
     void Stop();
-    void OnRequest(const RoutingMessage& request);
-    void OnRequestSubOnline(const RoutingMessage& request);
-    void OnRequestSubOffline(const RoutingMessage& request);
-    void OnRequestNodeList();
+
 private:
     std::atomic<bool> stop_;
-    std::atomic<int32_t> m_current_port;
     int32_t m_pool_timeout;
 
-private:
     std::mutex m_rep_mutex;
     std::unique_ptr <zmq::socket_t> m_rep_socket;
-
-    // topic -> sub list
-    std::mutex m_topic_mutex;
-    std::unique_ptr<SubscribeNodeList> sub_list_;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -108,27 +99,14 @@ class RequestImpl
 public:
     explicit RequestImpl(zmq::context_t& zmq_ctx);
     virtual ~RequestImpl();
+
     bool Connected() const;
-    void Stop();
-    bool GetPubAddr(const std::string &topic, std::string &pub_addr);
-    bool GetSubAddr(const std::string &topic, std::vector<std::string> &sub_addr_list);
-    bool RequestNodeList(SubscribeNodeList &node_list);
+    bool Request(const RoutingMessage& message);
+    bool Response(RoutingMessage& response);
 
 private:
-    bool RequestNodeOnline(const int32_t action, const std::string &topic, std::vector<std::string> &addr_list);
-    bool RequstNodeOffline(const int32_t action, const std::string &topic, const std::string &addr);
-
-private:
-    // topic -> pub socket addr
-    std::map<std::string, std::string> m_advertised_topic;
-
-    // topic + sub socket addr
-    std::vector<std::pair<std::string, std::string>> m_subscribed_topic;
-
     std::mutex m_req_mutex;
     std::unique_ptr<zmq::socket_t> m_req_socket;
-
-    std::string m_client_id;
 };
 } // namespace zmqcopy 
 } // namespace messages
