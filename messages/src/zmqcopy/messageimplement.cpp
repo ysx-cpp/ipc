@@ -80,22 +80,11 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
     pub_socket_->bind(server_pub_addr.c_str());
 }
 
-void PublisherImpl::Publish(const RoutingMessage &message)
+bool PublisherImpl::Publish(const RoutingMessage &message)
 {
     // notify
     LOG(INFO) << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
-
-    // assign port
-    std::string pub_addr;
-    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-
-    // reponse publisher addr, only one node
-    std::string topic = message.node().message_topic();
-
-    // boardcast publisher online
-    RoutingMessage pub_message(message);
-    pub_message.mutable_node()->set_socket_addr(pub_addr);
-    send_message(pub_socket_, pub_mutex_, pub_message);
+    return send_message(pub_socket_, pub_mutex_, message);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -126,10 +115,8 @@ bool SubscriberImpl::Connected() const
 }
 
 
-void SubscriberImpl::Run(SubscriberCallback&& callback)
+void SubscriberImpl::Run(SubscribeCallback&& callback)
 {
-    // ipc::util::set_thread_name("imr-" + m_client_id);
-
     RoutingMessage message;
     zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
     while (!stop_)
@@ -259,10 +246,6 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
 
     std::string server_req_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     req_socket_->connect(server_req_addr.c_str());
-}
-
-RequestImpl::~RequestImpl() 
-{
 }
 
 bool RequestImpl::Connected() const 

@@ -42,7 +42,7 @@ class PublisherImpl
 {
 public:
     explicit PublisherImpl(zmq::context_t& zmq_ctx);
-    void Publish(const RoutingMessage& message);
+    bool Publish(const RoutingMessage& message);
 
 private:
     std::mutex pub_mutex_;
@@ -52,12 +52,13 @@ private:
 ////////////////////////////////////////////////////////////////////////////////
 class SubscriberImpl
 {
-    using SubscriberCallback = std::function<void(const RoutingMessage&)>;
 public:
+    using SubscribeCallback = std::function<void(const RoutingMessage&)>;
     explicit SubscriberImpl(zmq::context_t& zmq_ctx);
     ~SubscriberImpl();
+
     bool Connected() const;
-    void Run(SubscriberCallback&& callback);
+    void Run(SubscribeCallback&& callback);
     void Stop();
 
 private:
@@ -74,6 +75,7 @@ class ResponseImpl
 public:
     explicit ResponseImpl(zmq::context_t& zmq_ctx);
     ~ResponseImpl();
+
     void Run(RequestCallback&& callback);
     void Stop();
 
@@ -90,10 +92,9 @@ class RequestImpl
 {
 public:
     explicit RequestImpl(zmq::context_t& zmq_ctx);
-    virtual ~RequestImpl();
 
     bool Connected() const;
-    bool Request(const RoutingMessage& message, RoutingMessage& response);
+    bool Request(const RoutingMessage& request, RoutingMessage& response);
 
 private:
     std::mutex req_mutex_;
