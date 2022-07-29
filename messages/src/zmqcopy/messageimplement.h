@@ -100,6 +100,27 @@ private:
     std::mutex req_mutex_;
     std::unique_ptr<zmq::socket_t> req_socket_;
 };
+
+////////////////////////////////////////////////////////////////////////////////
+class RouterImpl
+{
+public:
+    explicit RouterImpl(zmq::context_t& zmq_ctx);
+
+    void Run();
+
+private:
+    std::atomic<bool> stop_;
+    int32_t pool_timeout_;
+
+private:
+    std::mutex frontend_route_mutex_;
+    std::unique_ptr<zmq::socket_t> frontend_router_socket_;
+
+    std::mutex backend_route_mutex_;
+    std::unique_ptr<zmq::socket_t> backend_router_socket_;
+};
+
 } // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

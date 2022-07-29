@@ -264,6 +264,56 @@ bool RequestImpl::Request(const RoutingMessage& request, RoutingMessage& respons
     return ret;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+//class RouterImpl
+RouterImpl::RouterImpl(zmq::context_t& zmq_ctx)
+{
+    frontend_router_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
+    backend_router_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
+
+    frontend_router_socket_->bind("ipc://frontend.ipc");
+    backend_router_socket_->bind("ipc://backend.ipc");
+}
+
+void RouterImpl::Run()
+{
+    // zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
+    try
+    {
+        while (!stop_)
+        {
+            zmq_pollitem_t zmq_pool_item[] = {
+                {*frontend_router_socket_, 0, ZMQ_POLLIN, 0},
+                {*backend_router_socket_, 0, ZMQ_POLLIN, 0}};
+
+            int available_workers = 2;
+
+            int rc = zmq::poll(&zmq_pool_item, available_workers, pool_timeout_);
+            if (rc < 0)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < available_workers; ++i)
+            {
+                if (zmq_pool_item.revents[i] & ZMQ_POLLIN)
+                {
+                    if (recv_message(sub_socket_, sub_mutex_, message) == false)
+                    {
+                        continue;
+                    }
+
+                    callback(message);
+                }
+            }
+        }
+    }
+    catch (zmq::error_t &e)
+    {
+        LOG(ERROR) << (e.what());
+    }
+}
+
 } // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc
