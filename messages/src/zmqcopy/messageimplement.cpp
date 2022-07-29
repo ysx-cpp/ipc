@@ -114,15 +114,13 @@ bool SubscriberImpl::Connected() const
     return sub_socket_ != nullptr;
 }
 
-
-void SubscriberImpl::Run(SubscribeCallback&& callback)
+void SubscriberImpl::Run(SubscribeCallback &&callback)
 {
-    RoutingMessage message;
-    zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
-    while (!stop_)
+    try
     {
-        try
+        while (!stop_)
         {
+            zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
             int rc = zmq::poll(&zmq_pool_item, 1, pool_timeout_);
             if (rc < 0)
             {
@@ -131,6 +129,7 @@ void SubscriberImpl::Run(SubscribeCallback&& callback)
 
             if (zmq_pool_item.revents & ZMQ_POLLIN)
             {
+                RoutingMessage message;
                 if (recv_message(sub_socket_, sub_mutex_, message) == false)
                 {
                     continue;
@@ -139,10 +138,10 @@ void SubscriberImpl::Run(SubscribeCallback&& callback)
                 callback(message);
             }
         }
-        catch (zmq::error_t &e)
-        {
-            LOG(ERROR) << (e.what());
-        }
+    }
+    catch (zmq::error_t &e)
+    {
+        LOG(ERROR) << (e.what());
     }
 }
 
@@ -277,12 +276,11 @@ RouterImpl::RouterImpl(zmq::context_t& zmq_ctx)
 
 void RouterImpl::Run()
 {
-    // zmq::pollitem_t zmq_pool_item = {*sub_socket_, 0, ZMQ_POLLIN, 0};
     try
     {
         while (!stop_)
         {
-            zmq_pollitem_t zmq_pool_item[] = {
+            zmq::pollitem_t zmq_pool_item[] = {
                 {*frontend_router_socket_, 0, ZMQ_POLLIN, 0},
                 {*backend_router_socket_, 0, ZMQ_POLLIN, 0}};
 
@@ -294,17 +292,25 @@ void RouterImpl::Run()
                 continue;
             }
 
-            for (int i = 0; i < available_workers; ++i)
+            if (zmq_pool_item[0].revents & ZMQ_POLLIN)
             {
-                if (zmq_pool_item.revents[i] & ZMQ_POLLIN)
+                RoutingMessage message;
+                if (recv_message(frontend_router_socket_, frontend_route_mutex_, message) == false)
                 {
-                    if (recv_message(sub_socket_, sub_mutex_, message) == false)
-                    {
-                        continue;
-                    }
-
-                    callback(message);
+                    continue;
                 }
+
+                callback(message);
+            }
+            if (zmq_pool_item[1].revents & ZMQ_POLLIN)
+            {
+                RoutingMessage message;
+                if (recv_message(backend_router_socket_, backend_route_mutex_, message) == false)
+                {
+                    continue;
+                }
+
+                callback(message);
             }
         }
     }
