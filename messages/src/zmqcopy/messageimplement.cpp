@@ -66,8 +66,12 @@ bool zmq_recv(std::unique_ptr<zmq::socket_t> &socket, StringBuffer& buffer)
             return false;
 
         LOG(INFO) << "init buuffer.size:" << buffer.size();
+
         auto mutable_buffer = buffer.prepare(message.size());
-        // std::copy(message.data(), message.data() + message.size(), mutable_buffer.data());
+        std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
+                     reinterpret_cast<char *>(message.data()),
+                     message.size());
+
         LOG(INFO) << "prepare buuffer.size:" << buffer.size();
         buffer.commit(message.size());
         LOG(INFO) << "commit buuffer.size:" << buffer.size();
@@ -88,7 +92,10 @@ bool SendMessage(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, cons
     StringBuffer buffer;
     LOG(INFO) << "init buuffer.size:" << buffer.size();
     auto mutable_buffer = buffer.prepare(data.size());
-    // std::copy(data.data(), data.size(), mutable_buffer.data());
+    std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
+                 reinterpret_cast<char *>(message.data()),
+                 message.size());
+
     LOG(INFO) << "prepare buuffer.size:" << buffer.size();
     buffer.commit(data.size());
     LOG(INFO) << "commit buuffer.size:" << buffer.size();
