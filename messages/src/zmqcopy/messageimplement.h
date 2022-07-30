@@ -8,6 +8,7 @@
 #include <utility>
 #include <functional>
 #include "zmq.hpp"
+#include "streambuffer.hpp"
 
 // forward declaration for hiding zmq.hpp
 namespace zmq {
@@ -30,7 +31,6 @@ namespace messages {
 
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
-class SubscribeNodeList;
 
 ////////////////////////////////////////////////////////////////////////////////
 class PublisherImpl
@@ -40,7 +40,7 @@ public:
     bool Publish(const RoutingMessage& message);
 
 private:
-    std::mutex pub_mutex_;
+    StreamBuffer buffer_;
     std::unique_ptr<zmq::socket_t> pub_socket_;
 };
 
@@ -58,9 +58,9 @@ public:
 
 private:
     std::atomic<bool> stop_;
-    int32_t pool_timeout_;
+    std::chrono::milliseconds pool_timeout_;
 
-    std::mutex sub_mutex_;
+    StreamBuffer buffer_;
     std::unique_ptr<zmq::socket_t> sub_socket_;
 };
 
@@ -76,9 +76,9 @@ public:
 
 private:
     std::atomic<bool> stop_;
-    int32_t m_pool_timeout;
+    std::chrono::milliseconds pool_timeout_;
 
-    std::mutex rep_mutex_;
+    StreamBuffer buffer_;
     std::unique_ptr <zmq::socket_t> rep_socket_;
 };
 
@@ -92,7 +92,8 @@ public:
     bool Request(const RoutingMessage& request, RoutingMessage& response);
 
 private:
-    std::mutex req_mutex_;
+    StreamBuffer send_buffer_;
+    StreamBuffer recv_buffer_;
     std::unique_ptr<zmq::socket_t> req_socket_;
 };
 
@@ -106,13 +107,13 @@ public:
 
 private:
     std::atomic<bool> stop_;
-    int32_t pool_timeout_;
+    std::chrono::milliseconds pool_timeout_;
 
 private:
-    std::mutex frontend_route_mutex_;
+    StreamBuffer frontend_buffer_;
     std::unique_ptr<zmq::socket_t> frontend_router_socket_;
 
-    std::mutex backend_route_mutex_;
+    StreamBuffer backend_buffer_;
     std::unique_ptr<zmq::socket_t> backend_router_socket_;
 };
 

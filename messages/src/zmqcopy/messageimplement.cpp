@@ -2,160 +2,26 @@
 
 #include "messageimplement.h"
 #include <algorithm>
+#include <chrono>
 #include <glog/logging.h>
 #include "zmq_config.h"
 #include "envelope.pb.h"
-#include "stringbuffer.hpp"
+#include "sendassist.hpp"
 
 namespace ipc {
 namespace messages {
-
-bool send_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex,
-              const std::string& buffer) {
-    try 
-    {
-        zmq::message_t message(buffer.c_str(), buffer.length());
-        std::lock_guard<std::mutex> lock(mutex);
-        return socket->send(buffer.c_str(), buffer.length());
-    } 
-    catch (zmq::error_t& e) 
-    {
-        LOG(ERROR) << (e.what());
-        return false;
-    }
-}
-
-bool recv_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, std::string& buffer) {
-    try {
-        zmq::message_t message;
-        {
-            std::lock_guard<std::mutex> lock(mutex);
-
-            if (socket->recv(&message) == false) {
-                return false;
-            }
-        }
-        buffer = std::string(static_cast<char*>(message.data()), message.size());
-        return true;
-    } catch (zmq::error_t& e) {
-        LOG(ERROR) << (e.what());
-        return false;
-    }
-}
-
-bool zmq_send(std::unique_ptr<zmq::socket_t>& socket, const StringBuffer& buffer) 
-{
-    try 
-    {
-        socket->send(buffer.data());
-        return true;
-    } 
-    catch (zmq::error_t& e) 
-    {
-        LOG(ERROR) << (e.what());
-    }
-    return false;
-}
-
-bool zmq_recv(std::unique_ptr<zmq::socket_t> &socket, StringBuffer& buffer)
-{
-    try
-    {
-        zmq::message_t message;
-        if (!socket->recv(message))
-            return false;
-
-        LOG(INFO) << "init buuffer.size:" << buffer.size();
-
-        auto mutable_buffer = buffer.prepare(message.size());
-        std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
-                     reinterpret_cast<char *>(message.data()),
-                     message.size());
-
-        LOG(INFO) << "prepare buuffer.size:" << buffer.size();
-        buffer.commit(message.size());
-        LOG(INFO) << "commit buuffer.size:" << buffer.size();
-    }
-    catch (zmq::error_t &e)
-    {
-        LOG(ERROR) << (e.what());
-    }
-    return false;
-}
-
-bool SendMessage(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) 
-{
-    std::string data;
-    if (!message.SerializeToString(&data))
-        return false;
-
-    StringBuffer buffer;
-    LOG(INFO) << "init buuffer.size:" << buffer.size();
-    auto mutable_buffer = buffer.prepare(data.size());
-    std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
-                 reinterpret_cast<char *>(message.data()),
-                 message.size());
-
-    LOG(INFO) << "prepare buuffer.size:" << buffer.size();
-    buffer.commit(data.size());
-    LOG(INFO) << "commit buuffer.size:" << buffer.size();
-
-    return zmq_send(socket, buffer);
-}
-
-bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, std::mutex &mutex, ::google::protobuf::Message &message)
-{
-    StringBuffer buffer;
-    if (!zmq_recv(socket, buffer))
-        return false;
-
-    if (buffer.size() < sizeof(size_t))
-        return false;
-
-    auto data = reinterpret_cast<const char*>(buffer.data().data());
-    auto size = reinterpret_cast<const size_t*>(data);
-
-    return message.ParseFromArray(data, *size);
-}
-
-bool send_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) 
-{
-    // assert((std::is_base_of<::google::protobuf::Message, T>::value));
-
-    std::string buffer;
-    if (message.SerializeToString(&buffer))
-    {
-        return send_zmq(socket, mutex, buffer);
-    } 
-    return false;
-}
-
-bool recv_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, ::google::protobuf::Message& message) {
-    // assert((std::is_base_of<::google::protobuf::Message, T>::value));
-
-    std::string buffer;
-    if (recv_zmq(socket, mutex, buffer) == false) {
-        return false;
-    }
-    return message.ParseFromString(buffer);
-}
-
-std::string splice(const std::string& protocol, const std::string& ip, int port)
-{
-    std::string addr;
-    addr.append(protocol).append(ip).append(":").append(std::to_string(port));
-    return addr;
-}
 
 ////////////////////////////////////////////////////////////////////////////////
 //class PublisherImpl
 PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 {
     pub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
-    pub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
-    pub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    // pub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
+    // pub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    pub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_SEND_QUEUE);
+    pub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_pub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_pub_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     pub_socket_->bind(server_pub_addr.c_str());
 }
 
@@ -163,7 +29,11 @@ bool PublisherImpl::Publish(const RoutingMessage &message)
 {
     // notify
     LOG(INFO) << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
-    return send_message(pub_socket_, pub_mutex_, message);
+    
+    // pub_socket_->send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
+    // pub_socket_->send(zmq::str_buffer("Message in A envelope"));
+    Encode(message, buffer_);
+    return SendMessage(pub_socket_, buffer_);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -171,19 +41,20 @@ bool PublisherImpl::Publish(const RoutingMessage &message)
 SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
 {
     stop_ = false;
-    pool_timeout_ = ipc_ZMQ_POOL_TIMEOUT;
+    pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
 
     sub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
-    sub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
-    sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    // sub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
+    // sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    sub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
+    sub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_sub_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_sub_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     sub_socket_->connect(server_sub_addr.c_str());
 
-    sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
-
-    // sub_socket_.send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
-    // sub_socket_.send(zmq::str_buffer("Message in A envelope"));
+    // sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
+    sub_socket_->set(zmq::sockopt::subscribe, ""); // subscribe all
+    // sub_socket_->set(zmq::sockopt::subscribe, "topc");
 }
 
 SubscriberImpl::~SubscriberImpl()
@@ -211,13 +82,14 @@ void SubscriberImpl::Run(SubscribeCallback &&callback)
 
             if (zmq_pool_item.revents & ZMQ_POLLIN)
             {
-                RoutingMessage message;
-                if (recv_message(sub_socket_, sub_mutex_, message) == false)
+                if (!RecvMessage(sub_socket_, buffer_))
                 {
                     continue;
                 }
 
-                callback(message);
+                RoutingMessage message;
+                if (Decode(buffer_, message))
+                    callback(message);
             }
         }
     }
@@ -238,15 +110,19 @@ ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
 {
     // init status
     stop_ = false;
+    pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
 
     // init zmq
     // static zmq::context_t zmq_ctx = zmq::context_t(1);
 
     rep_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
-    rep_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
-    rep_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    // rep_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
+    // rep_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    rep_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
+    rep_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_rep_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+
+    std::string server_rep_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     rep_socket_->bind(server_rep_addr.c_str());
 }
 
@@ -262,34 +138,28 @@ void ResponseImpl::Run(RequestCallback&& callback)
     {
         try
         {
-            int rc = zmq::poll(&zmq_pool_item, 1, m_pool_timeout);
+            int rc = zmq::poll(&zmq_pool_item, 1, pool_timeout_);
             if (rc < 0)
                 continue;
 
             if (zmq_pool_item.revents & ZMQ_POLLIN)
             {
-                // do not use recv_message<T>() for get "Peer-Address"
-                zmq::message_t message;
-                // sync block
-                {
-                    std::lock_guard<std::mutex> lock(rep_mutex_);
-                    if (rep_socket_->recv(&message, ZMQ_DONTWAIT) == false)
-                    {
-                        continue;
-                    }
-                }
-                // deserialization
-                std::string buffer = std::string(static_cast<char *>(message.data()), message.size());
-                RoutingMessage request;
-                if (request.ParseFromString(buffer) == false)
+                if (!RecvMessage(rep_socket_, buffer_))
                 {
                     continue;
                 }
 
-                // client ip
-                request.mutable_node()->set_client_ip(message.gets("Peer-Address"));
+                RoutingMessage message;
+                if (Decode(buffer_, message))
+                    callback(message);
 
-                callback(request);
+                // client ip
+                // zmq::message_t message;
+                // if (rep_socket_->recv(&message, ZMQ_DONTWAIT) == false)
+                // {
+                //     continue;
+                // }
+                //request.mutable_node()->set_client_ip(message.gets("Peer-Address"));
             }
         }
         catch (zmq::error_t &e)
@@ -318,14 +188,13 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
     }
     */
 
-    // init zmq
-    // zmq::context_t& zmq_ctx = ContextManager::instance();
-
     req_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
-    req_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
-    req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    // req_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
+    // req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
+    req_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
+    req_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_req_addr = splice("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_req_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
     req_socket_->connect(server_req_addr.c_str());
 }
 
@@ -337,12 +206,17 @@ bool RequestImpl::Connected() const
 bool RequestImpl::Request(const RoutingMessage& request, RoutingMessage& response) 
 {
     // request
-    auto ret = send_message(req_socket_, req_mutex_, request);
+    if (!Encode(request, send_buffer_))
+        return false;
+    
+    if (!SendMessage(req_socket_, send_buffer_))
+        return false;
 
     // response
-    ret = recv_message(req_socket_, req_mutex_, response);
+    if (!RecvMessage(req_socket_, recv_buffer_))
+        return false;
 
-    return ret;
+    return Decode(recv_buffer_, response);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
