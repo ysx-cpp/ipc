@@ -2,6 +2,8 @@
 #include <mutex>
 #include <memory>
 #include "zmq.hpp"
+#include "envelope.pb.h"
+#include "messageimplement.h"
 
 namespace zmq {
     class socket_t;

@@ -18,13 +18,27 @@ if (NOT ZeroMQ_FOUND)
     )
 endif()
 
+if (NOT Glog_FOUND)
+    # load in pkg-config support
+    find_package(PkgConfig)
+    # use pkg-config to get hints for 0mq locations
+    pkg_check_modules(PC_Glog QUIET glog)
+
+    find_library(Glog_LIBRARY
+        NAMES glog
+        PATHS ${PC_Glog_LIBRARY_DIRS}
+    )
+endif()
+
 file(GLOB PROTO_FILES "protos/*.proto")
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${PROTO_FILES}")
 list(GET PROTO_HDRS 0 PROTO_HDR)
 get_filename_component(PROTO_DIR ${PROTO_HDR} PATH)
 
 include_directories("${PROTO_DIR}" ${PROJECT_SOURCE_DIR}/src)
-set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${GLOG_LIBRARIES}) # ${Boost_LIBRARIES}  glog
+set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${GLOG_LIBRARIES} glog)
+
+# message("Glog_LIBRARY:${Glog_LIBRARY} GLOG_LIBRARIES:${GLOG_LIBRARIES} PROTOBUF_LIBRARIES:${PROTOBUF_LIBRARIES} ZeroMQ_LIBRARY:${ZeroMQ_LIBRARY}")
 
 file(GLOB_RECURSE SRCS src/*.cpp)
 add_library(${PROJECT_NAME} SHARED ${SRCS} ${PROTO_SRCS})
@@ -37,12 +51,13 @@ target_link_libraries(${PROJECT_NAME} ${LIBS})
 #target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
 
 # target
-#set(name "messages_test")
-#add_executable(${name} examples/test.cpp)
-#add_dependencies(${name} ${PROJECT_NAME})
-#target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
+set(name "messages_test")
+add_executable(${name} examples/test.cpp)
+add_dependencies(${name} ${PROJECT_NAME})
+include_directories(${PROJECT_SOURCE_DIR}/src)
+target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
 
-#set(targets ${PROJECT_NAME} server_node messages_test)
+#set(targets ${PROJECT_NAME} messages_test)
 set(targets ${PROJECT_NAME})
 
 install(TARGETS ${targets}
