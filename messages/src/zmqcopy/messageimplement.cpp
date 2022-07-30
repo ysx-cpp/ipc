@@ -5,17 +5,21 @@
 #include <glog/logging.h>
 #include "zmq_config.h"
 #include "envelope.pb.h"
+#include "stringbuffer.hpp"
 
 namespace ipc {
 namespace messages {
 
 bool send_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex,
               const std::string& buffer) {
-    try {
+    try 
+    {
         zmq::message_t message(buffer.c_str(), buffer.length());
         std::lock_guard<std::mutex> lock(mutex);
         return socket->send(buffer.c_str(), buffer.length());
-    } catch (zmq::error_t& e) {
+    } 
+    catch (zmq::error_t& e) 
+    {
         LOG(ERROR) << (e.what());
         return false;
     }
@@ -39,15 +43,84 @@ bool recv_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, std::st
     }
 }
 
-bool send_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) {
+bool zmq_send(std::unique_ptr<zmq::socket_t>& socket, const StringBuffer& buffer) 
+{
+    try 
+    {
+        socket->send(buffer.data());
+        return true;
+    } 
+    catch (zmq::error_t& e) 
+    {
+        LOG(ERROR) << (e.what());
+    }
+    return false;
+}
+
+bool zmq_recv(std::unique_ptr<zmq::socket_t> &socket, StringBuffer& buffer)
+{
+    try
+    {
+        zmq::message_t message;
+        if (!socket->recv(message))
+            return false;
+
+        LOG(INFO) << "init buuffer.size:" << buffer.size();
+        auto mutable_buffer = buffer.prepare(message.size());
+        // std::copy(message.data(), message.data() + message.size(), mutable_buffer.data());
+        LOG(INFO) << "prepare buuffer.size:" << buffer.size();
+        buffer.commit(message.size());
+        LOG(INFO) << "commit buuffer.size:" << buffer.size();
+    }
+    catch (zmq::error_t &e)
+    {
+        LOG(ERROR) << (e.what());
+    }
+    return false;
+}
+
+bool SendMessage(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) 
+{
+    std::string data;
+    if (!message.SerializeToString(&data))
+        return false;
+
+    StringBuffer buffer;
+    LOG(INFO) << "init buuffer.size:" << buffer.size();
+    auto mutable_buffer = buffer.prepare(data.size());
+    // std::copy(data.data(), data.size(), mutable_buffer.data());
+    LOG(INFO) << "prepare buuffer.size:" << buffer.size();
+    buffer.commit(data.size());
+    LOG(INFO) << "commit buuffer.size:" << buffer.size();
+
+    return zmq_send(socket, buffer);
+}
+
+bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, std::mutex &mutex, ::google::protobuf::Message &message)
+{
+    StringBuffer buffer;
+    if (!zmq_recv(socket, buffer))
+        return false;
+
+    if (buffer.size() < sizeof(size_t))
+        return false;
+
+    auto data = reinterpret_cast<const char*>(buffer.data().data());
+    auto size = reinterpret_cast<const size_t*>(data);
+
+    return message.ParseFromArray(data, *size);
+}
+
+bool send_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, const ::google::protobuf::Message& message) 
+{
     // assert((std::is_base_of<::google::protobuf::Message, T>::value));
 
     std::string buffer;
-    if (message.SerializeToString(&buffer) == true) {
+    if (message.SerializeToString(&buffer))
+    {
         return send_zmq(socket, mutex, buffer);
-    } else {
-        return false;
-    }
+    } 
+    return false;
 }
 
 bool recv_message(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex, ::google::protobuf::Message& message) {
