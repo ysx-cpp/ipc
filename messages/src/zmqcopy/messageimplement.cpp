@@ -3,12 +3,11 @@
 #include "messageimplement.h"
 #include <algorithm>
 #include <glog/logging.h>
-#include "zmq/zmq_config.h"
-#include "messages_protos.pb.h"
+#include "zmq_config.h"
+#include "envelope.pb.h"
 
 namespace ipc {
 namespace messages {
-namespace zmqcopy {
 
 bool send_zmq(std::unique_ptr<zmq::socket_t>& socket, std::mutex& mutex,
               const std::string& buffer) {
@@ -102,6 +101,9 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     sub_socket_->connect(server_sub_addr.c_str());
 
     sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
+
+    // sub_socket_.send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
+    // sub_socket_.send(zmq::str_buffer("Message in A envelope"));
 }
 
 SubscriberImpl::~SubscriberImpl()
@@ -276,50 +278,49 @@ RouterImpl::RouterImpl(zmq::context_t& zmq_ctx)
 
 void RouterImpl::Run()
 {
-    try
-    {
-        while (!stop_)
-        {
-            zmq::pollitem_t zmq_pool_item[] = {
-                {*frontend_router_socket_, 0, ZMQ_POLLIN, 0},
-                {*backend_router_socket_, 0, ZMQ_POLLIN, 0}};
+    // try
+    // {
+    //     while (!stop_)
+    //     {
+    //         zmq::pollitem_t zmq_pool_item[] = {
+    //             {*frontend_router_socket_, 0, ZMQ_POLLIN, 0},
+    //             {*backend_router_socket_, 0, ZMQ_POLLIN, 0}};
 
-            int available_workers = 2;
+    //         int available_workers = 2;
 
-            int rc = zmq::poll(&zmq_pool_item, available_workers, pool_timeout_);
-            if (rc < 0)
-            {
-                continue;
-            }
+    //         int rc = zmq::poll(&zmq_pool_item, available_workers, pool_timeout_);
+    //         if (rc < 0)
+    //         {
+    //             continue;
+    //         }
 
-            if (zmq_pool_item[0].revents & ZMQ_POLLIN)
-            {
-                RoutingMessage message;
-                if (recv_message(frontend_router_socket_, frontend_route_mutex_, message) == false)
-                {
-                    continue;
-                }
+    //         if (zmq_pool_item[0].revents & ZMQ_POLLIN)
+    //         {
+    //             RoutingMessage message;
+    //             if (recv_message(frontend_router_socket_, frontend_route_mutex_, message) == false)
+    //             {
+    //                 continue;
+    //             }
 
-                callback(message);
-            }
-            if (zmq_pool_item[1].revents & ZMQ_POLLIN)
-            {
-                RoutingMessage message;
-                if (recv_message(backend_router_socket_, backend_route_mutex_, message) == false)
-                {
-                    continue;
-                }
+    //             callback(message);
+    //         }
+    //         if (zmq_pool_item[1].revents & ZMQ_POLLIN)
+    //         {
+    //             RoutingMessage message;
+    //             if (recv_message(backend_router_socket_, backend_route_mutex_, message) == false)
+    //             {
+    //                 continue;
+    //             }
 
-                callback(message);
-            }
-        }
-    }
-    catch (zmq::error_t &e)
-    {
-        LOG(ERROR) << (e.what());
-    }
+    //             callback(message);
+    //         }
+    //     }
+    // }
+    // catch (zmq::error_t &e)
+    // {
+    //     LOG(ERROR) << (e.what());
+    // }
 }
 
-} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

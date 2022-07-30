@@ -2,7 +2,7 @@
 #include <future>
 #include <functional>
 #include <glog/logging.h>
-#include "messages_protos.pb.h"
+#include "envelope.pb.h"
 #include "messageimplement.h"
 
 namespace ipc {
@@ -11,8 +11,6 @@ namespace messages {
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
 class SubscribeNodeList;
-
-namespace zmqcopy {
 
 Scheduler::Scheduler(zmq::context_t& zmq_ctx) :
 publisher_(std::make_unique<PublisherImpl>(zmq_ctx)),
@@ -25,11 +23,14 @@ sub_list_(std::make_unique<SubscribeNodeList>())
 
 void Scheduler::Run()
 {
-    auto sub_callback = std::bind(&Scheduler::SubscribeEvent, this, std::placeholders::_1);
-    std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(), sub_callback);
+    auto sub_thread = std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(),
+                                 std::bind(&Scheduler::SubscribeEvent, this, std::placeholders::_1));
 
-    auto rep_callback = std::bind(&Scheduler::RequestEvent, this, std::placeholders::_1);
-    std::async(std::launch::async, &ResponseImpl::Run, response_.get(), rep_callback);
+    auto rep_thread = std::async(std::launch::async, &ResponseImpl::Run, response_.get(),
+                                 std::bind(&Scheduler::RequestEvent, this, std::placeholders::_1));
+
+    sub_thread.wait();
+    rep_thread.wait();
 }
 
 bool Scheduler::Publish(const RoutingMessage& message)
@@ -78,6 +79,5 @@ void Scheduler::SubscribeOffline(const RoutingMessage& message)
     }
 }
 
-} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

@@ -1,7 +1,7 @@
 #pragma once
 #include <mutex>
 #include <memory>
-#include "zmq/zmq.hpp"
+#include "zmq.hpp"
 
 namespace zmq {
     class socket_t;
@@ -13,9 +13,6 @@ namespace messages {
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
 class SubscribeNodeList;
-
-namespace zmqcopy {
-
 class PublisherImpl;
 class SubscriberImpl;
 class ResponseImpl;
@@ -46,6 +43,5 @@ private:
     std::unique_ptr<SubscribeNodeList> sub_list_;
 };
 
-} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc

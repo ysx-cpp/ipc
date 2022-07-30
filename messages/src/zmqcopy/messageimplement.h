@@ -1,5 +1,3 @@
-// zeromq messages service procotol interface
-
 #pragma once
 #include <string>
 #include <map>
@@ -9,8 +7,7 @@
 #include <thread>
 #include <utility>
 #include <functional>
-#include <unordered_map>
-#include "zmq/zmq.hpp"
+#include "zmq.hpp"
 
 // forward declaration for hiding zmq.hpp
 namespace zmq {
@@ -34,8 +31,6 @@ namespace messages {
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
 class SubscribeNodeList;
-
-namespace zmqcopy {
 
 ////////////////////////////////////////////////////////////////////////////////
 class PublisherImpl
@@ -121,6 +116,5 @@ private:
     std::unique_ptr<zmq::socket_t> backend_router_socket_;
 };
 
-} // namespace zmqcopy 
 } // namespace messages
 } // namespace ipc
