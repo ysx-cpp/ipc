@@ -3,7 +3,7 @@
 #include <memory>
 #include "zmq.hpp"
 #include "envelope.pb.h"
-#include "messageimplement.h"
+#include "messageimpl.h"
 
 namespace zmq {
     class socket_t;
@@ -17,7 +17,7 @@ class RoutingMessage;
 class SubscribeNodeList;
 class PublisherImpl;
 class SubscriberImpl;
-class ResponseImpl;
+class ReplyImpl;
 class RequestImpl;
 class Scheduler
 {
@@ -36,7 +36,7 @@ public:
 private:
     std::unique_ptr<PublisherImpl> publisher_;
     std::unique_ptr<SubscriberImpl> subscriber_;
-    std::unique_ptr<ResponseImpl> response_;
+    std::unique_ptr<ReplyImpl> reply_;
     std::unique_ptr<RequestImpl> request_;
 
 private:

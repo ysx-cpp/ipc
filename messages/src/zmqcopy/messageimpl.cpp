@@ -1,6 +1,6 @@
 // zeromq messages service procotol implement
 
-#include "messageimplement.h"
+#include "messageimpl.h"
 #include <algorithm>
 #include <chrono>
 #include <glog/logging.h>
@@ -44,9 +44,9 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
 
     sub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
-    // sub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
+    // sub_socket_->setsockopt(ZMQ_REVHWM, ipc_ZMQ_RECV_QUEUE);
     // sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-    sub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
+    sub_socket_->set(zmq::sockopt::rcvhwm, ipc_ZMQ_RECV_QUEUE);
     sub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
     std::string server_sub_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
@@ -106,7 +106,7 @@ void SubscriberImpl::Stop()
 
 ////////////////////////////////////////////////////////////////////////////////
 // routing server
-ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
+ReplyImpl::ReplyImpl(zmq::context_t &zmq_ctx)
 {
     // init status
     stop_ = false;
@@ -126,12 +126,12 @@ ResponseImpl::ResponseImpl(zmq::context_t &zmq_ctx)
     rep_socket_->bind(server_rep_addr.c_str());
 }
 
-ResponseImpl::~ResponseImpl()
+ReplyImpl::~ReplyImpl()
 {
     this->Stop();
 }
 
-void ResponseImpl::Run(RequestCallback&& callback)
+void ReplyImpl::Run(RequestCallback&& callback)
 {
     zmq::pollitem_t zmq_pool_item = {*rep_socket_, 0, ZMQ_POLLIN, 0};
     while (!stop_)
@@ -169,7 +169,7 @@ void ResponseImpl::Run(RequestCallback&& callback)
     }
 }
 
-void ResponseImpl::Stop()
+void ReplyImpl::Stop()
 {
     stop_ = true;
 }

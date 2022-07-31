@@ -3,7 +3,7 @@
 #include <functional>
 #include <glog/logging.h>
 #include "envelope.pb.h"
-#include "messageimplement.h"
+#include "messageimpl.h"
 
 namespace ipc {
 namespace messages {
@@ -15,7 +15,7 @@ class SubscribeNodeList;
 Scheduler::Scheduler(zmq::context_t& zmq_ctx) :
 publisher_(std::make_unique<PublisherImpl>(zmq_ctx)),
 subscriber_(std::make_unique<SubscriberImpl>(zmq_ctx)),
-response_(std::make_unique<ResponseImpl>(zmq_ctx)),
+reply_(std::make_unique<ReplyImpl>(zmq_ctx)),
 request_(std::make_unique<RequestImpl>(zmq_ctx)),
 sub_list_(std::make_unique<SubscribeNodeList>())
 {
@@ -26,7 +26,7 @@ void Scheduler::Run()
     auto sub_thread = std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(),
                                  std::bind(&Scheduler::SubscribeEvent, this, std::placeholders::_1));
 
-    auto rep_thread = std::async(std::launch::async, &ResponseImpl::Run, response_.get(),
+    auto rep_thread = std::async(std::launch::async, &ReplyImpl::Run, reply_.get(),
                                  std::bind(&Scheduler::RequestEvent, this, std::placeholders::_1));
 
     sub_thread.wait();
@@ -45,12 +45,12 @@ bool Scheduler::Request(const RoutingMessage& request, RoutingMessage& response)
 
 void Scheduler::SubscribeEvent(const RoutingMessage& message)
 {
-
+    LOG(INFO) << message.DebugString();
 }
 
 void Scheduler::RequestEvent(const RoutingMessage& message)
 {
-
+    LOG(INFO) << message.DebugString();
 }
 
 void Scheduler::SubscribeOnline(const RoutingMessage& message)

@@ -35,6 +35,7 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${PROTO_FILES}")
 list(GET PROTO_HDRS 0 PROTO_HDR)
 get_filename_component(PROTO_DIR ${PROTO_HDR} PATH)
 
+include_directories(${PROJECT_SOURCE_DIR}/src)
 include_directories("${PROTO_DIR}" ${PROJECT_SOURCE_DIR}/src)
 set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${GLOG_LIBRARIES} glog)
 
@@ -45,20 +46,18 @@ add_library(${PROJECT_NAME} SHARED ${SRCS} ${PROTO_SRCS})
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 # target
-#set(name "server_node")
-#add_executable(${name} server_node.cpp)
-#add_dependencies(${name} ${PROJECT_NAME})
-#target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
+set(TEST_PROACTIVE "test_proactive")
+add_executable(${TEST_PROACTIVE} examples/test_proactive.cpp)
+add_dependencies(${TEST_PROACTIVE} ${PROJECT_NAME})
+target_link_libraries(${TEST_PROACTIVE} ${PROJECT_NAME} ${LIBS})
 
 # target
-set(name "messages_test")
-add_executable(${name} examples/test.cpp)
-add_dependencies(${name} ${PROJECT_NAME})
-include_directories(${PROJECT_SOURCE_DIR}/src)
-target_link_libraries(${name} ${PROJECT_NAME} ${LIBS})
+set(TEST_PASSIVE "test_passive")
+add_executable(${TEST_PASSIVE} examples/test_passive.cpp)
+add_dependencies(${TEST_PASSIVE} ${PROJECT_NAME})
+target_link_libraries(${TEST_PASSIVE} ${PROJECT_NAME} ${LIBS})
 
-#set(targets ${PROJECT_NAME} messages_test)
-set(targets ${PROJECT_NAME})
+set(targets ${PROJECT_NAME} ${TEST_PROACTIVE} ${TEST_PASSIVE})
 
 install(TARGETS ${targets}
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

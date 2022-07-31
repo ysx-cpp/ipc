@@ -5,8 +5,8 @@
 // server addr
 #define ipc_SERVER_REP_ADDR     "*"
 #define ipc_SERVER_PUB_ADDR     "*"
-#define ipc_SERVER_REQ_ADDR     "192.168.1.12"
-#define ipc_SERVER_SUB_ADDR     "192.168.1.12"
+#define ipc_SERVER_REQ_ADDR     "127.0.0.1"
+#define ipc_SERVER_SUB_ADDR     "127.0.0.1"
 
 // topic port
 #define ipc_TOPIC_START_PORT    7714

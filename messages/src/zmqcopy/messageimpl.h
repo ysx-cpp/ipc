@@ -64,12 +64,12 @@ private:
     std::unique_ptr<zmq::socket_t> sub_socket_;
 };
 
-class ResponseImpl
+class ReplyImpl
 {
     using RequestCallback = std::function<void(const RoutingMessage&)>;
 public:
-    explicit ResponseImpl(zmq::context_t& zmq_ctx);
-    ~ResponseImpl();
+    explicit ReplyImpl(zmq::context_t& zmq_ctx);
+    ~ReplyImpl();
 
     void Run(RequestCallback&& callback);
     void Stop();
