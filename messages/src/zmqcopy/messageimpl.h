@@ -37,6 +37,7 @@ class PublisherImpl
 {
 public:
     explicit PublisherImpl(zmq::context_t& zmq_ctx);
+    void Bind(const std::string& host);
     bool Publish(const RoutingMessage& message);
 
 private:
@@ -71,7 +72,9 @@ public:
     explicit ReplyImpl(zmq::context_t& zmq_ctx);
     ~ReplyImpl();
 
+    void Bind(const std::string& host);
     void Run(RequestCallback&& callback);
+    bool SendResponse(const RoutingMessage& message);
     void Stop();
 
 private:

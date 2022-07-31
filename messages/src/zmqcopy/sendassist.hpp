@@ -48,16 +48,30 @@ bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, StreamBuffer& buffer)
     return false;
 }
 
+static const size_t HEAD_SIZE = sizeof(size_t);
+
+void EncodeHead(size_t data_size, StreamBuffer& buffer)
+{
+    size_t packet_size = HEAD_SIZE + data_size;
+    auto mutable_buffer = buffer.prepare(HEAD_SIZE);
+    std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
+                 reinterpret_cast<char *>(&packet_size),
+                 HEAD_SIZE);
+
+    buffer.commit(HEAD_SIZE);
+}
+
 bool Encode(const ::google::protobuf::Message& message, StreamBuffer& buffer) 
 {
     std::string data;
     if (!message.SerializeToString(&data))
         return false;
 
+    EncodeHead(data.size(), buffer);
+
     LOG(INFO) << "init buuffer.size:" << buffer.size();
     auto mutable_buffer = buffer.prepare(data.size());
     std::copy(data.begin(), data.end(), reinterpret_cast<char *>(mutable_buffer.data()));
-
     LOG(INFO) << "prepare buuffer.size:" << buffer.size();
     buffer.commit(data.size());
     LOG(INFO) << "commit buuffer.size:" << buffer.size();
@@ -67,19 +81,20 @@ bool Encode(const ::google::protobuf::Message& message, StreamBuffer& buffer)
 
 bool Decode(StreamBuffer& buffer, ::google::protobuf::Message &message)
 {
+    LOGINFO << "BUFFER SIZE:" << buffer.size();
     if (buffer.size() < sizeof(size_t))
         return false;
 
     auto data = reinterpret_cast<const char*>(buffer.data().data());
-    auto data_size = reinterpret_cast<const size_t*>(data);
+    auto packet_size = reinterpret_cast<const size_t*>(data);
 
-    if (buffer.size() < *data_size)
+    if (buffer.size() < *packet_size)
         return false;
 
-    if (!message.ParseFromArray(data, *data_size))
+    if (!message.ParseFromArray(data + HEAD_SIZE, *packet_size - HEAD_SIZE))
         return false;
 
-    buffer.consume(*data_size);
+    buffer.consume(*packet_size);
 
     return true;
 }
@@ -87,7 +102,7 @@ bool Decode(StreamBuffer& buffer, ::google::protobuf::Message &message)
 std::string ParseHost(const std::string& protocol, const std::string& ip, int port)
 {
     std::string addr;
-    addr.append(protocol).append(ip).append(":").append(std::to_string(port));
+    addr.append(protocol).append("://").append(ip).append(":").append(std::to_string(port));
     return addr;
 }
 

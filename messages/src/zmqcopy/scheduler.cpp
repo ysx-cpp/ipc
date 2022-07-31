@@ -4,6 +4,7 @@
 #include <glog/logging.h>
 #include "envelope.pb.h"
 #include "messageimpl.h"
+#include "zmq_config.h"
 
 namespace ipc {
 namespace messages {
@@ -45,12 +46,13 @@ bool Scheduler::Request(const RoutingMessage& request, RoutingMessage& response)
 
 void Scheduler::SubscribeEvent(const RoutingMessage& message)
 {
-    LOG(INFO) << message.DebugString();
+    LOGINFO << message.DebugString();
 }
 
 void Scheduler::RequestEvent(const RoutingMessage& message)
 {
-    LOG(INFO) << message.DebugString();
+    reply_->SendResponse(message);
+    LOGINFO << message.DebugString();
 }
 
 void Scheduler::SubscribeOnline(const RoutingMessage& message)

@@ -21,14 +21,20 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
     pub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_SEND_QUEUE);
     pub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_pub_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
-    pub_socket_->bind(server_pub_addr.c_str());
+    
+}
+
+void PublisherImpl::Bind(const std::string& host)
+{
+    // std::string server_pub_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_PUB_PORT);
+    LOGINFO << "bind server_pub_addr:" << host;
+    pub_socket_->bind(host.c_str());
 }
 
 bool PublisherImpl::Publish(const RoutingMessage &message)
 {
     // notify
-    LOG(INFO) << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
+    LOGINFO << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
     
     // pub_socket_->send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
     // pub_socket_->send(zmq::str_buffer("Message in A envelope"));
@@ -49,7 +55,8 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     sub_socket_->set(zmq::sockopt::rcvhwm, ipc_ZMQ_RECV_QUEUE);
     sub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_sub_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_sub_addr = ParseHost("tcp", ipc_SERVER_SUB_ADDR, ipc_SERVER_PUB_PORT);
+    LOGINFO << "connect server_pub_addr:" << server_sub_addr;
     sub_socket_->connect(server_sub_addr.c_str());
 
     // sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
@@ -122,7 +129,8 @@ ReplyImpl::ReplyImpl(zmq::context_t &zmq_ctx)
     rep_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
 
-    std::string server_rep_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_rep_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_REP_PORT);
+    LOGINFO << "bind server_pub_addr:" << server_rep_addr;
     rep_socket_->bind(server_rep_addr.c_str());
 }
 
@@ -169,6 +177,18 @@ void ReplyImpl::Run(RequestCallback&& callback)
     }
 }
 
+bool ReplyImpl::SendResponse(const RoutingMessage& message)
+{
+    // notify
+    LOGINFO << "id:" << message.node().client_id() << " topic:" << message.node().message_topic();
+    
+    // pub_socket_->send(zmq::str_buffer("A"), zmq::send_flags::sndmore);
+    // pub_socket_->send(zmq::str_buffer("Message in A envelope"));
+    StreamBuffer buffer;
+    Encode(message, buffer);
+    return SendMessage(rep_socket_, buffer);
+}
+
 void ReplyImpl::Stop()
 {
     stop_ = true;
@@ -178,23 +198,14 @@ void ReplyImpl::Stop()
 // class RequestImpl
 RequestImpl::RequestImpl(zmq::context_t& zmq_ctx) 
 {
-    /*
-    // load config
-    MessagesConfig config;
-    bool parse_result = ipc::util::load_config<MessagesConfig>(ipc_CONFIG_MESSAGES, config);
-    if (parse_result == false) {
-        LOG(ERROR) << ("config [%s] lost", ipc_CONFIG_MESSAGES);
-        return;
-    }
-    */
-
     req_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
     // req_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     // req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
     req_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
     req_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
 
-    std::string server_req_addr = ParseHost("tcp://", ipc_SERVER_REP_ADDR, ipc_TOPIC_START_PORT);
+    std::string server_req_addr = ParseHost("tcp", ipc_SERVER_REQ_ADDR, ipc_SERVER_REP_PORT);
+    LOGINFO << "connect server_req_addr:" << server_req_addr;
     req_socket_->connect(server_req_addr.c_str());
 }
 
