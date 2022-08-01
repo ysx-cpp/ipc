@@ -1,6 +1,8 @@
 #pragma once
 #include <memory>
 #include "zmq.hpp"
+#include "messageimpl.h"
+#include "envelope.pb.h"
 
 namespace ipc {
 namespace messages {
@@ -10,25 +12,30 @@ class RoutingMessage;
 class ProactiveSide
 {
 public:
-    ProactiveSide() = default;
-    // virtual ~ProactiveSide() = 0;
-    virtual bool Publish(const RoutingMessage& message) = 0;
-    virtual bool Request(const RoutingMessage& request, RoutingMessage& response) = 0;
+    explicit ProactiveSide(zmq::context_t& zmq_ctx, const std::string& topc);
+    virtual ~ProactiveSide();
+    void Run();
+    bool Request(const RoutingMessage& request, RoutingMessage& response);
+    virtual void SubscribeEvent(const RoutingMessage& message);
+    
+protected:
+    std::unique_ptr<RequestImpl> request_;
+    std::unique_ptr<SubscriberImpl> subscriber_;
 };
 
-class PassiveSide
+class PassiveSide 
 {
 public:
-    PassiveSide() = default;
-    // virtual ~PassiveSide() = 0;
-    virtual void Run() = 0;
-    virtual void SubscribeEvent(const RoutingMessage& message) = 0;
-    virtual void RequestEvent(const RoutingMessage& message) = 0;
+    explicit PassiveSide(zmq::context_t& zmq_ctx, const std::string &topc);
+    virtual ~PassiveSide();
+    void Run();
+    bool Publish(const RoutingMessage& message);
+    virtual void RequestEvent(const RoutingMessage& message);
+
+protected:
+    std::unique_ptr<ReplyImpl> reply_;
+    std::unique_ptr<PublisherImpl> publisher_;
 };
-
-static std::unique_ptr<ProactiveSide> CreateProactiveSide(zmq::context_t& zmq_ctx, const std::string &topc);
-
-static std::unique_ptr<PassiveSide> CreatePassiveSide(zmq::context_t& zmq_ctx, const std::string &topc);
 
 } // namespace messages
 } // namespace ipc
