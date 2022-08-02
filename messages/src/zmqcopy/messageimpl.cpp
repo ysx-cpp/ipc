@@ -145,6 +145,7 @@ void ReplyImpl::Run(RequestCallback&& callback)
             {
                 if (!RecvMessage(rep_socket_, buffer_))
                 {
+                    LOGERROR << "RecvMessage ERROR";
                     continue;
                 }
 

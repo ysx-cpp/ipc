@@ -21,3 +21,4 @@
 #define ipc_THREAD_QUEUE_SIZE   1000
 
 #define LOGINFO LOG(INFO)<<__FUNCTION__<<"|"
+#define LOGERROR LOG(ERROR)<<__FUNCTION__<<"|"

@@ -2,6 +2,7 @@
 // support text messages only
 // usage: ./messages_debuger <server> <port> <pub|sub> <topic> <pub message char> <pub message size> <pub interval(ms)>
 
+#include <future>
 #include <glog/logging.h>
 #include "zmqcopy/scheduler.h"
 #include "zmqcopy/messageinterface.h"
@@ -19,7 +20,8 @@ int main(int argc, char** argv)
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
     static zmq::context_t zmq_ctx = zmq::context_t(1);
-    ipc::messages::ProactiveSide client(zmq_ctx, "");
+    ipc::messages::RequestImpl client(zmq_ctx);
+    client.Connect("tcp://127.0.0.1:7720");
 
     RoutingMessage req;
     RoutingMessage rsp;

@@ -33,13 +33,14 @@ bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, StreamBuffer& buffer)
         LOG(INFO) << "init buuffer.size:" << buffer.size();
 
         auto mutable_buffer = buffer.prepare(message.size());
-        std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
+        std::memcpy(reinterpret_cast<char *>(mutable_buffer.data()),
                      reinterpret_cast<char *>(message.data()),
                      message.size());
 
         LOG(INFO) << "prepare buuffer.size:" << buffer.size();
         buffer.commit(message.size());
         LOG(INFO) << "commit buuffer.size:" << buffer.size();
+        return true;
     }
     catch (zmq::error_t &e)
     {
@@ -54,7 +55,7 @@ void EncodeHead(size_t data_size, StreamBuffer& buffer)
 {
     size_t packet_size = HEAD_SIZE + data_size;
     auto mutable_buffer = buffer.prepare(HEAD_SIZE);
-    std::strncpy(reinterpret_cast<char *>(mutable_buffer.data()),
+    std::memcpy(reinterpret_cast<char *>(mutable_buffer.data()),
                  reinterpret_cast<char *>(&packet_size),
                  HEAD_SIZE);
 
@@ -81,18 +82,26 @@ bool Encode(const ::google::protobuf::Message& message, StreamBuffer& buffer)
 
 bool Decode(StreamBuffer& buffer, ::google::protobuf::Message &message)
 {
-    LOGINFO << "BUFFER SIZE:" << buffer.size();
     if (buffer.size() < sizeof(size_t))
+    {
+        LOGERROR << "buffer size:" << buffer.size();
         return false;
+    }
 
     auto data = reinterpret_cast<const char*>(buffer.data().data());
     auto packet_size = reinterpret_cast<const size_t*>(data);
 
     if (buffer.size() < *packet_size)
+    {
+        LOGERROR << "buffer size:" << buffer.size() << " packet size:" << packet_size;
         return false;
+    }
 
     if (!message.ParseFromArray(data + HEAD_SIZE, *packet_size - HEAD_SIZE))
+    {
+        LOGERROR << "buffer size:" << buffer.size() << " packet size:" << packet_size << " head_size:" << HEAD_SIZE;
         return false;
+    }
 
     buffer.consume(*packet_size);
 
