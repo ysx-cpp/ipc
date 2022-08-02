@@ -53,7 +53,7 @@ public:
     explicit SubscriberImpl(zmq::context_t& zmq_ctx);
     ~SubscriberImpl();
 
-    bool Connected() const;
+    bool Connect(const std::string& host, const std::string& topc);
     void Run(SubscribeCallback&& callback);
     void Stop();
 
@@ -91,7 +91,7 @@ class RequestImpl
 public:
     explicit RequestImpl(zmq::context_t& zmq_ctx);
 
-    bool Connected() const;
+    bool Connect(const std::string& host);
     bool Request(const RoutingMessage& request, RoutingMessage& response);
 
 private:

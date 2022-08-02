@@ -4,6 +4,7 @@
 
 #include <glog/logging.h>
 #include "zmqcopy/scheduler.h"
+#include "zmqcopy/messageinterface.h"
 #include "envelope.pb.h"
 
 int main(int argc, char** argv) 
@@ -16,7 +17,7 @@ int main(int argc, char** argv)
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
     static zmq::context_t zmq_ctx = zmq::context_t(1);
-    ipc::messages::Scheduler server(zmq_ctx);
+    ipc::messages::PassiveSide server(zmq_ctx, "");
 
     server.Run();
 

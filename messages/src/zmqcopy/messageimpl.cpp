@@ -20,8 +20,6 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
     // pub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
     pub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_SEND_QUEUE);
     pub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
-
-    
 }
 
 void PublisherImpl::Bind(const std::string& host)
@@ -54,14 +52,6 @@ SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
     // sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
     sub_socket_->set(zmq::sockopt::rcvhwm, ipc_ZMQ_RECV_QUEUE);
     sub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
-
-    std::string server_sub_addr = ParseHost("tcp", ipc_SERVER_SUB_ADDR, ipc_SERVER_PUB_PORT);
-    LOGINFO << "connect server_pub_addr:" << server_sub_addr;
-    sub_socket_->connect(server_sub_addr.c_str());
-
-    // sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
-    sub_socket_->set(zmq::sockopt::subscribe, ""); // subscribe all
-    // sub_socket_->set(zmq::sockopt::subscribe, "topc");
 }
 
 SubscriberImpl::~SubscriberImpl()
@@ -69,8 +59,16 @@ SubscriberImpl::~SubscriberImpl()
     Stop();
 }
 
-bool SubscriberImpl::Connected() const
+bool SubscriberImpl::Connect(const std::string& host, const std::string& topc)
 {
+    // std::string server_sub_addr = ParseHost("tcp", ipc_SERVER_SUB_ADDR, ipc_SERVER_PUB_PORT);
+    sub_socket_->connect(host.c_str());
+    LOGINFO << "connect server_pub_addr:" << host;
+
+    // sub_socket_->setsockopt(ZMQ_SUBSCRIBE, "", 0); // subscribe all
+    // sub_socket_->set(zmq::sockopt::subscribe, ""); // subscribe all
+    sub_socket_->set(zmq::sockopt::subscribe, topc);
+
     return sub_socket_ != nullptr;
 }
 
@@ -119,24 +117,23 @@ ReplyImpl::ReplyImpl(zmq::context_t &zmq_ctx)
     stop_ = false;
     pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
 
-    // init zmq
-    // static zmq::context_t zmq_ctx = zmq::context_t(1);
-
     rep_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
     // rep_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     // rep_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
     rep_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
     rep_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
-
-
-    std::string server_rep_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_REP_PORT);
-    LOGINFO << "bind server_pub_addr:" << server_rep_addr;
-    rep_socket_->bind(server_rep_addr.c_str());
 }
 
 ReplyImpl::~ReplyImpl()
 {
     this->Stop();
+}
+
+void ReplyImpl::Bind(const std::string& host)
+{
+    // std::string server_rep_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_REP_PORT);
+    LOGINFO << "bind server_rep_addr:" << host;
+    rep_socket_->bind(host.c_str());
 }
 
 void ReplyImpl::Run(RequestCallback&& callback)
@@ -203,14 +200,13 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
     // req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
     req_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
     req_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
-
-    std::string server_req_addr = ParseHost("tcp", ipc_SERVER_REQ_ADDR, ipc_SERVER_REP_PORT);
-    LOGINFO << "connect server_req_addr:" << server_req_addr;
-    req_socket_->connect(server_req_addr.c_str());
 }
 
-bool RequestImpl::Connected() const 
+bool RequestImpl::Connect(const std::string& host)
 {
+    // std::string server_req_addr = ParseHost("tcp", ipc_SERVER_REQ_ADDR, ipc_SERVER_REP_PORT);
+    LOGINFO << "connect req_addr:" << host;
+    req_socket_->connect(host.c_str());
     return req_socket_ != nullptr;
 }
 
