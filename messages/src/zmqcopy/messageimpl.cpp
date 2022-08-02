@@ -6,7 +6,7 @@
 #include <glog/logging.h>
 #include "zmq_config.h"
 #include "envelope.pb.h"
-#include "sendassist.hpp"
+#include "sendassist.h"
 
 namespace ipc {
 namespace messages {

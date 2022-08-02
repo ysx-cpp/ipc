@@ -9,39 +9,14 @@
 namespace ipc {
 namespace messages {
 
-// forward declaration for hiding messages_protos.pb.h
-class RoutingMessage;
-class SubscribeNodeList;
-
 Scheduler::Scheduler(zmq::context_t& zmq_ctx) :
-publisher_(std::make_unique<PublisherImpl>(zmq_ctx)),
-subscriber_(std::make_unique<SubscriberImpl>(zmq_ctx)),
-reply_(std::make_unique<ReplyImpl>(zmq_ctx)),
-request_(std::make_unique<RequestImpl>(zmq_ctx)),
-sub_list_(std::make_unique<SubscribeNodeList>())
+ProactiveSide(zmq_ctx, ""),
+PassiveSide(zmq_ctx, "")
 {
 }
 
 void Scheduler::Run()
 {
-    auto sub_thread = std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(),
-                                 std::bind(&Scheduler::SubscribeEvent, this, std::placeholders::_1));
-
-    auto rep_thread = std::async(std::launch::async, &ReplyImpl::Run, reply_.get(),
-                                 std::bind(&Scheduler::RequestEvent, this, std::placeholders::_1));
-
-    sub_thread.wait();
-    rep_thread.wait();
-}
-
-bool Scheduler::Publish(const RoutingMessage& message)
-{
-    return publisher_->Publish(message);
-}
-
-bool Scheduler::Request(const RoutingMessage& request, RoutingMessage& response)
-{
-    return request_->Request(request, response);
 }
 
 void Scheduler::SubscribeEvent(const RoutingMessage& message)

@@ -3,7 +3,8 @@
 #include <memory>
 #include "zmq.hpp"
 #include "envelope.pb.h"
-#include "messageimpl.h"
+#include "proactiveside.h"
+#include "passiveside.h"
 
 namespace zmq {
     class socket_t;
@@ -14,30 +15,18 @@ namespace messages {
 
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
-class SubscribeNodeList;
-class PublisherImpl;
-class SubscriberImpl;
-class ReplyImpl;
-class RequestImpl;
-class Scheduler
+
+class Scheduler : public ProactiveSide, public PassiveSide
 {
 public:
-    Scheduler(zmq::context_t& zmq_ctx);
-
+    explicit Scheduler(zmq::context_t& zmq_ctx);
+    ~Scheduler() = default;
     void Run();
-    bool Publish(const RoutingMessage& message);
-    bool Request(const RoutingMessage& request, RoutingMessage& response);
-    void SubscribeEvent(const RoutingMessage& message);
-    void RequestEvent(const RoutingMessage& message);
+    void SubscribeEvent(const RoutingMessage& message) override;
+    void RequestEvent(const RoutingMessage& message) override;
 
     void SubscribeOnline(const RoutingMessage& message);
     void SubscribeOffline(const RoutingMessage& message);
-
-private:
-    std::unique_ptr<PublisherImpl> publisher_;
-    std::unique_ptr<SubscriberImpl> subscriber_;
-    std::unique_ptr<ReplyImpl> reply_;
-    std::unique_ptr<RequestImpl> request_;
 
 private:
     // topic + pub addr

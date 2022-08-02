@@ -1,4 +1,4 @@
-#pragma once
+#include "sendassist.h"
 #include <memory>
 #include <glog/logging.h>
 #include "zmq_config.h"
@@ -7,6 +7,8 @@
 
 namespace ipc {
 namespace messages {
+
+static const size_t HEAD_SIZE = sizeof(size_t);
 
 bool SendMessage(std::unique_ptr<zmq::socket_t>& socket, const StreamBuffer& buffer) 
 {
@@ -48,8 +50,6 @@ bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, StreamBuffer& buffer)
     }
     return false;
 }
-
-static const size_t HEAD_SIZE = sizeof(size_t);
 
 void EncodeHead(size_t data_size, StreamBuffer& buffer)
 {
@@ -106,6 +106,13 @@ bool Decode(StreamBuffer& buffer, ::google::protobuf::Message &message)
     buffer.consume(*packet_size);
 
     return true;
+}
+
+std::string ParseHost(const std::string& protocol, const std::string& ip, int port)
+{
+    std::string addr;
+    addr.append(protocol).append("://").append(ip).append(":").append(std::to_string(port));
+    return addr;
 }
 
 } //namespace ipc

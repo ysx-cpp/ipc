@@ -3,9 +3,11 @@
 // usage: ./messages_debuger <server> <port> <pub|sub> <topic> <pub message char> <pub message size> <pub interval(ms)>
 
 #include <glog/logging.h>
-#include "zmqcopy/scheduler.h"
-#include "zmqcopy/messageinterface.h"
 #include "envelope.pb.h"
+#include "zmqcopy/sendassist.h"
+#include "zmqcopy/proactiveside.h"
+#include "zmqcopy/passiveside.h"
+#include "zmqcopy/scheduler.h"
 
 int main(int argc, char** argv) 
 {
@@ -19,7 +21,7 @@ int main(int argc, char** argv)
     static zmq::context_t zmq_ctx = zmq::context_t(1);
     ipc::messages::PassiveSide server(zmq_ctx, "");
 
-    server.Run();
+    server.Bind();
 
     return 0;
 }
