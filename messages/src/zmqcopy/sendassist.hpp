@@ -99,12 +99,5 @@ bool Decode(StreamBuffer& buffer, ::google::protobuf::Message &message)
     return true;
 }
 
-std::string ParseHost(const std::string& protocol, const std::string& ip, int port)
-{
-    std::string addr;
-    addr.append(protocol).append("://").append(ip).append(":").append(std::to_string(port));
-    return addr;
-}
-
 } //namespace ipc
 } //namespace messages

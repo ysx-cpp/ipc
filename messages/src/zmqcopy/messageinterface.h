@@ -19,6 +19,7 @@ public:
     virtual void SubscribeEvent(const RoutingMessage& message);
     
 protected:
+    const std::string &topc_;
     std::unique_ptr<RequestImpl> request_;
     std::unique_ptr<SubscriberImpl> subscriber_;
 };
@@ -33,6 +34,7 @@ public:
     virtual void RequestEvent(const RoutingMessage& message);
 
 protected:
+    const std::string &topc_;
     std::unique_ptr<ReplyImpl> reply_;
     std::unique_ptr<PublisherImpl> publisher_;
 };

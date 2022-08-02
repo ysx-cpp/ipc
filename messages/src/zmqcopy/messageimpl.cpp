@@ -11,8 +11,7 @@
 namespace ipc {
 namespace messages {
 
-////////////////////////////////////////////////////////////////////////////////
-//class PublisherImpl
+//////////////////////////////////////class PublisherImpl//////////////////////////////////////////
 PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 {
     pub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
@@ -24,7 +23,6 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
 
 void PublisherImpl::Bind(const std::string& host)
 {
-    // std::string server_pub_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_PUB_PORT);
     LOGINFO << "bind server_pub_addr:" << host;
     pub_socket_->bind(host.c_str());
 }
@@ -40,8 +38,7 @@ bool PublisherImpl::Publish(const RoutingMessage &message)
     return SendMessage(pub_socket_, buffer_);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// subscriber
+///////////////////////////////////////class subscriber/////////////////////////////////////////
 SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
 {
     stop_ = false;
@@ -61,7 +58,6 @@ SubscriberImpl::~SubscriberImpl()
 
 bool SubscriberImpl::Connect(const std::string& host, const std::string& topc)
 {
-    // std::string server_sub_addr = ParseHost("tcp", ipc_SERVER_SUB_ADDR, ipc_SERVER_PUB_PORT);
     sub_socket_->connect(host.c_str());
     LOGINFO << "connect server_pub_addr:" << host;
 
@@ -109,8 +105,7 @@ void SubscriberImpl::Stop()
     stop_ = true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// routing server
+///////////////////////////////////////class ReplyImpl/////////////////////////////////////////
 ReplyImpl::ReplyImpl(zmq::context_t &zmq_ctx)
 {
     // init status
@@ -131,7 +126,6 @@ ReplyImpl::~ReplyImpl()
 
 void ReplyImpl::Bind(const std::string& host)
 {
-    // std::string server_rep_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_REP_PORT);
     LOGINFO << "bind server_rep_addr:" << host;
     rep_socket_->bind(host.c_str());
 }
@@ -191,8 +185,7 @@ void ReplyImpl::Stop()
     stop_ = true;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// class RequestImpl
+///////////////////////////////////////class RequestImpl/////////////////////////////////////////
 RequestImpl::RequestImpl(zmq::context_t& zmq_ctx) 
 {
     req_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
@@ -204,7 +197,6 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
 
 bool RequestImpl::Connect(const std::string& host)
 {
-    // std::string server_req_addr = ParseHost("tcp", ipc_SERVER_REQ_ADDR, ipc_SERVER_REP_PORT);
     LOGINFO << "connect req_addr:" << host;
     req_socket_->connect(host.c_str());
     return req_socket_ != nullptr;
@@ -226,8 +218,7 @@ bool RequestImpl::Request(const RoutingMessage& request, RoutingMessage& respons
     return Decode(recv_buffer_, response);
 }
 
-////////////////////////////////////////////////////////////////////////////////
-//class RouterImpl
+///////////////////////////////////////class RouterImpl/////////////////////////////////////////
 RouterImpl::RouterImpl(zmq::context_t& zmq_ctx)
 {
     frontend_router_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
