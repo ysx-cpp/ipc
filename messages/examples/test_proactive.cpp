@@ -9,6 +9,7 @@
 #include "zmqcopy/proactiveside.h"
 #include "zmqcopy/passiveside.h"
 #include "zmqcopy/scheduler.h"
+#include "zmqcopy/utils.hpp"
 
 using namespace ipc::messages;
 
@@ -21,16 +22,27 @@ int main(int argc, char** argv)
 	FLAGS_colorlogtostderr = true;//log有颜色区分
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
+    MessagesConfig config;
+    assert(LoadConfig(argv[1], config));
+
+    LOGINFO << config.DebugString();
+
     static zmq::context_t zmq_ctx = zmq::context_t(1);
     ipc::messages::RequestImpl client(zmq_ctx);
-    client.Connect("tcp://127.0.0.1:7720");
+    client.Connect(config.server_req_addr());
 
     RoutingMessage req;
     RoutingMessage rsp;
     req.set_action(111);
     client.Request(req, rsp);
+    LOGINFO << rsp.DebugString();
 
-    LOG(INFO) << rsp.DebugString();
+    ipc::messages::SubscriberImpl subscriber(zmq_ctx);
+    subscriber.Connect(config.server_sub_addr(), config.topic_start_port());
+
+    subscriber.Run([](const RoutingMessage& msg){
+        LOGINFO << msg.DebugString();
+    });
 
     return 0;
 }

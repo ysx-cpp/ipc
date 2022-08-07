@@ -21,7 +21,7 @@ class PassiveSide
 public:
     explicit PassiveSide(zmq::context_t& zmq_ctx, const std::string &topc);
     virtual ~PassiveSide();
-    void Bind();
+    void Bind(const MessagesConfig& config);
     bool Publish(const RoutingMessage& message);
     virtual void RequestEvent(const RoutingMessage& message);
 

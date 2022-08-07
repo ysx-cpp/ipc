@@ -1,3 +1,8 @@
+server_rep_addr: "tcp://*:7011"
+server_pub_addr: "tcp://*:7012"
+server_req_addr: "tcp://127.0.0.1:7011"
+server_sub_addr: "tcp://127.0.0.1:7012"
+topic_start_port: "topc"
 zmq_send_queue: 10000
 zmq_recv_queue: 10000
 zmq_close_wait: 0

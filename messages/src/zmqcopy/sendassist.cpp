@@ -32,14 +32,14 @@ bool RecvMessage(std::unique_ptr<zmq::socket_t> &socket, StreamBuffer& buffer)
         if (!socket->recv(message))
             return false;
 
-        LOG(INFO) << "init buuffer.size:" << buffer.size();
+        // LOG(INFO) << "init buuffer.size:" << buffer.size();
 
         auto mutable_buffer = buffer.prepare(message.size());
         std::memcpy(reinterpret_cast<char *>(mutable_buffer.data()),
                      reinterpret_cast<char *>(message.data()),
                      message.size());
 
-        LOG(INFO) << "prepare buuffer.size:" << buffer.size();
+        // LOG(INFO) << "prepare buuffer.size:" << buffer.size();
         buffer.commit(message.size());
         LOG(INFO) << "commit buuffer.size:" << buffer.size();
         return true;
@@ -70,10 +70,10 @@ bool Encode(const ::google::protobuf::Message& message, StreamBuffer& buffer)
 
     EncodeHead(data.size(), buffer);
 
-    LOG(INFO) << "init buuffer.size:" << buffer.size();
+    // LOG(INFO) << "init buuffer.size:" << buffer.size();
     auto mutable_buffer = buffer.prepare(data.size());
     std::copy(data.begin(), data.end(), reinterpret_cast<char *>(mutable_buffer.data()));
-    LOG(INFO) << "prepare buuffer.size:" << buffer.size();
+    // LOG(INFO) << "prepare buuffer.size:" << buffer.size();
     buffer.commit(data.size());
     LOG(INFO) << "commit buuffer.size:" << buffer.size();
 

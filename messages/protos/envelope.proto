@@ -17,7 +17,7 @@ message MessagesConfig {
     bytes server_sub_addr   = 4;
 
     // topic start port
-    int32 topic_start_port  = 5;
+    bytes topic_start_port  = 5;
 
     // buffer and waiting
     int32 zmq_send_queue    = 6;

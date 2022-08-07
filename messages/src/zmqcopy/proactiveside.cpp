@@ -21,13 +21,10 @@ ProactiveSide::~ProactiveSide()
 {
 }
 
-void ProactiveSide::Connect()
+void ProactiveSide::Connect(const MessagesConfig& config)
 {
-    std::string server_req_addr = ParseHost("tcp", ipc_SERVER_REQ_ADDR, ipc_SERVER_REP_PORT);
-    request_->Connect(server_req_addr);
-
-    std::string server_pub_addr = ParseHost("tcp", ipc_SERVER_PUB_ADDR, ipc_SERVER_PUB_PORT);
-    subscriber_->Connect(server_pub_addr, topc_);
+    request_->Connect(config.server_rep_addr());
+    subscriber_->Connect(config.server_pub_addr(), config.topic_start_port());
 
     auto sub_thread = std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(),
                                  std::bind(&ProactiveSide::SubscribeEvent, this, std::placeholders::_1));
@@ -42,7 +39,7 @@ bool ProactiveSide::Request(const RoutingMessage& request, RoutingMessage& respo
 
 void ProactiveSide::SubscribeEvent(const RoutingMessage &message)
 {
-    LOG(INFO) << message.DebugString();
+    LOGINFO << message.DebugString();
 }
 
 } // namespace messages

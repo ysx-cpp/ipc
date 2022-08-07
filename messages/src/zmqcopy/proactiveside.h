@@ -21,7 +21,7 @@ class ProactiveSide
 public:
     explicit ProactiveSide(zmq::context_t& zmq_ctx, const std::string& topc);
     virtual ~ProactiveSide();
-    void Connect();
+    void Connect(const MessagesConfig& config);
     bool Request(const RoutingMessage& request, RoutingMessage& response);
     virtual void SubscribeEvent(const RoutingMessage& message);
     

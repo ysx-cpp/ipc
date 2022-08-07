@@ -8,6 +8,9 @@
 #include "zmqcopy/proactiveside.h"
 #include "zmqcopy/passiveside.h"
 #include "zmqcopy/scheduler.h"
+#include "zmqcopy/utils.hpp"
+
+using namespace ipc::messages;
 
 int main(int argc, char** argv) 
 {
@@ -18,10 +21,15 @@ int main(int argc, char** argv)
 	FLAGS_colorlogtostderr = true;//log有颜色区分
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
+    MessagesConfig config;
+    assert(LoadConfig(argv[1], config));
+
+    LOGINFO << config.DebugString();
+
     static zmq::context_t zmq_ctx = zmq::context_t(1);
     ipc::messages::PassiveSide server(zmq_ctx, "");
 
-    server.Bind();
+    server.Bind(config);
 
     return 0;
 }

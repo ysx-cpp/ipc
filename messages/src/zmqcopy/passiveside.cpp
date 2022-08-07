@@ -21,13 +21,10 @@ PassiveSide::~PassiveSide()
 {
 }
 
-void PassiveSide::Bind()
+void PassiveSide::Bind(const MessagesConfig& config)
 {
-    std::string server_rep_addr = ParseHost("tcp", ipc_SERVER_REP_ADDR, ipc_SERVER_REP_PORT);
-    reply_->Bind(server_rep_addr);
-
-    std::string server_pub_addr = ParseHost("tcp", ipc_SERVER_SUB_ADDR, ipc_SERVER_PUB_PORT);
-    publisher_->Bind(server_pub_addr);
+    reply_->Bind(config.server_rep_addr());
+    publisher_->Bind(config.server_pub_addr());
 
     auto rep_thread = std::async(std::launch::async, &ReplyImpl::Run, reply_.get(),
                                  std::bind(&PassiveSide::RequestEvent, this, std::placeholders::_1));
@@ -43,6 +40,7 @@ bool PassiveSide::Publish(const RoutingMessage& message)
 void PassiveSide::RequestEvent(const RoutingMessage &message)
 {
     reply_->SendResponse(message);
+    publisher_->Publish(message);
     LOG(INFO) << message.DebugString();
 }
 
