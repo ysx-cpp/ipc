@@ -2,8 +2,8 @@
 // support text messages only
 // usage: ./messages_debuger <server> <port> <pub|sub> <topic> <pub message char> <pub message size> <pub interval(ms)>
 
-#include <glog/logging.h>
 #include "envelope.pb.h"
+#include "config.pb.h"
 #include "zmqcopy/sendassist.h"
 #include "zmqcopy/proactiveside.h"
 #include "zmqcopy/passiveside.h"
@@ -11,6 +11,7 @@
 #include "zmqcopy/utils.hpp"
 
 using namespace ipc::messages;
+using namespace ipc::config;
 
 int main(int argc, char** argv) 
 {
@@ -21,15 +22,14 @@ int main(int argc, char** argv)
 	FLAGS_colorlogtostderr = true;//log有颜色区分
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
-    MessagesConfig config;
-    assert(LoadConfig(argv[1], config));
+    assert(LoadConfig(argv[1], g_config));
 
-    LOGINFO << config.DebugString();
+    LOGINFO << g_config.DebugString();
 
     static zmq::context_t zmq_ctx = zmq::context_t(1);
     ipc::messages::PassiveSide server(zmq_ctx, "");
 
-    server.Bind(config);
+    server.Bind(g_config);
 
     return 0;
 }

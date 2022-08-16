@@ -9,28 +9,20 @@
 #include <functional>
 #include "zmq.hpp"
 #include "streambuffer.hpp"
+#include "config.pb.h"
 
 // forward declaration for hiding zmq.hpp
 namespace zmq {
     class socket_t;
 }
 
-// node type defines
-#define ROUTING_NODE_PUB    1
-#define ROUTING_NODE_SUB    2
-
-// routing action defines
-#define ROUTING_PUB_ONLINE  1
-#define ROUTING_PUB_OFFLINE 2
-#define ROUTING_SUB_ONLINE  3
-#define ROUTING_SUB_OFFLINE 4
-#define ROUTING_NODE_LIST   5
-
 namespace ipc {
 namespace messages {
 
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
+
+static config::MessagesConfig g_config;
 
 ////////////////////////////////////////////////////////////////////////////////
 class PublisherImpl

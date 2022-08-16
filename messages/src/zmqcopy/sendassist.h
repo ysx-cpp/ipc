@@ -2,7 +2,6 @@
 #define SEND_ASSIST_HPP
 #include <memory>
 #include <glog/logging.h>
-#include "zmq_config.h"
 #include "envelope.pb.h"
 #include "streambuffer.hpp"
 

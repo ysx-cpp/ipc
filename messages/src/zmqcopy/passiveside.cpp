@@ -3,8 +3,8 @@
 #include <functional>
 #include <glog/logging.h>
 #include "envelope.pb.h"
+#include "config.pb.h"
 #include "messageimpl.h"
-#include "zmq_config.h"
 #include "sendassist.h"
 
 namespace ipc {
@@ -21,7 +21,7 @@ PassiveSide::~PassiveSide()
 {
 }
 
-void PassiveSide::Bind(const MessagesConfig& config)
+void PassiveSide::Bind(const config::MessagesConfig& config)
 {
     reply_->Bind(config.server_rep_addr());
     publisher_->Bind(config.server_pub_addr());

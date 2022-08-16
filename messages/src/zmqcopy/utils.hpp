@@ -4,6 +4,10 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/text_format.h>
 #include <google/protobuf/io/zero_copy_stream_impl.h>
+#include <glog/logging.h>
+
+#define LOGINFO LOG(INFO)<<__FUNCTION__<<"|"
+#define LOGERROR LOG(ERROR)<<__FUNCTION__<<"|"
 
 ////////////////////////////////////////////////////////////////////////////////
 // parse prototxt file

@@ -4,7 +4,7 @@
 #include <glog/logging.h>
 #include "envelope.pb.h"
 #include "messageimpl.h"
-#include "zmq_config.h"
+#include "utils.hpp"
 
 namespace ipc {
 namespace messages {

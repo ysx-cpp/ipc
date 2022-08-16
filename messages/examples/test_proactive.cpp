@@ -22,14 +22,13 @@ int main(int argc, char** argv)
 	FLAGS_colorlogtostderr = true;//log有颜色区分
 	FLAGS_stop_logging_if_full_disk = true;//磁盘写满了就不写了
 
-    MessagesConfig config;
-    assert(LoadConfig(argv[1], config));
+    assert(LoadConfig(argv[1], g_config));
 
-    LOGINFO << config.DebugString();
+    LOGINFO << g_config.DebugString();
 
     static zmq::context_t zmq_ctx = zmq::context_t(1);
     ipc::messages::RequestImpl client(zmq_ctx);
-    client.Connect(config.server_req_addr());
+    client.Connect(g_config.server_req_addr());
 
     RoutingMessage req;
     RoutingMessage rsp;
@@ -38,7 +37,7 @@ int main(int argc, char** argv)
     LOGINFO << rsp.DebugString();
 
     ipc::messages::SubscriberImpl subscriber(zmq_ctx);
-    subscriber.Connect(config.server_sub_addr(), config.topic_start_port());
+    subscriber.Connect(g_config.server_sub_addr(), g_config.topic_start_port());
 
     subscriber.Run([](const RoutingMessage& msg){
         LOGINFO << msg.DebugString();

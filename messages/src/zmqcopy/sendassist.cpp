@@ -1,9 +1,8 @@
 #include "sendassist.h"
 #include <memory>
-#include <glog/logging.h>
-#include "zmq_config.h"
 #include "envelope.pb.h"
 #include "streambuffer.hpp"
+#include "utils.hpp"
 
 namespace ipc {
 namespace messages {

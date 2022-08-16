@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <chrono>
 #include <glog/logging.h>
-#include "zmq_config.h"
+#include "utils.hpp"
 #include "envelope.pb.h"
 #include "sendassist.h"
 
@@ -17,8 +17,8 @@ PublisherImpl::PublisherImpl(zmq::context_t &zmq_ctx)
     pub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_PUB);
     // pub_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     // pub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-    pub_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_SEND_QUEUE);
-    pub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
+    pub_socket_->set(zmq::sockopt::sndhwm, g_config.zmq_send_queue());
+    pub_socket_->set(zmq::sockopt::linger, g_config.zmq_close_wait());
 }
 
 void PublisherImpl::Bind(const std::string& host)
@@ -42,13 +42,13 @@ bool PublisherImpl::Publish(const RoutingMessage &message)
 SubscriberImpl::SubscriberImpl(zmq::context_t& zmq_ctx)
 {
     stop_ = false;
-    pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
+    pool_timeout_ = std::chrono::milliseconds(g_config.zmq_pool_timeout());
 
     sub_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_SUB);
     // sub_socket_->setsockopt(ZMQ_REVHWM, ipc_ZMQ_RECV_QUEUE);
     // sub_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-    sub_socket_->set(zmq::sockopt::rcvhwm, ipc_ZMQ_RECV_QUEUE);
-    sub_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
+    sub_socket_->set(zmq::sockopt::rcvhwm, g_config.zmq_recv_queue());
+    sub_socket_->set(zmq::sockopt::linger, g_config.zmq_close_wait());
 }
 
 SubscriberImpl::~SubscriberImpl()
@@ -110,13 +110,13 @@ ReplyImpl::ReplyImpl(zmq::context_t &zmq_ctx)
 {
     // init status
     stop_ = false;
-    pool_timeout_ = std::chrono::milliseconds(ipc_ZMQ_POOL_TIMEOUT);
+    pool_timeout_ = std::chrono::milliseconds(g_config.zmq_pool_timeout());
 
     rep_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REP);
     // rep_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_RECV_QUEUE);
     // rep_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-    rep_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
-    rep_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
+    rep_socket_->set(zmq::sockopt::sndhwm, g_config.zmq_recv_queue());
+    rep_socket_->set(zmq::sockopt::linger, g_config.zmq_close_wait());
 }
 
 ReplyImpl::~ReplyImpl()
@@ -192,8 +192,8 @@ RequestImpl::RequestImpl(zmq::context_t& zmq_ctx)
     req_socket_ = std::make_unique<zmq::socket_t>(zmq_ctx, ZMQ_REQ);
     // req_socket_->setsockopt(ZMQ_SNDHWM, ipc_ZMQ_SEND_QUEUE);
     // req_socket_->setsockopt(ZMQ_LINGER, ipc_ZMQ_CLOSE_WAIT);
-    req_socket_->set(zmq::sockopt::sndhwm, ipc_ZMQ_RECV_QUEUE);
-    req_socket_->set(zmq::sockopt::linger, ipc_ZMQ_CLOSE_WAIT);
+    req_socket_->set(zmq::sockopt::sndhwm, g_config.zmq_send_queue());
+    req_socket_->set(zmq::sockopt::linger, g_config.zmq_close_wait());
 }
 
 bool RequestImpl::Connect(const std::string& host)

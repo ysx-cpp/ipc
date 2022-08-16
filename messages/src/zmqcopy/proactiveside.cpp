@@ -4,8 +4,9 @@
 #include <glog/logging.h>
 #include "envelope.pb.h"
 #include "messageimpl.h"
-#include "zmq_config.h"
+#include "config.pb.h"
 #include "sendassist.h"
+#include "utils.hpp"
 
 namespace ipc {
 namespace messages {
@@ -21,7 +22,7 @@ ProactiveSide::~ProactiveSide()
 {
 }
 
-void ProactiveSide::Connect(const MessagesConfig& config)
+void ProactiveSide::Connect(const config::MessagesConfig& config)
 {
     request_->Connect(config.server_rep_addr());
     subscriber_->Connect(config.server_pub_addr(), config.topic_start_port());

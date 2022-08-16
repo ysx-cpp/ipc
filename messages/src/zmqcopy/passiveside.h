@@ -3,6 +3,7 @@
 #include <memory>
 #include "zmq.hpp"
 #include "envelope.pb.h"
+#include "config.pb.h"
 #include "messageimpl.h"
 
 namespace zmq {
@@ -21,7 +22,7 @@ class PassiveSide
 public:
     explicit PassiveSide(zmq::context_t& zmq_ctx, const std::string &topc);
     virtual ~PassiveSide();
-    void Bind(const MessagesConfig& config);
+    void Bind(const config::MessagesConfig& config);
     bool Publish(const RoutingMessage& message);
     virtual void RequestEvent(const RoutingMessage& message);
 
