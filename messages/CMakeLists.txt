@@ -1,9 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project("messages")
 
-#find_package(Boost REQUIRED)
 find_package(Protobuf REQUIRED)
-find_package(Glog REQUIRED)
 find_package(ZeroMQ REQUIRED)
 
 if (NOT ZeroMQ_FOUND)
@@ -15,18 +13,6 @@ if (NOT ZeroMQ_FOUND)
     find_library(ZeroMQ_LIBRARY
         NAMES zmq
         PATHS ${PC_ZeroMQ_LIBRARY_DIRS}
-    )
-endif()
-
-if (NOT Glog_FOUND)
-    # load in pkg-config support
-    find_package(PkgConfig)
-    # use pkg-config to get hints for 0mq locations
-    pkg_check_modules(PC_Glog QUIET glog)
-
-    find_library(Glog_LIBRARY
-        NAMES glog
-        PATHS ${PC_Glog_LIBRARY_DIRS}
     )
 endif()
 
