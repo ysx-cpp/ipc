@@ -11,7 +11,7 @@
 #include <future>
 #include <functional>
 #include <condition_variable>
-#include "util_defines.h"
+#include <assert.h>
 #include "util_system.h"
 
 namespace ipc {
@@ -93,7 +93,7 @@ private:
             }
 
             // pop task
-            if (m_pop_strategy == ipc_THREAD_POOL_DROP) {
+            if (m_pop_strategy == 2) {
                 task = std::move(m_queue.front());
                 m_queue.pop_front();
             } else { // ipc_THREAD_POOL_FIFO

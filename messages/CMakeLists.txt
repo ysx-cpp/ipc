@@ -35,8 +35,7 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS "${PROTO_FILES}")
 list(GET PROTO_HDRS 0 PROTO_HDR)
 get_filename_component(PROTO_DIR ${PROTO_HDR} PATH)
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
-include_directories("${PROTO_DIR}" ${PROJECT_SOURCE_DIR}/src)
+include_directories(${PROTO_DIR} ${PROJECT_SOURCE_DIR}/src)
 set(LIBS ${ZeroMQ_LIBRARY} ${PROTOBUF_LIBRARIES} ${GLOG_LIBRARIES} glog)
 
 # message("Glog_LIBRARY:${Glog_LIBRARY} GLOG_LIBRARIES:${GLOG_LIBRARIES} PROTOBUF_LIBRARIES:${PROTOBUF_LIBRARIES} ZeroMQ_LIBRARY:${ZeroMQ_LIBRARY}")

@@ -5,11 +5,11 @@
 #include <future>
 #include <glog/logging.h>
 #include "envelope.pb.h"
-#include "zmqcopy/sendassist.h"
-#include "zmqcopy/proactiveside.h"
-#include "zmqcopy/passiveside.h"
-#include "zmqcopy/scheduler.h"
-#include "zmqcopy/utils.hpp"
+#include "sendassist.h"
+#include "proactiveside.h"
+#include "passiveside.h"
+#include "scheduler.h"
+#include "utils.hpp"
 
 using namespace ipc::messages;
 
