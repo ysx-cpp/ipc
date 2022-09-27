@@ -1,5 +1,5 @@
 /*
- * @file connectionmgr.h
+ * @file connectionpool.h
  * @author Songxi Yang
  * @mail ysx-cpp@gmail.com
  * @github https://github.com/ysx-cpp
@@ -18,11 +18,11 @@
 namespace fastlink {
 namespace net {
 
-class ConnectionMgr : private boost::noncopyable
+class ConnectionPool : private boost::noncopyable
 {
     friend class Connection;
 protected:
-	virtual ~ConnectionMgr() = default;
+	virtual ~ConnectionPool() = default;
 
     virtual int OnReceveData(const ByteArrayPtr data, ConnectionPtr connection) = 0;
 	virtual int OnConnect(ConnectionPtr connection) = 0;
@@ -42,7 +42,7 @@ private:
 	boost::recursive_mutex mutex_;                      /* 全局锁 */
 	std::set<ConnectionPtr> connection_pool_;           /* 连接池 */
 };
-using ConnectionMgrPtr = boost::shared_ptr<ConnectionMgr>;
+using ConnectionPoolPtr = boost::shared_ptr<ConnectionPool>;
 
 } // namespace net
 } // namespace fastlink

@@ -15,7 +15,7 @@
 namespace fastlink {
 namespace net {
 
-class ConnectionMgr;
+class ConnectionPool;
 class Connection : public TcpHandler
 {
 public:
@@ -24,7 +24,7 @@ public:
 
 	void Start();
     void Stop();
-	void SetManager(ConnectionMgr *manager);
+	void SetManager(ConnectionPool *manager);
 	bool Connect(const std::string &host, unsigned short port);
 	void Send(ByteArray &data);
 	void EnableHeartbeat();
@@ -39,7 +39,7 @@ protected:
 	void Disconnect() override;
 
 private:
-    ConnectionMgr *manager_;
+    ConnectionPool *manager_;
 	std::unique_ptr<Heartbeat> heartbeat_;
 	bool connected_ = false;
 };

@@ -12,7 +12,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
-#include "connectionmgr.h"
+#include "connectionpool.h"
 
 namespace fastlink {
 namespace net {
@@ -43,7 +43,7 @@ void Connection::Stop()
 		manager_->RemoveConnection(ShaerdSelf());
 }
 
-void Connection::SetManager(ConnectionMgr *manager)
+void Connection::SetManager(ConnectionPool *manager)
 {
 	manager_ = manager;
 }

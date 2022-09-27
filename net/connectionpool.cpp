@@ -1,11 +1,11 @@
 /*
- * @file connectionmgr.cpp
+ * @file connectionpool.cpp
  * @author Songxi Yang
  * @mail ysx-cpp@gmail.com
  * @github https://github.com/ysx-cpp
  * @date Oct 08 2019
  */
-#include "connectionmgr.h"
+#include "connectionpool.h"
 #include <algorithm>
 #include <boost/make_shared.hpp>
 #ifndef WIN32
@@ -19,27 +19,27 @@ namespace net {
 
 using namespace boost::asio;
 
-int ConnectionMgr::OnReceveData(const ByteArrayPtr, ConnectionPtr)
+int ConnectionPool::OnReceveData(const ByteArrayPtr, ConnectionPtr)
 {
     return 0;
 }
 
-int ConnectionMgr::OnConnect(ConnectionPtr /*connection*/)
+int ConnectionPool::OnConnect(ConnectionPtr /*connection*/)
 {
 	return 0;
 }
 
-int ConnectionMgr::OnDisconnect(ConnectionPtr /*connection*/)
+int ConnectionPool::OnDisconnect(ConnectionPtr /*connection*/)
 {
 	return 0;
 }
 
-ConnectionPtr ConnectionMgr::CreateConnection(boost::asio::io_context &ioc)
+ConnectionPtr ConnectionPool::CreateConnection(boost::asio::io_context &ioc)
 {
 	return std::make_shared<Connection>(ioc);
 }
 
-ConnectionPtr ConnectionMgr::CreateConnectionSsl(boost::asio::io_context &ioc)
+ConnectionPtr ConnectionPool::CreateConnectionSsl(boost::asio::io_context &ioc)
 {
 #if 0
 	ssl::context ctx(ssl::context::sslv23);
@@ -62,14 +62,14 @@ ConnectionPtr ConnectionMgr::CreateConnectionSsl(boost::asio::io_context &ioc)
 #endif
 }
 
-void ConnectionMgr::AddConnection(ConnectionPtr connection)
+void ConnectionPool::AddConnection(ConnectionPtr connection)
 {
 	boost::recursive_mutex::scoped_lock rlock(mutex_);
 	connection_pool_.insert(connection);
 	this->OnConnect(connection);
 }
 
-void ConnectionMgr::RemoveConnection(ConnectionPtr connection)
+void ConnectionPool::RemoveConnection(ConnectionPtr connection)
 {
 	boost::recursive_mutex::scoped_lock rlock(mutex_);
 	if (connection_pool_.find(connection) != connection_pool_.end())
@@ -79,20 +79,20 @@ void ConnectionMgr::RemoveConnection(ConnectionPtr connection)
 	}
 }
 
-void ConnectionMgr::RemoveAllConnection()
+void ConnectionPool::RemoveAllConnection()
 {
 	boost::recursive_mutex::scoped_lock rlock(mutex_);
 	connection_pool_.clear();
 }
 
-ConnectionPtr ConnectionMgr::GetConnection() const
+ConnectionPtr ConnectionPool::GetConnection() const
 {
     auto it = connection_pool_.cbegin();
     std::next(it, Index());
     return *it;
 }
 
-ConnectionPtr ConnectionMgr::GetConnection(const ConnectionPtr &connection) const
+ConnectionPtr ConnectionPool::GetConnection(const ConnectionPtr &connection) const
 {
 	auto it = connection_pool_.lower_bound(connection);
 	if (it == connection_pool_.end())
@@ -101,7 +101,7 @@ ConnectionPtr ConnectionMgr::GetConnection(const ConnectionPtr &connection) cons
 	return *it;
 }
 
-size_t ConnectionMgr::Index() const
+size_t ConnectionPool::Index() const
 {
 	static unsigned index = 0;
 	assert(!connection_pool_.empty());

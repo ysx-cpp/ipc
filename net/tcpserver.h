@@ -9,13 +9,13 @@
 #define NET_TCPSERVER_H
 
 #include <set>
-#include "connectionmgr.h"
+#include "connectionpool.h"
 #include "application.h"
 
 namespace fastlink {
 namespace net {
 
-class TcpServer : public ConnectionMgr
+class TcpServer : public ConnectionPool
 {   
 public:
     TcpServer(const std::string &host, unsigned short port);
