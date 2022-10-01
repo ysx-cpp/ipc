@@ -90,6 +90,9 @@ public:
     }
 
 protected:
+    friend class TcpServer;
+    friend class UdpServer;
+    friend class IcmpServer;
     tcpsocket socket_;
 };
     

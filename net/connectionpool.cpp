@@ -88,16 +88,26 @@ void ConnectionPool::RemoveAllConnection()
 ConnectionPtr ConnectionPool::GetConnection() const
 {
     auto it = connection_pool_.cbegin();
-    std::next(it, Index());
+    it = std::next(it, Index());
+	assert(it != connection_pool_.cend());
     return *it;
 }
 
 ConnectionPtr ConnectionPool::GetConnection(const ConnectionPtr &connection) const
 {
-	auto it = connection_pool_.lower_bound(connection);
+	auto it = connection_pool_.find(connection);
 	if (it == connection_pool_.end())
-		return *connection_pool_.begin();
+		return nullptr;
 
+	return *it;
+}
+
+ConnectionPtr ConnectionPool::GetConnection(size_t hash_value) const
+{
+	const auto size = connection_pool_.size();
+	auto it = connection_pool_.cbegin();
+	it = std::next(it, hash_value % size);
+	assert(it != connection_pool_.cend());
 	return *it;
 }
 
