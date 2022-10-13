@@ -15,7 +15,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using tcpsocket = boost::asio::ip::tcp::socket;
@@ -97,6 +97,6 @@ protected:
 };
     
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_TCP_SOCKET_SETINTS_HPP

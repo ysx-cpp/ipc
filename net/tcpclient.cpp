@@ -11,7 +11,7 @@
 #include <boost/bind.hpp>
 #include "package.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 TcpClient::TcpClient(boost::asio::io_context &ioc)
@@ -70,4 +70,4 @@ void TcpClient::Disconnect()
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

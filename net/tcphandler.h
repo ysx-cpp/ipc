@@ -13,7 +13,7 @@
 #include "package.h"
 #include "sockethandler.hpp"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class MatchWhitespace
@@ -63,6 +63,6 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_TCP_HANDLER_H

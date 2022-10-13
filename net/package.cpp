@@ -9,7 +9,7 @@
 #include <boost/asio/streambuf.hpp>
 #include "package.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
@@ -79,4 +79,4 @@ void Package::Decode(const ByteArray &data)
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

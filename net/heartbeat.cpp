@@ -12,7 +12,7 @@
 #include "connection.h"
 
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
@@ -59,4 +59,4 @@ void Heartbeat::TimerHandle(const boost::system::error_code &ec)
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

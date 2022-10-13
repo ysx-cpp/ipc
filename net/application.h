@@ -14,7 +14,7 @@
 #include <boost/asio/io_service_strand.hpp>
 #include <boost/thread/detail/singleton.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class Application
@@ -41,5 +41,5 @@ private:
 using ApplicationSgl = boost::detail::thread::singleton<Application>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 #endif // NET_REACTOR_H

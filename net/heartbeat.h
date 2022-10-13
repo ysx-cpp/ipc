@@ -13,7 +13,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class Heartbeat : public boost::enable_shared_from_this<Heartbeat>
@@ -37,7 +37,7 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_HEARBEAT_H
 

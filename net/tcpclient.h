@@ -12,7 +12,7 @@
 #include "tcphandler.h"
 #include "connection.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 struct ConnectOption
@@ -40,6 +40,6 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_TCPCLIENT_H

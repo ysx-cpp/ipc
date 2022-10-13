@@ -12,7 +12,7 @@
 #include "tcphandler.h"
 #include "heartbeat.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class ConnectionPool;
@@ -46,6 +46,6 @@ private:
 using ConnectionPtr = std::shared_ptr<Connection>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_CONNECTION_H

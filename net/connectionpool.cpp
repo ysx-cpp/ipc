@@ -14,7 +14,7 @@
 #include <boost/asio/ssl/stream.hpp>
 #endif
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
@@ -119,4 +119,4 @@ size_t ConnectionPool::Index() const
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

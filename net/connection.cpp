@@ -14,7 +14,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include "connectionpool.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 Connection::Connection(boost::asio::io_context &ioc) :
@@ -99,4 +99,4 @@ void Connection::Disconnect()
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

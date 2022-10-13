@@ -15,7 +15,7 @@
 #include <boost/noncopyable.hpp>
 
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 template<class T>
@@ -157,6 +157,6 @@ protected:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_SOCKET_WRAPPER_HPP

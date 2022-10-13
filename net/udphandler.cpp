@@ -13,7 +13,7 @@
 #include <boost/bind.hpp>
 
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using namespace boost::asio;
@@ -108,4 +108,4 @@ void UdpHandler::Disconnect()
 }
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc

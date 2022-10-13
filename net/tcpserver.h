@@ -12,7 +12,7 @@
 #include "connectionpool.h"
 #include "application.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class TcpServer : public ConnectionPool
@@ -38,5 +38,5 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 #endif // NET_TCPSERVER_H

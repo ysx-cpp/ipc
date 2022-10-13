@@ -14,7 +14,7 @@
 #include "package.h"
 #include "sockethandler.hpp"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class UdpHandler : public SocketHandler<boost::asio::ip::udp::socket>
@@ -40,6 +40,6 @@ private:
 };
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_SOCKET_HANDLER_H

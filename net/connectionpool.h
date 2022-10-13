@@ -15,7 +15,7 @@
 #include <boost/shared_ptr.hpp>
 #include "connection.h"
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 class ConnectionPool : private boost::noncopyable
@@ -46,5 +46,5 @@ private:
 using ConnectionPoolPtr = boost::shared_ptr<ConnectionPool>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 #endif // NET_CONNECTION_MGR_H

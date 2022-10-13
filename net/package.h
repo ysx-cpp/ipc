@@ -13,7 +13,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
 
-namespace fastlink {
+namespace ipc {
 namespace net {
 
 using Byte = uint8_t;
@@ -78,6 +78,6 @@ public:
 using PackagePtr = std::shared_ptr<Package>;
 
 } // namespace net
-} // namespace fastlink
+} // namespace ipc
 
 #endif // NET_PACKAGE_H
