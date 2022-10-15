@@ -5,8 +5,8 @@
  * @github https://github.com/ysx-cpp
  * @date Oct 08 2019
  */
-#ifndef NET_CONNECTION_MGR_H
-#define NET_CONNECTION_MGR_H
+#ifndef NET_CONNECTION_POOL_H
+#define NET_CONNECTION_POOL_H
 
 #include <set>
 #include <boost/noncopyable.hpp>
@@ -47,4 +47,4 @@ using ConnectionPoolPtr = boost::shared_ptr<ConnectionPool>;
 
 } // namespace net
 } // namespace ipc
-#endif // NET_CONNECTION_MGR_H
+#endif // NET_CONNECTION_POOL_H
