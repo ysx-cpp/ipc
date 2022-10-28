@@ -145,7 +145,7 @@ void TcpHandler::ReadUntil(const std::string& string_regex)
 	boost::asio::streambuf recv_buf;
 	boost::asio::async_read_until(socket_,
 								  recv_buf,
-								  boost::regex("\r\n"),
+								  boost::regex(string_regex),
 								  boost::bind(&TcpHandler::ReadUntilHandler, this,
 											  boost::asio::placeholders::error,
 											  boost::asio::placeholders::bytes_transferred));
