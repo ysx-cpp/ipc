@@ -24,9 +24,9 @@ public:
 
 	void Start();
     void Stop();
-	void SetManager(ConnectionPool *manager);
-	bool Connect(const std::string &host, unsigned short port);
-	void Send(ByteArray &data);
+	void SetConnectionPool(ConnectionPool* conn_pool);
+	bool Connect(const std::string& host, unsigned short port);
+	void Send(Package& pkg);
 	void EnableHeartbeat();
 	int OnHeartbeat();
 
@@ -36,12 +36,15 @@ public:
 protected:
 	std::shared_ptr<Connection> ShaerdSelf();
     void Complete(const ByteArrayPtr data) override;
+	void Successfully(const std::size_t& write_bytes) override;
 	void Disconnect() override;
 
 private:
-    ConnectionPool *manager_;
+    ConnectionPool *connction_pool_;
 	std::unique_ptr<Heartbeat> heartbeat_;
 	bool connected_ = false;
+	std::uint64_t send_seq_ = 0;
+	std::uint64_t recv_seq_ = 0;
 };
 using ConnectionPtr = std::shared_ptr<Connection>;
 

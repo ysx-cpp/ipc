@@ -8,6 +8,7 @@
 #include "tcphandler.h"
 #include <iostream>
 #include <boost/bind.hpp>
+#include <boost/regex.hpp>
 #include "heartbeat.h"
 
 namespace ipc {
@@ -66,6 +67,10 @@ void TcpHandler::WriteSomeHandler(const boost::system::error_code &ec, const std
 											 boost::asio::placeholders::error,
 											 boost::asio::placeholders::bytes_transferred));
 	}
+	else
+	{
+		Successfully(write_bytes);
+	}
 }
 
 void TcpHandler::ReadSome()
@@ -114,12 +119,33 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	}
 }
 
-void TcpHandler::ReadUntil(MatchWhitespace &/*match_whitespace*/)
+//
+//class MatchWhitespace
+//{
+//	
+//public:
+//	explicit MatchWhitespace(char c) : c_(c) {}
+//
+//	template <typename Iterator>
+//	std::pair<Iterator, bool> operator()(Iterator begin, Iterator end) const
+//	{
+//		Iterator i = begin;
+//		while (i != end)
+//			if (c_ == *i++)
+//				return std::make_pair(i, true);
+//		return std::make_pair(i, false);
+//	}
+//
+//private:
+//	char c_;
+//};
+
+void TcpHandler::ReadUntil(const std::string& string_regex)
 {
 	boost::asio::streambuf recv_buf;
 	boost::asio::async_read_until(socket_,
 								  recv_buf,
-								  "q",//MatchWhitespace('a'),
+								  boost::regex("\r\n"),
 								  boost::bind(&TcpHandler::ReadUntilHandler, this,
 											  boost::asio::placeholders::error,
 											  boost::asio::placeholders::bytes_transferred));

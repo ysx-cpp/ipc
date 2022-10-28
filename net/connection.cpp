@@ -19,16 +19,16 @@ namespace net {
 
 Connection::Connection(boost::asio::io_context &ioc) :
 	TcpHandler(ioc),
-	manager_(nullptr),
+	connction_pool_(nullptr),
 	heartbeat_(new Heartbeat(ioc))
 {
 }
 
 void Connection::Start()
 {
-    if (manager_)
+    if (connction_pool_)
 	{
-        manager_->AddConnection(ShaerdSelf());
+        connction_pool_->AddConnection(ShaerdSelf());
 	}
 
 	set_connected(true);
@@ -39,13 +39,13 @@ void Connection::Stop()
 {
 	set_connected(false);
 
-	if (manager_)
-		manager_->RemoveConnection(ShaerdSelf());
+	if (connction_pool_)
+		connction_pool_->RemoveConnection(ShaerdSelf());
 }
 
-void Connection::SetManager(ConnectionPool *manager)
+void Connection::SetConnectionPool(ConnectionPool* conn_pool)
 {
-	manager_ = manager;
+	connction_pool_ = conn_pool;
 }
 
 void Connection::EnableHeartbeat()
@@ -74,11 +74,11 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 	return !ec;
 }
 
-void Connection::Send(ByteArray &data)
+void Connection::Send(Package& pkg)
 {
-    Head head;
-    head.Encode(data);
-    Write(data);
+	pkg.set_seq(send_seq_);
+	pkg.Encode();
+    WriteSome(pkg.data());
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()
@@ -88,8 +88,22 @@ std::shared_ptr<Connection> Connection::ShaerdSelf()
 
 void Connection::Complete(const ByteArrayPtr data)
 {
-    if (manager_)
-        manager_->OnReceveData(data, std::dynamic_pointer_cast<Connection>(shared_from_this()));
+	auto package = std::make_shared<Package>();
+	package->Decode(*data);
+
+	if (package->seq() != recv_seq_)
+		return;
+
+	++recv_seq_;
+    if (connction_pool_)
+        connction_pool_->OnReceveData(package, std::dynamic_pointer_cast<Connection>(shared_from_this()));
+}
+
+void Connection::Successfully(const std::size_t& write_bytes)
+{
+	++send_seq_;
+	if (connction_pool_)
+		connction_pool_->OnSendData(write_bytes);
 }
 
 void Connection::Disconnect()

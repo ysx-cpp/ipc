@@ -19,7 +19,7 @@ namespace net {
 
 using namespace boost::asio;
 
-int ConnectionPool::OnReceveData(const ByteArrayPtr, ConnectionPtr)
+int ConnectionPool::OnReceveData(const PackagePtr, ConnectionPtr)
 {
     return 0;
 }

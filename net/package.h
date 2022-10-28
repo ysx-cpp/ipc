@@ -37,6 +37,8 @@ struct PackageHead
     std::uint16_t cmd            = 0;
     std::uint32_t src            = 0; //from server ID
     std::uint32_t dst            = 0; //destination is server ID
+	std::uint64_t seq            = 0; //sequence
+	std::uint64_t verify         = 0; //verify
 };
 
 class Package : public boost::enable_shared_from_this<Package>
@@ -62,14 +64,18 @@ public:
     void set_uid(std::uint64_t uid) {head_.uid = uid;}
     void set_cmd(std::uint16_t cmd) {head_.cmd = cmd;}
     void set_src(std::uint32_t src) {head_.src = src;}
-    void set_dst(std::uint32_t dst) {head_.dst = dst;}
+	void set_dst(std::uint32_t dst) { head_.dst = dst; }
+	void set_seq(std::uint64_t seq) { head_.dst = seq; }
+	void set_verify(std::uint64_t verify) { head_.verify = verify; }
 
     std::uint16_t head_size() const {return head_.head_size;}
     std::uint16_t data_size() const {return head_.data_size;}
     std::uint64_t uid() const {return head_.uid;}
     std::uint16_t cmd() const {return head_.cmd;}
     std::uint32_t src() const {return head_.src;}
-    std::uint32_t dst() const {return head_.dst;}
+	std::uint32_t dst() const { return head_.dst; }
+	std::uint64_t seq() const { return head_.seq; }
+	std::uint64_t verify() const { return head_.verify; }
 
 public:
     PackageHead head_;

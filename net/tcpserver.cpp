@@ -54,7 +54,7 @@ void TcpServer::DoAccept()
     //connection->SetSendBuffSize(8192);
     //connection->SetReciveBuffSize(8192);
     
-    connection->SetManager(this);
+    connection->SetConnectionPool(this);
     acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, _1));
 }
 

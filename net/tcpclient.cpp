@@ -58,9 +58,9 @@ void TcpClient::SendData(const std::string &msg)
         }
     }
 
-    ByteArray data;
-    data.assign(msg.begin(), msg.end());
-    Send(data);
+    Package package;
+    package.Encode(msg);
+    Send(package);
 }
 
 void TcpClient::Disconnect()

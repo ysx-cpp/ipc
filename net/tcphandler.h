@@ -16,26 +16,6 @@
 namespace ipc {
 namespace net {
 
-class MatchWhitespace
-{
-public:
-    explicit MatchWhitespace(char c) : c_(c) {}
-
-    template <typename Iterator>
-    std::pair<Iterator, bool> operator()(
-        Iterator begin, Iterator end) const
-    {
-        Iterator i = begin;
-        while (i != end)
-            if (c_ == *i++)
-                return std::make_pair(i, true);
-        return std::make_pair(i, false);
-    }
-
-private:
-  char c_;
-};
-
 class TcpHandler : public SocketHandler<boost::asio::ip::tcp::socket>
 {
 public:
@@ -51,10 +31,11 @@ protected:
     void ReadSomeHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
 
 
-    void ReadUntil(MatchWhitespace &match_whitespace);
+    void ReadUntil(const std::string& string_regex);
     void ReadUntilHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
 
     virtual void Complete(const ByteArrayPtr data) = 0;
+    virtual void Successfully(const std::size_t &write_bytes) = 0;
     virtual void Disconnect() = 0;
 
 private:

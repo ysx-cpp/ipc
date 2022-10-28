@@ -24,7 +24,8 @@ class ConnectionPool : private boost::noncopyable
 protected:
 	virtual ~ConnectionPool() = default;
 
-    virtual int OnReceveData(const ByteArrayPtr data, ConnectionPtr connection) = 0;
+    virtual int OnReceveData(const PackagePtr data, ConnectionPtr connection) = 0;
+	virtual void OnSendData(const std::size_t& write_bytes) = 0;
 	virtual int OnConnect(ConnectionPtr connection) = 0;
 	virtual int OnDisconnect(ConnectionPtr connection) = 0;
 	ConnectionPtr CreateConnection(boost::asio::io_context &ioc);
