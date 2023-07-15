@@ -37,6 +37,8 @@ protected:
 	std::shared_ptr<Connection> ShaerdSelf();
     void Complete(const ByteArrayPtr data) override;
 	void Successfully(const std::size_t& write_bytes) override;
+	bool CheckVerify(const ByteArray &data, uint64_t verify);
+	uint64_t GenerateVerify(const ByteArray &data);
 	void Disconnect() override;
 
 private:

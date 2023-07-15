@@ -13,6 +13,7 @@
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include "connectionpool.h"
+#include "md5.hpp"
 
 namespace ipc {
 namespace net {
@@ -77,6 +78,7 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 void Connection::Send(Package& pkg)
 {
 	pkg.set_seq(send_seq_);
+	pkg.set_verify(GenerateVerify(pkg.data()));
 	pkg.Encode();
     WriteSome(pkg.data());
 }
@@ -104,6 +106,19 @@ void Connection::Successfully(const std::size_t& write_bytes)
 	++send_seq_;
 	if (connction_pool_)
 		connction_pool_->OnSendData(write_bytes);
+}
+
+bool Connection::CheckVerify(const ByteArray &data, uint64_t verify)
+{
+	return GenerateVerify(data) == verify;
+}
+
+uint64_t Connection::GenerateVerify(const ByteArray &data)
+{
+	std::string ret;
+    ret.resize(data.size());
+    std::copy(data.begin(), data.end(), ret.begin());
+	return websocketpp::md5::md5_hash_int64(ret);
 }
 
 void Connection::Disconnect()
