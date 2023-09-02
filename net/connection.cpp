@@ -12,8 +12,8 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/functional/hash.hpp>
 #include "connectionpool.h"
-#include "md5.hpp"
 
 namespace ipc {
 namespace net {
@@ -96,6 +96,9 @@ void Connection::Complete(const ByteArrayPtr data)
 	if (package->seq() != recv_seq_)
 		return;
 
+	if (package->verify() != GenerateVerify(package->data()))
+		return;
+
 	++recv_seq_;
     if (connction_pool_)
         connction_pool_->OnReceveData(package, std::dynamic_pointer_cast<Connection>(shared_from_this()));
@@ -118,7 +121,7 @@ uint64_t Connection::GenerateVerify(const ByteArray &data)
 	std::string ret;
     ret.resize(data.size());
     std::copy(data.begin(), data.end(), ret.begin());
-	return websocketpp::md5::md5_hash_int64(ret);
+	return boost::hash_value(ret);
 }
 
 void Connection::Disconnect()
