@@ -7,12 +7,14 @@
  */
 #ifndef ICP_SHM_CONTAINER_H
 #define ICP_SHM_CONTAINER_H
+#include <boost/noncopyable.hpp>
 #include <boost/interprocess/managed_shared_memory.hpp>
 #include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/containers/string.hpp>
+#include <boost/thread/detail/singleton.hpp>
 
 namespace ipc {
 namespace shm {
@@ -23,26 +25,85 @@ using SegmentManager = managed_shared_memory::segment_manager;
 template <typename T, typename SegmentManager = SegmentManager>
 using Allocator = boost::interprocess::allocator<T, SegmentManager>;
 
-static managed_shared_memory g_shm_manager(boost::interprocess::open_or_create, "DefaultName", 0x80000000);
-static Allocator<void> g_shm_allocator(g_shm_manager.get_segment_manager());
+class ShmManaged : private boost::noncopyable
+{
+public:
+	bool Initialize(const std::string &key, size_t size)
+	{
+		// Create a managed shared memory
+		shm_key_ = key;
+		// shm_ = std::make_unique<managed_shared_memory>(boost::interprocess::open_or_create, shm_key_.c_str(), size);
+		shm_.reset(new managed_shared_memory(boost::interprocess::open_or_create, shm_key_.c_str(), size));
+		assert(shm_ != nullptr);
+
+		// Create a allocator shared memory
+		// shm_allocator_ = std::make_unique<Allocator<void>>(shm_->get_segment_manager());
+		shm_allocator_.reset(new Allocator<void>(shm_->get_segment_manager()));
+		assert(shm_allocator_ != nullptr);
+
+		return shm_->get_size() == size;
+	}
+
+	managed_shared_memory &GetShmManaged()
+	{
+		return *shm_;
+	}
+
+	Allocator<void> &GetShmAllocator()
+	{
+		return *shm_allocator_;
+	}
+
+	void Grow(unsigned int size)
+	{
+		try
+		{
+			//Now that the segment is not mapped grow it adding extra ${size} bytes
+			shm_->grow(shm_key_.c_str(), size);
+		}
+		catch (...)
+		{
+			std::cout << "grow error!" << std::endl;
+		}
+	}
+
+	void ShrinkToFit()
+	{
+		try
+		{
+			//Now minimize the size of the segment
+			shm_->shrink_to_fit(shm_key_.c_str());
+		}
+		catch (...)
+		{
+			std::cout << "shrink_to_fit error!" << std::endl;
+		}
+	}
+
+private:
+	std::string shm_key_;
+    std::unique_ptr<managed_shared_memory> shm_;
+	std::unique_ptr<Allocator<void>> shm_allocator_;
+};
+using ShmManagedSgl = boost::detail::thread::singleton<ShmManaged>;
 
 
-//string
+//String
 using String = boost::interprocess::basic_string<char
 	, std::char_traits<char>
 	, Allocator<char> >;
 
-class CString : public String
+class ShmString : public String
 {
 public:
-	CString() : String(g_shm_allocator)
+	ShmString() : String(ShmManagedSgl::instance().GetShmAllocator())
 	{
 	}
 
-	CString(const CString&) = default; //默认调用基类的拷贝构造
-	CString(CString&&) = default;
+	ShmString(const ShmString&) = default; //默认调用基类的拷贝构造
+	ShmString(ShmString&&) = default;
 
-	String& operator=(const CString& other)
+	String& operator=(const ShmString& other)
 	{
 		return String::operator=(other);
 	}
@@ -62,25 +123,25 @@ public:
 template <typename T>
 using Vector = boost::interprocess::vector< T, Allocator<T> >;
 
-// CVector
+// ShmVector
 template <typename T>
-class CVector : public Vector<T>
+class ShmVector : public Vector<T>
 {
 public:
-	CVector() : Vector<T>(g_shm_allocator)
+	ShmVector() : Vector<T>(ShmManagedSgl::instance().GetShmAllocator())
 	{
 	}
 
-	CVector(const CVector&) = default; //默认调用基类的拷贝构造
-	CVector(CVector&&) = default;
+	ShmVector(const ShmVector&) = default; //默认调用基类的拷贝构造
+	ShmVector(ShmVector&&) = default;
 
-	CVector& operator=(const CVector& other)
+	ShmVector& operator=(const ShmVector& other)
 	{
 		Vector<T>::operator=(other);
 		return *this;
 	}
 
-	CVector& operator=(CVector &&other)
+	ShmVector& operator=(ShmVector &&other)
 	{
 		Vector<T>::operator=(std::move(other));
 		return *this;
@@ -91,25 +152,25 @@ public:
 template <typename T>
 using List = boost::interprocess::list< T, Allocator<T> >;
 
-// CList
+// ShmList
 template <typename T>
-class CList : public List<T>
+class ShmList : public List<T>
 {
 public:
-	CList() : List<T>(g_shm_allocator)
+	ShmList() : List<T>(ShmManagedSgl::instance().GetShmAllocator())
 	{
 	}
 
-	CList(const CList&) = default; //默认调用基类的拷贝构造
-	CList(CList&&) = default;
+	ShmList(const ShmList&) = default; //默认调用基类的拷贝构造
+	ShmList(ShmList&&) = default;
 
-	CList& operator=(const CList& other)
+	ShmList& operator=(const ShmList& other)
 	{
 		List<T>::operator=(other);
 		return *this;
 	}
 
-	CList& operator=(CList &&other)
+	ShmList& operator=(ShmList &&other)
 	{
 		List<T>::operator=(std::move(other));
 		return *this;
@@ -120,25 +181,25 @@ public:
 template <typename First, typename Second>
 using Pair = std::pair<const First, Second>;
 
-// CPair
+// ShmPair
 template <typename First, typename Second>
-class CPair : Pair<First, Second>
+class ShmPair : Pair<First, Second>
 {
 public:
-	CPair() : Pair<First, Second>(g_shm_allocator)
+	ShmPair() : Pair<First, Second>(ShmManagedSgl::instance().GetShmAllocator())
 	{
 	}
 
-	CPair(const CPair&) = default; //默认调用基类的拷贝构造
-	CPair(CPair&&) = default;
+	ShmPair(const ShmPair&) = default; //默认调用基类的拷贝构造
+	ShmPair(ShmPair&&) = default;
 
-	CPair& operator=(const CPair& other)
+	ShmPair& operator=(const ShmPair& other)
 	{
 		Pair<First, Second>::operator=(other);
 		return *this;
 	}
 
-	CPair &operator=(CPair &&other)
+	ShmPair &operator=(ShmPair &&other)
 	{
 		Pair<First, Second>::operator=(std::move(other));
 		return *this;
@@ -151,25 +212,25 @@ using Map = boost::interprocess::map < First, Second
 	, std::less<First>
 	, PairAllocator >;
 
-// CMap
+// ShmMap
 template <typename First, typename Second, typename PairAllocator = Allocator < Pair<First, Second> > >
-class CMap : public Map<First, Second>
+class ShmMap : public Map<First, Second>
 {
 public:
-	CMap() : Map<First, Second>(g_shm_allocator)
+	ShmMap() : Map<First, Second>(ShmManagedSgl::instance().GetShmAllocator())
 	{
 	}
 
-	CMap(const CMap&) = default; //默认调用基类的拷贝构造
-	CMap(CMap&&) = default;
+	ShmMap(const ShmMap&) = default; //默认调用基类的拷贝构造
+	ShmMap(ShmMap&&) = default;
 
-	CMap& operator=(const CMap& other)
+	ShmMap& operator=(const ShmMap& other)
 	{
 		Map<First, Second>::operator=(other);
 		return *this;
 	}
 
-	CMap& operator=(CMap &&other)
+	ShmMap& operator=(ShmMap &&other)
 	{
 		Map<First, Second>::operator=(std::move(other));
 		return *this;

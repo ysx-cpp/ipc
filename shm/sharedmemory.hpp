@@ -18,7 +18,9 @@
 namespace ipc {
 namespace shm {
 
-using namespace boost::interprocess;
+using boost::interprocess::managed_shared_memory;
+using boost::interprocess::interprocess_exception;
+using boost::interprocess::bad_alloc;
 
 template <typename T>
 class SharedMemory
@@ -28,8 +30,8 @@ public:
 		managed_shm_{managed_shm}
 	{
 	}
-
-    T *Construct(int64_t key)
+    
+	T *Construct(int64_t key)
     {
         return Construct(std::to_string(key));
     }
@@ -52,8 +54,6 @@ public:
 		catch (const bad_alloc &e)
 		{
 			std::cout << e.what() << std::endl;
-			try { managed_shm_.grow(name_, shm_size_/*managed_shm_.get_user_size() * 2*/); }
-			catch (...) { std::cout << "Fatal error!" << std::endl; }
 		}
 		catch (const interprocess_exception &e)
 		{
@@ -81,8 +81,6 @@ public:
 		catch (const bad_alloc &e)
 		{
 			std::cout << e.what() << std::endl;
-			try { managed_shm_.grow(name_, shm_size_/*managed_shm_.get_user_size() * 2*/); }
-			catch (...) { std::cout << "Fatal error!" << std::endl; }
 		}
 		catch (const interprocess_exception &e)
 		{
@@ -91,7 +89,7 @@ public:
 		return nullptr;
 	}
 
-	std::pair<T*, unsigned int> GetPair(const std::string & key)
+	std::pair<T*, unsigned int> GetShmObj(const std::string & key)
 	{
 		try
 		{
@@ -113,7 +111,7 @@ public:
 
     T *Open(const std::string & key)
 	{
-		auto pair = GetPair(key);
+		auto pair = GetShmObj(key);
 		if (pair.first != nullptr)
 			return pair.first;
 
@@ -130,7 +128,7 @@ public:
         return Open(key);
     }
 
-    void Destroy(const std::string & key)
+	void Destroy(const std::string & key)
     {
         try
         {
@@ -143,8 +141,6 @@ public:
     }
 
 private:
-	const char *name_;
-	size_t shm_size_;
     managed_shared_memory &managed_shm_;
 };
 

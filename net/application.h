@@ -9,6 +9,7 @@
 #define NET_REACTOR_H
 
 #include <memory>
+#include <boost/noncopyable.hpp>
 #include <boost/thread.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/asio/io_service_strand.hpp>
@@ -17,7 +18,7 @@
 namespace ipc {
 namespace net {
 
-class Application
+class Application : private boost::noncopyable
 {
 public:
 	Application() : io_context_(std::make_shared<boost::asio::io_context>()) {}
