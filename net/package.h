@@ -65,7 +65,7 @@ public:
     void set_cmd(std::uint16_t cmd) {head_.cmd = cmd;}
     void set_src(std::uint32_t src) {head_.src = src;}
 	void set_dst(std::uint32_t dst) { head_.dst = dst; }
-	void set_seq(std::uint64_t seq) { head_.dst = seq; }
+	void set_seq(std::uint64_t seq) { head_.seq = seq; }
 	void set_verify(std::uint64_t verify) { head_.verify = verify; }
 
     std::uint16_t head_size() const {return head_.head_size;}

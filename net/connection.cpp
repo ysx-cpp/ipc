@@ -94,10 +94,16 @@ void Connection::Complete(const ByteArrayPtr data)
 	package->Decode(*data);
 
 	if (package->seq() != recv_seq_)
+	{
+		std::cerr << "ERROR seq:" << package->seq() << std::endl;
 		return;
+	}
 
-	if (package->verify() != GenerateVerify(package->data()))
+	if (!CheckVerify(package->data(), package->verify()))
+	{
+		std::cerr << "ERROR verify:" << package->verify() << std::endl;
 		return;
+	}
 
 	++recv_seq_;
     if (connction_pool_)
