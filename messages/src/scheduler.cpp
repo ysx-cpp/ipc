@@ -9,25 +9,9 @@
 namespace ipc {
 namespace messages {
 
-Scheduler::Scheduler(zmq::context_t& zmq_ctx) :
-ProactiveSide(zmq_ctx, ""),
-PassiveSide(zmq_ctx, "")
+Scheduler::Scheduler() : 
+sub_list_(new SubscribeNodeList)
 {
-}
-
-void Scheduler::Run()
-{
-}
-
-void Scheduler::SubscribeEvent(const RoutingMessage& message)
-{
-    LOGINFO << message.DebugString();
-}
-
-void Scheduler::RequestEvent(const RoutingMessage& message)
-{
-    reply_->SendResponse(message);
-    LOGINFO << message.DebugString();
 }
 
 void Scheduler::SubscribeOnline(const RoutingMessage& message)
@@ -35,13 +19,29 @@ void Scheduler::SubscribeOnline(const RoutingMessage& message)
     // sync
     std::lock_guard<std::mutex> lock(topic_mutex_);
 
-    // append topic list
+    const std::string &topic = message.node().message_topic();
+
+    auto node_list = sub_list_->mutable_node_list();
+    if (node_list != nullptr)
+    {
+        auto iter = std::find_if(node_list->begin(), node_list->end(), [topic](const RoutingNode &item)
+                                 { return topic == item.message_topic(); });
+        // append topic list
+        if (iter != node_list->end())
+        {
+            std::cerr << __PRETTY_FUNCTION__ << "error topic:" << topic << std::endl;
+            return;
+        }
+    }
     auto sub_node = sub_list_->add_node_list();
     sub_node->CopyFrom(message.node());
 }
 
 void Scheduler::SubscribeOffline(const RoutingMessage& message)
 {
+    // sync
+    std::lock_guard<std::mutex> lock(topic_mutex_);
+
     // delete topic node
     std::string topic = message.node().message_topic();
 

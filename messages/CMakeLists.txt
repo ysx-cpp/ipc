@@ -44,14 +44,14 @@ add_library(${PROJECT_NAME} SHARED ${SRCS} ${PROTO_SRCS})
 target_link_libraries(${PROJECT_NAME} ${LIBS})
 
 # target
-set(TEST_PROACTIVE "test_proactive")
-add_executable(${TEST_PROACTIVE} examples/test_proactive.cpp)
+set(TEST_PROACTIVE "test_subscriber")
+add_executable(${TEST_PROACTIVE} examples/test_subscriber.cpp)
 add_dependencies(${TEST_PROACTIVE} ${PROJECT_NAME})
 target_link_libraries(${TEST_PROACTIVE} ${PROJECT_NAME} ${LIBS})
 
 # target
-set(TEST_PASSIVE "test_passive")
-add_executable(${TEST_PASSIVE} examples/test_passive.cpp)
+set(TEST_PASSIVE "test_publisher")
+add_executable(${TEST_PASSIVE} examples/test_publisher.cpp)
 add_dependencies(${TEST_PASSIVE} ${PROJECT_NAME})
 target_link_libraries(${TEST_PASSIVE} ${PROJECT_NAME} ${LIBS})
 

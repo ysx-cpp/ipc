@@ -1,4 +1,4 @@
-#include "proactiveside.h"
+#include "subscriber.h"
 #include <future>
 #include <functional>
 #include <glog/logging.h>
@@ -11,34 +11,37 @@
 namespace ipc {
 namespace messages {
 
-ProactiveSide::ProactiveSide(zmq::context_t &zmq_ctx, const std::string &topc) :
+Subscriber::Subscriber(zmq::context_t &zmq_ctx, const std::string &topc) :
 topc_(topc),
 request_(std::make_unique<RequestImpl>(zmq_ctx)),
 subscriber_(std::make_unique<SubscriberImpl>(zmq_ctx))                                                                        
 {
 }
 
-ProactiveSide::~ProactiveSide()
+Subscriber::~Subscriber()
 {
 }
 
-void ProactiveSide::Connect(const config::MessagesConfig& config)
+void Subscriber::Run()
 {
-    request_->Connect(config.server_rep_addr());
-    subscriber_->Connect(config.server_pub_addr(), config.topic_start_port());
-
     auto sub_thread = std::async(std::launch::async, &SubscriberImpl::Run, subscriber_.get(),
-                                 std::bind(&ProactiveSide::SubscribeEvent, this, std::placeholders::_1));
+                                 std::bind(&Subscriber::SubscribeEvent, this, std::placeholders::_1));
 
     sub_thread.wait();
 }
 
-bool ProactiveSide::Request(const RoutingMessage& request, RoutingMessage& response)
+void Subscriber::Connect(const config::MessagesConfig& config)
+{
+    request_->Connect(config.server_req_addr());
+    subscriber_->Connect(config.server_sub_addr(), config.topic_start_port());
+}
+
+bool Subscriber::Request(const RoutingMessage& request, RoutingMessage& response)
 {
     return request_->Request(request, response);
 }
 
-void ProactiveSide::SubscribeEvent(const RoutingMessage &message)
+void Subscriber::SubscribeEvent(const RoutingMessage &message)
 {
     LOGINFO << message.DebugString();
 }

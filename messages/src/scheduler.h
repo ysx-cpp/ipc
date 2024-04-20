@@ -3,8 +3,6 @@
 #include <memory>
 #include "zmq.hpp"
 #include "envelope.pb.h"
-#include "proactiveside.h"
-#include "passiveside.h"
 
 namespace zmq {
     class socket_t;
@@ -13,17 +11,22 @@ namespace zmq {
 namespace ipc {
 namespace messages {
 
+enum class ActionType
+{
+    ACTION_ONLINE,     //online
+    ACTION_OFFLINE,    //offline
+    ACTION_REQUEST,    //request
+    ACTION_ETC,        // etc
+};
+
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
 
-class Scheduler : public ProactiveSide, public PassiveSide
+class Scheduler
 {
 public:
-    explicit Scheduler(zmq::context_t& zmq_ctx);
-    ~Scheduler() = default;
-    void Run();
-    void SubscribeEvent(const RoutingMessage& message) override;
-    void RequestEvent(const RoutingMessage& message) override;
+    explicit Scheduler();
+    virtual ~Scheduler() = default;
 
     void SubscribeOnline(const RoutingMessage& message);
     void SubscribeOffline(const RoutingMessage& message);

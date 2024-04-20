@@ -4,6 +4,7 @@
 #include "zmq.hpp"
 #include "envelope.pb.h"
 #include "messageimpl.h"
+#include "scheduler.h"
 
 namespace zmq {
     class socket_t;
@@ -16,11 +17,13 @@ class RoutingMessage;
 class SubscriberImpl;
 class RequestImpl;
 
-class ProactiveSide
+class Subscriber : public Scheduler
 {
 public:
-    explicit ProactiveSide(zmq::context_t& zmq_ctx, const std::string& topc);
-    virtual ~ProactiveSide();
+    explicit Subscriber(zmq::context_t& zmq_ctx, const std::string& topc);
+    virtual ~Subscriber();
+
+    void Run();
     void Connect(const config::MessagesConfig& config);
     bool Request(const RoutingMessage& request, RoutingMessage& response);
     virtual void SubscribeEvent(const RoutingMessage& message);
