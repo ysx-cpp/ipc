@@ -11,30 +11,23 @@ namespace zmq {
 namespace ipc {
 namespace messages {
 
-enum class ActionType
-{
-    ACTION_ONLINE,     //online
-    ACTION_OFFLINE,    //offline
-    ACTION_REQUEST,    //request
-    ACTION_ETC,        // etc
-};
-
 // forward declaration for hiding messages_protos.pb.h
 class RoutingMessage;
 
-class Scheduler
+class SubscribeList
 {
 public:
-    explicit Scheduler();
-    virtual ~Scheduler() = default;
+    explicit SubscribeList();
+    virtual ~SubscribeList() = default;
 
     void SubscribeOnline(const RoutingMessage& message);
     void SubscribeOffline(const RoutingMessage& message);
+    const SubscribeNodeList &sub_nod_list() const {return *sub_nod_list_;}
 
 private:
     // topic + pub addr
     std::mutex topic_mutex_;
-    std::unique_ptr<SubscribeNodeList> sub_list_;
+    std::unique_ptr<SubscribeNodeList> sub_nod_list_;
 };
 
 } // namespace messages

@@ -13,7 +13,8 @@ namespace messages {
 Publisher::Publisher(zmq::context_t &zmq_ctx, const std::string &topc) : 
 topc_(topc),
 reply_(std::make_unique<ReplyImpl>(zmq_ctx)),
-publisher_(std::make_unique<PublisherImpl>(zmq_ctx))
+publisher_(std::make_unique<PublisherImpl>(zmq_ctx)),
+sub_list_(std::make_unique<SubscribeList>())
 {
 }
 
@@ -44,28 +45,23 @@ void Publisher::RequestEvent(const RoutingMessage &message)
 {
     LOG(INFO) << "request:" << message.DebugString();
 
-    ActionType action = static_cast<ActionType>(message.action());
+    MessageAction action = static_cast<MessageAction>(message.action());
     switch (action)
     {
-    case ActionType::ACTION_ONLINE:
+    case MSG_ACTION_SUB_ONLINE:
         LOG(INFO)  << " online:" << message.DebugString();
-        SubscribeOnline(message);
+        sub_list_->SubscribeOnline(message);
         break;
-    case ActionType::ACTION_OFFLINE:
+    case MSG_ACTION_SUB_OFFLINE:
         LOG(INFO)  << " offline:" << message.DebugString();
-        SubscribeOffline(message);
+        sub_list_->SubscribeOffline(message);
         break;
-    case ActionType::ACTION_REQUEST:
-    case ActionType::ACTION_ETC:
+    case MSG_ACTION_REQUEST:
+    case MSG_ACTION_ECT:
         break;
     default:
         break;
     }
-    SendResponse(message);
-}
-
-void Publisher::SendResponse(const RoutingMessage& message)
-{
     reply_->SendResponse(message);
 }
 

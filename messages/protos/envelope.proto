@@ -9,6 +9,16 @@ Use the 'bytes' type if you intend to send raw bytes.
 ////////////////////////////////////////////////////////////////////////////////
 // routing protocol
 
+enum MessageAction
+{
+    MSG_ACTION_PING				    = 0; 	//心跳
+    MSG_ACTION_SUB_ONLINE			= 1000; //登录
+    MSG_ACTION_SUB_OFFLINE          = 1002; //登出
+    MSG_ACTION_REQUEST				= 1004; //请求
+    MSG_ACTION_ECT				    = 1003; //etc
+    MSG_ACTION_END					= 1999;
+}
+
 message RoutingNode {
     int32 node_type         = 1; // 1:pub, 2:sub
     bytes message_topic     = 2;

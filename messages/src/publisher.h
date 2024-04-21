@@ -5,7 +5,7 @@
 #include "envelope.pb.h"
 #include "config.pb.h"
 #include "messageimpl.h"
-#include "scheduler.h"
+#include "subscribelist.h"
 
 namespace zmq {
     class socket_t;
@@ -18,7 +18,7 @@ class RoutingMessage;
 class PublisherImpl;
 class ReplyImpl;
 
-class Publisher : public Scheduler
+class Publisher
 {
 public:
     explicit Publisher(zmq::context_t& zmq_ctx, const std::string &topc);
@@ -28,12 +28,12 @@ public:
     void Bind(const config::MessagesConfig& config);
     bool Publish(const RoutingMessage& message);
     virtual void RequestEvent(const RoutingMessage& message);
-    virtual void SendResponse(const RoutingMessage& message);
 
 protected:
     const std::string &topc_;
     std::unique_ptr<ReplyImpl> reply_;
     std::unique_ptr<PublisherImpl> publisher_;
+    std::unique_ptr<SubscribeList> sub_list_;
 };
 
 } // namespace messages

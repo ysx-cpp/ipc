@@ -7,7 +7,6 @@
 #include "envelope.pb.h"
 #include "sendassist.h"
 #include "subscriber.h"
-#include "scheduler.h"
 #include "utils.hpp"
 
 using namespace ipc::messages;
@@ -40,8 +39,9 @@ void Test(zmq::context_t &zmq_ctx)
     subscriber.Connect(g_config);
     RoutingMessage req;
     RoutingMessage rsp;
-    req.set_action(1);
+    req.set_action(MSG_ACTION_SUB_ONLINE);
     subscriber.Request(req, rsp);
+    LOGINFO << rsp.DebugString();
     subscriber.Run();
 }
 
