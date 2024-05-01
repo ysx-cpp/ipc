@@ -39,7 +39,7 @@ private:
 	std::shared_ptr<boost::asio::io_context> io_context_;
     boost::thread_group thread_group_;
 };
-using ApplicationSgl = boost::detail::thread::singleton<Application>;
+using ApplicationSingle = boost::detail::thread::singleton<Application>;
 
 } // namespace net
 } // namespace ipc
