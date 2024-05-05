@@ -60,7 +60,7 @@ void TcpClient::SendData(const std::string &msg)
 
     Package package;
     package.Encode(msg);
-    Send(package);
+    WriteSome(package.data());
 }
 
 void TcpClient::Disconnect()

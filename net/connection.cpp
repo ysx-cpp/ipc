@@ -77,8 +77,8 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 
 void Connection::Send(Package& pkg)
 {
-	pkg.set_seq(send_seq_);
-	pkg.set_verify(GenerateVerify(pkg.data()));
+	// pkg.set_seq(send_seq_);
+	// pkg.set_verify(GenerateVerify(pkg.data()));
 	pkg.Encode();
     WriteSome(pkg.data());
 }
@@ -93,17 +93,17 @@ void Connection::Complete(const ByteArrayPtr data)
 	auto package = std::make_shared<Package>();
 	package->Decode(*data);
 
-	if (package->seq() != recv_seq_)
-	{
-		std::cerr << "ERROR seq:" << package->seq() << std::endl;
-		return;
-	}
+	// if (package->seq() != recv_seq_)
+	// {
+	// 	std::cerr << "ERROR seq:" << package->seq() << std::endl;
+	// 	return;
+	// }
 
-	if (!CheckVerify(package->data(), package->verify()))
-	{
-		std::cerr << "ERROR verify:" << package->verify() << std::endl;
-		return;
-	}
+	// if (!CheckVerify(package->data(), package->verify()))
+	// {
+	// 	std::cerr << "ERROR verify:" << package->verify() << std::endl;
+	// 	return;
+	// }
 
 	++recv_seq_;
     if (connction_pool_)
