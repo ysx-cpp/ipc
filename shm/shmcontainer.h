@@ -7,96 +7,24 @@
  */
 #ifndef ICP_SHM_CONTAINER_H
 #define ICP_SHM_CONTAINER_H
-#include <boost/noncopyable.hpp>
-#include <boost/interprocess/managed_shared_memory.hpp>
-#include <boost/interprocess/allocators/allocator.hpp>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/containers/list.hpp>
 #include <boost/interprocess/containers/string.hpp>
-#include <boost/thread/detail/singleton.hpp>
+#include "shmmanaged.h"
 
 namespace ipc {
 namespace shm {
 
-using boost::interprocess::managed_shared_memory;
-using SegmentManager = managed_shared_memory::segment_manager;
-
-template <typename T, typename SegmentManager = SegmentManager>
-using Allocator = boost::interprocess::allocator<T, SegmentManager>;
-
-class ShmManaged : private boost::noncopyable
-{
-public:
-	bool Initialize(const std::string &key, size_t size)
-	{
-		// Create a managed shared memory
-		shm_key_ = key;
-		// shm_ = std::make_unique<managed_shared_memory>(boost::interprocess::open_or_create, shm_key_.c_str(), size);
-		shm_.reset(new managed_shared_memory(boost::interprocess::open_or_create, shm_key_.c_str(), size));
-		assert(shm_ != nullptr);
-
-		// Create a allocator shared memory
-		// shm_allocator_ = std::make_unique<Allocator<void>>(shm_->get_segment_manager());
-		shm_allocator_.reset(new Allocator<void>(shm_->get_segment_manager()));
-		assert(shm_allocator_ != nullptr);
-
-		return shm_->get_size() == size;
-	}
-
-	managed_shared_memory &GetShmManaged()
-	{
-		return *shm_;
-	}
-
-	Allocator<void> &GetShmAllocator()
-	{
-		return *shm_allocator_;
-	}
-
-	void Grow(unsigned int size)
-	{
-		try
-		{
-			//Now that the segment is not mapped grow it adding extra ${size} bytes
-			shm_->grow(shm_key_.c_str(), size);
-		}
-		catch (...)
-		{
-			std::cout << "grow error!" << std::endl;
-		}
-	}
-
-	void ShrinkToFit()
-	{
-		try
-		{
-			//Now minimize the size of the segment
-			shm_->shrink_to_fit(shm_key_.c_str());
-		}
-		catch (...)
-		{
-			std::cout << "shrink_to_fit error!" << std::endl;
-		}
-	}
-
-private:
-	std::string shm_key_;
-    std::unique_ptr<managed_shared_memory> shm_;
-	std::unique_ptr<Allocator<void>> shm_allocator_;
-};
-using ShmManagedSgl = boost::detail::thread::singleton<ShmManaged>;
-
-
 //String
 using String = boost::interprocess::basic_string<char
 	, std::char_traits<char>
-	, Allocator<char> >;
+	, ShmAllocator<char> >;
 
 class ShmString : public String
 {
 public:
-	ShmString() : String(ShmManagedSgl::instance().GetShmAllocator())
+	ShmString() : String(ShmManagedSingle::instance().GetShmAllocator())
 	{
 	}
 
@@ -121,14 +49,14 @@ public:
 
 // vector
 template <typename T>
-using Vector = boost::interprocess::vector< T, Allocator<T> >;
+using Vector = boost::interprocess::vector< T, ShmAllocator<T> >;
 
 // ShmVector
 template <typename T>
 class ShmVector : public Vector<T>
 {
 public:
-	ShmVector() : Vector<T>(ShmManagedSgl::instance().GetShmAllocator())
+	ShmVector() : Vector<T>(ShmManagedSingle::instance().GetShmAllocator())
 	{
 	}
 
@@ -150,14 +78,14 @@ public:
 
 // list
 template <typename T>
-using List = boost::interprocess::list< T, Allocator<T> >;
+using List = boost::interprocess::list< T, ShmAllocator<T> >;
 
 // ShmList
 template <typename T>
 class ShmList : public List<T>
 {
 public:
-	ShmList() : List<T>(ShmManagedSgl::instance().GetShmAllocator())
+	ShmList() : List<T>(ShmManagedSingle::instance().GetShmAllocator())
 	{
 	}
 
@@ -186,7 +114,7 @@ template <typename First, typename Second>
 class ShmPair : Pair<First, Second>
 {
 public:
-	ShmPair() : Pair<First, Second>(ShmManagedSgl::instance().GetShmAllocator())
+	ShmPair() : Pair<First, Second>(ShmManagedSingle::instance().GetShmAllocator())
 	{
 	}
 
@@ -207,17 +135,17 @@ public:
 };
 
 // map
-template <typename First, typename Second, typename PairAllocator = Allocator < Pair<First, Second> > >
+template <typename First, typename Second, typename PairAllocator = ShmAllocator < Pair<First, Second> > >
 using Map = boost::interprocess::map < First, Second
 	, std::less<First>
 	, PairAllocator >;
 
 // ShmMap
-template <typename First, typename Second, typename PairAllocator = Allocator < Pair<First, Second> > >
+template <typename First, typename Second, typename PairAllocator = ShmAllocator < Pair<First, Second> > >
 class ShmMap : public Map<First, Second>
 {
 public:
-	ShmMap() : Map<First, Second>(ShmManagedSgl::instance().GetShmAllocator())
+	ShmMap() : Map<First, Second>(ShmManagedSingle::instance().GetShmAllocator())
 	{
 	}
 

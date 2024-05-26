@@ -102,11 +102,11 @@ ConnectionPtr ConnectionPool::GetConnection(const ConnectionPtr &connection) con
 	return *it;
 }
 
-ConnectionPtr ConnectionPool::GetConnection(size_t hash_value) const
+ConnectionPtr ConnectionPool::GetConnection(size_t index) const
 {
 	const auto size = connection_pool_.size();
 	auto it = connection_pool_.cbegin();
-	it = std::next(it, hash_value % size);
+	it = std::next(it, index % size);
 	assert(it != connection_pool_.cend());
 	return *it;
 }

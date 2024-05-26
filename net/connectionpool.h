@@ -35,7 +35,7 @@ protected:
 	void RemoveAllConnection();
     ConnectionPtr GetConnection() const;
 	ConnectionPtr GetConnection(const ConnectionPtr &connection) const;
-	ConnectionPtr GetConnection(size_t hash_value) const;
+	ConnectionPtr GetConnection(size_t index) const;
 
     std::set<ConnectionPtr> &GetAllConnection() {return connection_pool_;}
     size_t Index() const;
