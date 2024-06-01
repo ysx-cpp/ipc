@@ -57,6 +57,7 @@ void TcpClient::SendData(const std::string &msg)
             Start();
         }
     }
+    std::cout << "Ping:" << option_.host << " port:" << option_.port << std::endl;
 
     Package package;
     package.Encode(msg);

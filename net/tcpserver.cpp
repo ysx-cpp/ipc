@@ -32,13 +32,13 @@ TcpServer::~TcpServer()
 void TcpServer::Start()
 {
     DoAccept();
-    app_.RunThreadPool();
+    app_.Run();
 }
 
 void TcpServer::StartThreadPool()
 {
     DoAccept();
-    app_.Run();
+    app_.RunThreadPool();
 }
 
 void TcpServer::Stop()
