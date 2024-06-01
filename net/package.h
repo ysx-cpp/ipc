@@ -20,7 +20,6 @@ using Byte = uint8_t;
 using ByteArray = std::vector<Byte>;
 using ByteArrayPtr = std::shared_ptr<ByteArray>;
 
-#pragma pack(1)
 struct Head
 {
     std::uint16_t  head_size      = 0;
@@ -81,7 +80,6 @@ public:
     PackageHead head_;
     ByteArray data_;
 };
-#pragma pack(1)
 
 using PackagePtr = std::shared_ptr<Package>;
 
