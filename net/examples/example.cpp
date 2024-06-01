@@ -12,13 +12,13 @@ using ipc::net::PackagePtr;
 using ipc::net::ConnectionPtr;
 using ipc::net::Package;
 using ipc::net::ByteArrayPtr;
+using ipc::net::ByteArray;
 
 class TestTcpClient : public TcpClient
 {
 public:
 	explicit TestTcpClient(boost::asio::io_context &ioc): 
-    TcpClient(ioc), 
-    timer_(ioc)
+    TcpClient(ioc)
     {
     }
 
@@ -28,11 +28,6 @@ public:
         std::cout << strmsg << std::endl;
         SendData(strmsg);
         Ping();
-        // Package pkg;
-        // pkg.Encode(strmsg);
-        // Send(pkg);
-        // timer_.expires_from_now(boost::posix_time::seconds(3));
-        // timer_.async_wait(std::bind(&TestTcpClient::TestPing, this));
     }
 
     void set_host(const std::string &host) { host_ = host; };
@@ -46,10 +41,10 @@ protected:
         if (data == nullptr) return;
 
         std::string msg(data->begin(), data->end());
+        std::cout << msg << std::endl;
     }
 
 private:
-	boost::asio::deadline_timer timer_;
 	std::string host_;
 	uint16_t port_;
 };
@@ -64,11 +59,11 @@ public:
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-        std::cout << data->pdata() << " seq:" << data->dst() << std::endl;
+        std::cout << data->pdata() << " seq:" << data->seq() << std::endl;
 
         Package pkg;
         pkg.Encode("Hello client!");
-        connection->Send(pkg);
+        connection->Write(const_cast<ByteArray&>(pkg.data()));
         return 0;
     }
 	void OnSendData(const std::size_t& write_bytes) override

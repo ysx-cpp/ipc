@@ -55,9 +55,10 @@ void Package::Encode(const ByteArray &data)
     phead->cmd = this->cmd();
     phead->src = this->src();
     phead->dst = this->dst();
-    // phead->seq = this->seq();
-    // phead->verify = this->verify();
-
+    phead->seq = this->seq();
+    phead->verify = this->verify();
+    
+    head_ = *phead;
     data_.insert(data_.begin() + phead->head_size, data.begin(), data.end());
 }
 
@@ -76,9 +77,10 @@ void Package::Decode(const ByteArray &data)
     this->set_cmd(phead->cmd);
     this->set_src(phead->src);
     this->set_dst(phead->dst);
-    // this->set_seq(phead->seq);
-    // this->set_verify(phead->verify);
-
+    this->set_seq(phead->seq);
+    this->set_verify(phead->verify);
+    
+    head_ = *phead;
     data_.assign(data.begin() + phead->head_size, data.end());
 }
 

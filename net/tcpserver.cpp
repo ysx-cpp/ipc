@@ -51,9 +51,6 @@ void TcpServer::Stop()
 void TcpServer::DoAccept()
 {
     auto connection = CreateConnection(app_.io_context());
-    //connection->SetSendBuffSize(8192);
-    //connection->SetReciveBuffSize(8192);
-    
     connection->SetConnectionPool(this);
     acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, _1));
 }

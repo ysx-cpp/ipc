@@ -37,7 +37,7 @@ void TcpClient::Ping()
     // this->ioc_.post(boost::bind(&TcpClient::Ping, this));
 
     if (connected())
-        SendData("1");
+        SendData("Hello server!");
 }
 
 void TcpClient::SendData(const std::string &msg)

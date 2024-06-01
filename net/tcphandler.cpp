@@ -95,18 +95,24 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 		CheckErrorCode(ec);
 		if (!ec && read_bytes)
 		{
-			recv_buff_.commit(read_bytes);
-			boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
-			const Head *phead = reinterpret_cast<const Head *>(buff.data());
-			uint32_t packet_size = phead->head_size + phead->data_size;
-			if (phead->head_size > 0)
+			size_t min_size = sizeof(Head);
+			if (read_bytes >= min_size)
 			{
-				if (recv_buff_.size() >= packet_size)
+				recv_buff_.commit(min_size);
+				boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
+				const Head *phead = reinterpret_cast<const Head *>(buff.data());
+				uint32_t packet_size = phead->head_size + phead->data_size;
+				if (phead->head_size > 0)
 				{
-					ByteArrayPtr data = std::make_shared<ByteArray>();
-					data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
-					Complete(data);
-					recv_buff_.consume(packet_size);
+					recv_buff_.commit(packet_size - min_size);
+					buff = recv_buff_.data();
+					if (recv_buff_.size() >= packet_size)
+					{
+						ByteArrayPtr data = std::make_shared<ByteArray>();
+						data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
+						Complete(data);
+						recv_buff_.consume(packet_size);
+					}
 				}
 			}
 		}
