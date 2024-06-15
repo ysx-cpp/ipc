@@ -26,7 +26,6 @@ clinet_timer_(ioc)
 void Heartbeat::PingSecond5(boost::function<void()> handler)
 {
 	auto lamb = [=](const boost::system::error_code &ec) { 
-		std::cerr << "Client ping server......" << std::endl;
 		handler(); 
 		PingSecond5(handler);
 	};

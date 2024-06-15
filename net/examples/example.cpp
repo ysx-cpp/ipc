@@ -27,9 +27,11 @@ public:
         std::string strmsg("Hello server!");
         std::cout << strmsg << std::endl;
         DoHeartBeat();
-        // Package pkg;
-        // std::copy(strmsg.begin(), strmsg.end(), pkg.data_.begin());
-        Send(strmsg);
+
+        Package pkg;
+        pkg.data_.resize(strmsg.size());
+        std::copy(strmsg.begin(), strmsg.end(), pkg.data_.begin());
+        SendData(pkg);
     }
 
     void set_host(const std::string &host) { host_ = host; };
@@ -61,11 +63,12 @@ public:
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-        std::cout << data->pdata() << " seq:" << data->seq() << std::endl;
+        std::cerr << data->pdata() << " seq:" << data->seq() << std::endl;
 
         Package pkg;
+        pkg.set_cmd(0);
         pkg.Encode("Hello client!");
-        connection->Write(const_cast<ByteArray&>(pkg.data()));
+        connection->SendData(pkg);
         return 0;
     }
 	void OnSendData(const std::size_t& write_bytes) override
@@ -97,6 +100,7 @@ int main(int argc, char *argv[])
         boost::asio::io_context ioc;
         TestTcpClient client(ioc);
         client.CreateConnect(host, port);
+        client.Connect(host, port);
         client.TestPing();
         ioc.run();
     }
