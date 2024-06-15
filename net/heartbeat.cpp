@@ -23,13 +23,17 @@ clinet_timer_(ioc)
 {
 }
 
-// void Heartbeat::PingSecond5(boost::function<void()> handler)
-// {
-//     clinet_timer_.expires_from_now(boost::posix_time::seconds(5));
-//     clinet_timer_.async_wait(boost::bind(&Heartbeat::PingSecond5, this));
+void Heartbeat::PingSecond5(boost::function<void()> handler)
+{
+	auto lamb = [=](const boost::system::error_code &ec) { 
+		std::cerr << "Client ping server......" << std::endl;
+		handler(); 
+		PingSecond5(handler);
+	};
 
-//     handler();
-// }
+    clinet_timer_.expires_from_now(boost::posix_time::seconds(5));
+    clinet_timer_.async_wait(lamb);
+}
 
 void Heartbeat::CheckPing()
 {

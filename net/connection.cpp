@@ -57,7 +57,11 @@ void Connection::EnableHeartbeat()
 
 void Connection::DoHeartBeat()
 {
-	//heartbeat_->PingSecond5(std::bind(&Connection::SendData, this, std::placeholders::_1));
+	heartbeat_->PingSecond5([&]() {
+		Package pkg;
+		pkg.set_cmd(0);
+		SendData(pkg);
+	});
 }
 
 void Connection::OnHeartbeat()
@@ -107,6 +111,8 @@ void Connection::Complete(const ByteArrayPtr data)
 		std::cerr << "ERROR verify:" << package->verify() << std::endl;
 		// return;
 	}
+
+	OnHeartbeat();
 
 	++recv_seq_;
     if (connction_pool_)

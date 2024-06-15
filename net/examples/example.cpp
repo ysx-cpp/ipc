@@ -26,8 +26,10 @@ public:
     {
         std::string strmsg("Hello server!");
         std::cout << strmsg << std::endl;
-        SendData(strmsg);
-        Ping();
+        DoHeartBeat();
+        // Package pkg;
+        // std::copy(strmsg.begin(), strmsg.end(), pkg.data_.begin());
+        Send(strmsg);
     }
 
     void set_host(const std::string &host) { host_ = host; };

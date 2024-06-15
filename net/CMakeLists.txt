@@ -20,7 +20,6 @@ endif(WIN32)
 
 if (TESTS)
 # target
-
 set(EXAMPLES "examples")
 add_definitions(-std=c++11 -g -pipe -fPIC -Wall -Wuninitialized -Wpessimizing-move)
 add_executable(${EXAMPLES} examples/example.cpp)

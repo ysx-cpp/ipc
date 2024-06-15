@@ -52,6 +52,7 @@ void TcpServer::DoAccept()
 {
     auto connection = CreateConnection(app_.io_context());
     connection->SetConnectionPool(this);
+    connection->EnableHeartbeat();
     acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
 }
 

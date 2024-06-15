@@ -12,6 +12,7 @@
 #include <boost/asio/deadline_timer.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/function.hpp>
 
 namespace ipc {
 namespace net {
@@ -22,7 +23,7 @@ public:
     explicit Heartbeat(boost::asio::io_context &ioc);
 
 public:
-	// void PingSecond5(boost::function<void()> handler);
+	void PingSecond5(boost::function<void()> handler);
 	void CheckPing();
 	void TimerHandle(const boost::system::error_code &ec);
 	void Tick10s();
