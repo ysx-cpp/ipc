@@ -17,8 +17,7 @@ namespace net {
 TcpClient::TcpClient(boost::asio::io_context &ioc)
     : Connection(ioc),
     ioc_(ioc),
-    timer_(ioc),
-    timer_conn_(ioc)
+    timer_(ioc)
 {
 }
 
@@ -29,25 +28,14 @@ void TcpClient::CreateConnect(const std::string &host, uint16_t port, int timeou
     option_.timeout_ms = timeout;
 }
 
-void TcpClient::Ping()
-{
-    timer_.expires_from_now(boost::posix_time::seconds(this->expire()));
-    timer_.async_wait(boost::bind(&TcpClient::Ping, this));
-
-    // this->ioc_.post(boost::bind(&TcpClient::Ping, this));
-
-    if (connected())
-        SendData("Hello server!");
-}
-
-void TcpClient::SendData(const std::string &msg)
+void TcpClient::Send(const std::string &msg)
 {
     if (!connected())
     {
         if (!Connect(option_.host, option_.port))
         {
-            timer_conn_.expires_from_now(boost::posix_time::milliseconds(option_.timeout_ms));
-            timer_conn_.async_wait(boost::bind(&TcpClient::SendData, this, msg));
+            timer_.expires_from_now(boost::posix_time::milliseconds(option_.timeout_ms));
+            timer_.async_wait(boost::bind(&TcpClient::Send, this, msg));
 
             std::cerr << "connect " << option_.host << ":" << option_.port << " timeout" << std::endl;
             return;

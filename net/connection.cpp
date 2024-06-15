@@ -14,6 +14,7 @@
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/functional/hash.hpp>
 #include "connectionpool.h"
+#include "heartbeat.h"
 
 namespace ipc {
 namespace net {
@@ -51,20 +52,22 @@ void Connection::SetConnectionPool(ConnectionPool* conn_pool)
 
 void Connection::EnableHeartbeat()
 {
-	heartbeat_->Run();
+	heartbeat_->CheckPing();
 }
 
-int Connection::OnHeartbeat()
+void Connection::DoHeartBeat()
+{
+	//heartbeat_->PingSecond5(std::bind(&Connection::SendData, this, std::placeholders::_1));
+}
+
+void Connection::OnHeartbeat()
 {
 	if (heartbeat_->Stopped())
 	{
 		Close();
-		return boost::system::errc::timed_out;
 	}
 	else
-		heartbeat_->CheckPing();
-
-	return 0;
+		heartbeat_->Tick10s();
 }
 
 bool Connection::Connect(const std::string &host, unsigned short port)
@@ -75,10 +78,10 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 	return !ec;
 }
 
-void Connection::Send(Package& pkg)
+void Connection::SendData(Package& pkg)
 {
-	// pkg.set_seq(send_seq_);
-	// pkg.set_verify(GenerateVerify(pkg.data()));
+	pkg.set_seq(send_seq_);
+	pkg.set_verify(GenerateVerify(pkg.data()));
 	pkg.Encode();
     WriteSome(pkg.data());
 }
@@ -93,17 +96,17 @@ void Connection::Complete(const ByteArrayPtr data)
 	auto package = std::make_shared<Package>();
 	package->Decode(*data);
 
-	// if (package->seq() != recv_seq_)
-	// {
-	// 	std::cerr << "ERROR seq:" << package->seq() << std::endl;
-	// 	return;
-	// }
+	if (package->seq() != recv_seq_)
+	{
+		std::cerr << "ERROR seq:" << package->seq() << std::endl;
+		// return;
+	}
 
-	// if (!CheckVerify(package->data(), package->verify()))
-	// {
-	// 	std::cerr << "ERROR verify:" << package->verify() << std::endl;
-	// 	return;
-	// }
+	if (!CheckVerify(package->data(), package->verify()))
+	{
+		std::cerr << "ERROR verify:" << package->verify() << std::endl;
+		// return;
+	}
 
 	++recv_seq_;
     if (connction_pool_)
@@ -124,10 +127,7 @@ bool Connection::CheckVerify(const ByteArray &data, uint64_t verify)
 
 uint64_t Connection::GenerateVerify(const ByteArray &data)
 {
-	std::string ret;
-    ret.resize(data.size());
-    std::copy(data.begin(), data.end(), ret.begin());
-	return boost::hash_value(ret);
+	return boost::hash_value(data);
 }
 
 void Connection::Disconnect()

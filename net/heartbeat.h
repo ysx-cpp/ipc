@@ -22,16 +22,18 @@ public:
     explicit Heartbeat(boost::asio::io_context &ioc);
 
 public:
-	void Run();
+	// void PingSecond5(boost::function<void()> handler);
 	void CheckPing();
 	void TimerHandle(const boost::system::error_code &ec);
+	void Tick10s();
 	void Stop() { stopped_ = true; }
 	bool Stopped() const { return stopped_; }
 
 private:
 	int expire() const { return 10; }
 
-    boost::asio::deadline_timer timer_;
+    boost::asio::deadline_timer server_timer_;
+    boost::asio::deadline_timer clinet_timer_;
 	bool stopped_ = false;
 	boost::posix_time::ptime last_ping_;
 };

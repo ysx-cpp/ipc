@@ -26,9 +26,10 @@ public:
     void Stop();
 	void SetConnectionPool(ConnectionPool* conn_pool);
 	bool Connect(const std::string& host, unsigned short port);
-	void Send(Package& pkg);
+	void SendData(Package& pkg);
 	void EnableHeartbeat();
-	int OnHeartbeat();
+	void DoHeartBeat();
+	void OnHeartbeat();
 
 	bool connected() const { return connected_; }
 	void set_connected(bool connected) { connected_ = connected; }

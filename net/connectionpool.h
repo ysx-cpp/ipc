@@ -22,6 +22,7 @@ class ConnectionPool : private boost::noncopyable
 {
     friend class Connection;
 protected:
+	ConnectionPool() = default;
 	virtual ~ConnectionPool() = default;
 
     virtual int OnReceveData(const PackagePtr data, ConnectionPtr connection) = 0;

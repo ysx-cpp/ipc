@@ -31,7 +31,7 @@ public:
 protected:
     void DoAccept();
     void OnAccept(ConnectionPtr connection,  const boost::system::error_code &ec);
-	Application app_;
+	Application &app_;
 
 private:
     boost::asio::ip::tcp::acceptor acceptor_;

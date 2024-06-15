@@ -19,8 +19,8 @@ using namespace std;
 using namespace boost::asio;
 
 TcpServer::TcpServer(const std::string & host, unsigned short port) : 
-    acceptor_(app_.io_context(), 
-              ip::tcp::endpoint(ip::address::from_string(host), port))
+app_(ApplicationSingle::instance()),
+acceptor_(app_.io_context(), ip::tcp::endpoint(ip::address::from_string(host), port))
 {
 }
 
@@ -52,7 +52,7 @@ void TcpServer::DoAccept()
 {
     auto connection = CreateConnection(app_.io_context());
     connection->SetConnectionPool(this);
-    acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, _1));
+    acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
 }
 
 void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_code &ec)
