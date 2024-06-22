@@ -26,11 +26,11 @@ public:
     {
         std::string strmsg("Hello server!");
         std::cout << strmsg << std::endl;
-        SendHeartBeat();
 
         Package pkg;
         pkg.FullData(strmsg);
         SendData(pkg);
+        SendHeartBeat();
     }
 
     void set_host(const std::string &host) { host_ = host; };

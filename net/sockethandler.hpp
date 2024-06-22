@@ -19,7 +19,7 @@ namespace ipc {
 namespace net {
 
 #define LOGERR(fmt) \
-std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << fmt << std::endl;
+std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << fmt << "\n" << std::endl;
 
 template<class T>
 class SocketHandler :

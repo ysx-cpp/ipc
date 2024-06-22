@@ -45,7 +45,13 @@ void Connection::Start()
 void Connection::Stop()
 {
 	if (connction_pool_)
+	{
 		connction_pool_->RemoveConnection(ShaerdSelf());
+	}
+	else
+	{
+		Close();
+	}
 }
 
 void Connection::StartHeartbeat()
@@ -66,7 +72,7 @@ void Connection::OnHeartbeat()
 {
 	if (heartbeat_->Stopped())
 	{
-		Close();
+		this->Stop();
 	}
 	else
 	{
@@ -84,13 +90,16 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 
 void Connection::SendData(Package& pkg)
 {
-	if (Connected())
-	{
-		pkg.set_seq(send_seq_);
-		pkg.set_verify(GenerateVerify(pkg.data()));
-		pkg.Encode(pkg.data());
-    	WriteSome(pkg.data());
-	}
+	std::string stringmsg1(pkg.data().begin(), pkg.data().end());
+	LOGERR("ERROR verify1:" << GenerateVerify(pkg.data()) << " data1:" << stringmsg1);
+
+	pkg.set_seq(send_seq_);
+	pkg.set_verify(GenerateVerify(pkg.data()));
+	pkg.Encode(pkg.data());
+    WriteSome(pkg.data());
+
+	std::string stringmsg2(pkg.data().begin(), pkg.data().end());
+	LOGERR("ERROR verify2:" << pkg.verify() << " data2:" << stringmsg2);
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()
@@ -111,7 +120,8 @@ void Connection::Complete(const ByteArrayPtr data)
 
 	if (!CheckVerify(package->data(), package->verify()))
 	{
-		LOGERR("ERROR verify:" << package->verify());
+		unsigned long long verify = GenerateVerify(package->data());
+		LOGERR("ERROR verify:" << package->verify() << " data verify:" << verify << " data:" << std::string(package->data().begin(), package->data().end()));
 		// return;
 	}
 
