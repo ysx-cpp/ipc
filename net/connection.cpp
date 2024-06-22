@@ -64,7 +64,7 @@ void Connection::SendHeartBeat()
 	heartbeat_->Ping([&]() {
 		Package pkg;
 		pkg.set_cmd(0);
-		SendData(pkg);
+		SendData(pkg, "ping");
 	});
 }
 
@@ -88,20 +88,26 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 	return !ec;
 }
 
-void Connection::SendData(Package& pkg)
+void Connection::SendData(Package& pkg, const std::string &data)
 {
-	std::string stringmsg1(pkg.data().begin(), pkg.data().end());
-	LOGERR("ERROR verify1:" << GenerateVerify(pkg.data()) << " data1:" << stringmsg1);
+	ByteArray array(data.begin(), data.end());
+	SendData(pkg, array);
+}
 
+void Connection::SendData(Package& pkg, const ByteArray &data)
+{
 	pkg.set_seq(send_seq_);
-	pkg.set_verify(GenerateVerify(pkg.data()));
-	pkg.Encode(pkg.data());
+	pkg.set_verify(GenerateVerify(data));
+	pkg.Encode(data);
     WriteSome(pkg.data());
+
+	std::string stringmsg1(data.begin(), data.end());
+	LOGERR("ERROR verify1:" << GenerateVerify(data) << " data1:" << stringmsg1 << " size1:" << data.size());
 
 	Package pkg2;
 	pkg2.Decode(pkg.data());
 	std::string stringmsg2(pkg2.data().begin(), pkg2.data().end());
-	LOGERR("ERROR verify2:" << pkg2.verify() << " data2:" << stringmsg2);
+	LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()

@@ -44,8 +44,8 @@ void Package::Encode(const std::string &data)
 
 void Package::Encode(const ByteArray &data)
 {
-    size_t head_size = sizeof(PackageHead);
-    size_t data_size = static_cast<uint16_t>(data.size());
+    uint16_t head_size = sizeof(PackageHead);
+    uint16_t data_size = static_cast<uint16_t>(data.size());
 
     data_.resize(head_size + data_size);
     PackageHead *phead = reinterpret_cast<PackageHead *>(&data_[0]);

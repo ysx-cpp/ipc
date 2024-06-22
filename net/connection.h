@@ -26,7 +26,8 @@ public:
 	void Start();
     void Stop();
 	bool Connect(const std::string& host, unsigned short port);
-	void SendData(Package& pkg);
+	void SendData(Package& pkg, const std::string &data);
+	void SendData(Package& pkg, const ByteArray &data);
 	void StartHeartbeat();
 	void SendHeartBeat();
 	void OnHeartbeat();

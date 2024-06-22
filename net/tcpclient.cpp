@@ -48,8 +48,7 @@ void TcpClient::Send(const std::string &msg)
     std::cout << "Ping:" << option_.host << " port:" << option_.port << std::endl;
 
     Package package;
-    package.FullData(msg);
-    SendData(package);
+    SendData(package, msg);
 }
 
 void TcpClient::Disconnect()

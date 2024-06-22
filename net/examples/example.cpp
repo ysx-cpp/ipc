@@ -28,8 +28,7 @@ public:
         std::cout << strmsg << std::endl;
 
         Package pkg;
-        pkg.FullData(strmsg);
-        SendData(pkg);
+        SendData(pkg, strmsg);
         SendHeartBeat();
     }
 
@@ -62,12 +61,12 @@ public:
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << data->pdata() << " seq:" << data->seq() << std::endl;
+        std::cout << __FUNCTION__ << " |data:" << data->pdata() << "| seq:" << data->seq() << std::endl;
 
         Package pkg;
         pkg.set_cmd(0);
-        pkg.FullData("Hello client!");
-        connection->SendData(pkg);
+        if (connection->Connected())
+            connection->SendData(pkg, "Hello client!");
         return 0;
     }
 	void OnSendData(const std::size_t& write_bytes) override
