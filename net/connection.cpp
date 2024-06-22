@@ -98,8 +98,10 @@ void Connection::SendData(Package& pkg)
 	pkg.Encode(pkg.data());
     WriteSome(pkg.data());
 
-	std::string stringmsg2(pkg.data().begin(), pkg.data().end());
-	LOGERR("ERROR verify2:" << pkg.verify() << " data2:" << stringmsg2);
+	Package pkg2;
+	pkg2.Decode(pkg.data());
+	std::string stringmsg2(pkg2.data().begin(), pkg2.data().end());
+	LOGERR("ERROR verify2:" << pkg2.verify() << " data2:" << stringmsg2);
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()
