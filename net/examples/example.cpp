@@ -67,7 +67,7 @@ public:
         Package pkg;
         pkg.set_cmd(0);
         pkg.FullData("Hello client!");
-        connection = GetConnection(connection); 
+        // connection = GetConnection(connection); 
         // if (!connection)
         // {
         //     std::cout << __FUNCTION__ << "|disconnect" << std::endl;
