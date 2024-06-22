@@ -102,7 +102,7 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
     WriteSome(pkg.data());
 
 	std::string stringmsg1(data.begin(), data.end());
-	LOGERR("ERROR verify1:" << GenerateVerify(data) << " data1:" << stringmsg1 << " size1:" << data.size());
+	LOGERR("ERROR verify1:" << pkg.verify() << " data1:" << stringmsg1 << " size1:" << data.size());
 
 	Package pkg2;
 	pkg2.Decode(pkg.data());
