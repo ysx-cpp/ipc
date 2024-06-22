@@ -134,6 +134,7 @@ uint64_t Connection::GenerateVerify(const ByteArray &data)
 
 void Connection::Disconnect()
 {
+	Close();
 	heartbeat_->Stop();
 	this->Stop();
 }
