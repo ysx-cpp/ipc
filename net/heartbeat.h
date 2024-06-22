@@ -28,15 +28,14 @@ public:
 	void UpdateTimer();
 	void TimerHandle(const boost::system::error_code &ec);
 	void Stop() { stopped_ = true; }
-	bool Stopped() const { return stopped_; }
+	bool Stopped() const { return stopped_.load(); }
 
 private:
 	int expire() const { return 10; }
 
     boost::asio::deadline_timer server_timer_;
     boost::asio::deadline_timer clinet_timer_;
-	bool stopped_ = false;
-	boost::posix_time::ptime last_ping_;
+	std::atomic<bool> stopped_;
 };
 
 } // namespace net

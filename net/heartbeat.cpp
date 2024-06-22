@@ -19,7 +19,8 @@ using namespace boost::posix_time;
 
 Heartbeat::Heartbeat(boost::asio::io_context &ioc) :
 server_timer_(ioc),
-clinet_timer_(ioc)
+clinet_timer_(ioc),
+stopped_(false)
 {
 }
 
