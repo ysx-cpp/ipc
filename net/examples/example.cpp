@@ -26,11 +26,10 @@ public:
     {
         std::string strmsg("Hello server!");
         std::cout << strmsg << std::endl;
-        DoHeartBeat();
+        SendHeartBeat();
 
         Package pkg;
-        pkg.data_.resize(strmsg.size());
-        std::copy(strmsg.begin(), strmsg.end(), pkg.data_.begin());
+        pkg.FullData(strmsg);
         SendData(pkg);
     }
 
@@ -67,7 +66,7 @@ public:
 
         Package pkg;
         pkg.set_cmd(0);
-        pkg.Encode("Hello client!");
+        pkg.FullData("Hello client!");
         connection->SendData(pkg);
         return 0;
     }

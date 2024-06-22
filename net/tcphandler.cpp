@@ -121,6 +121,7 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	catch (const boost::system::system_error &e)
 	{
 		std::cerr << e.what() << std::endl;
+		Close();
 		Disconnect();
 	}
 }

@@ -30,7 +30,7 @@ void TcpClient::CreateConnect(const std::string &host, uint16_t port, int timeou
 
 void TcpClient::Send(const std::string &msg)
 {
-    if (!connected())
+    if (!Connected())
     {
         if (!Connect(option_.host, option_.port))
         {
@@ -48,13 +48,12 @@ void TcpClient::Send(const std::string &msg)
     std::cout << "Ping:" << option_.host << " port:" << option_.port << std::endl;
 
     Package package;
-    package.Encode(msg);
-    WriteSome(package.data());
+    package.FullData(msg);
+    SendData(package);
 }
 
 void TcpClient::Disconnect()
 {
-    Close();
     Connection::Disconnect();
 }
 

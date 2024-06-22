@@ -110,6 +110,11 @@ public:
         return static_cast<int>(socket_.native_handle());
     }
 
+    bool Connected() const 
+    {
+        return socket_.is_open();
+    }
+
     int CheckErrorCode(const boost::system::error_code &ec)
     {
         switch (ec.value())

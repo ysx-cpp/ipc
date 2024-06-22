@@ -20,44 +20,42 @@ namespace ipc {
 namespace net {
 
 Connection::Connection(boost::asio::io_context &ioc) :
-	TcpHandler(ioc),
-	connction_pool_(nullptr),
-	heartbeat_(new Heartbeat(ioc))
+TcpHandler(ioc),
+connction_pool_(nullptr),
+heartbeat_(new Heartbeat(ioc))
 {
+}
+
+Connection::Connection(boost::asio::io_context &ioc, ConnectionPool *connction_pool) :
+TcpHandler(ioc),
+connction_pool_(connction_pool),
+heartbeat_(new Heartbeat(ioc))
+{
+
 }
 
 void Connection::Start()
 {
     if (connction_pool_)
-	{
-        connction_pool_->AddConnection(ShaerdSelf());
-	}
+    connction_pool_->AddConnection(ShaerdSelf());
 
-	set_connected(true);
     ReadSome();
 }
 
 void Connection::Stop()
 {
-	set_connected(false);
-
 	if (connction_pool_)
 		connction_pool_->RemoveConnection(ShaerdSelf());
 }
 
-void Connection::SetConnectionPool(ConnectionPool* conn_pool)
+void Connection::StartHeartbeat()
 {
-	connction_pool_ = conn_pool;
+	heartbeat_->StartTimer();
 }
 
-void Connection::EnableHeartbeat()
+void Connection::SendHeartBeat()
 {
-	heartbeat_->CheckPing();
-}
-
-void Connection::DoHeartBeat()
-{
-	heartbeat_->PingSecond5([&]() {
+	heartbeat_->Ping([&]() {
 		Package pkg;
 		pkg.set_cmd(0);
 		SendData(pkg);
@@ -67,11 +65,9 @@ void Connection::DoHeartBeat()
 void Connection::OnHeartbeat()
 {
 	if (heartbeat_->Stopped())
-	{
 		Close();
-	}
 	else
-		heartbeat_->Tick10s();
+		heartbeat_->UpdateTimer();
 }
 
 bool Connection::Connect(const std::string &host, unsigned short port)
@@ -86,7 +82,7 @@ void Connection::SendData(Package& pkg)
 {
 	pkg.set_seq(send_seq_);
 	pkg.set_verify(GenerateVerify(pkg.data()));
-	pkg.Encode();
+	pkg.Encode(pkg.data());
     WriteSome(pkg.data());
 }
 
@@ -133,7 +129,7 @@ bool Connection::CheckVerify(const ByteArray &data, uint64_t verify)
 
 uint64_t Connection::GenerateVerify(const ByteArray &data)
 {
-	return boost::hash_value(data);
+	return boost::hash_value<ByteArray>(data);
 }
 
 void Connection::Disconnect()

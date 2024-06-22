@@ -53,6 +53,10 @@ public:
     void Decode(const std::string &data);
     void Decode(const ByteArray &data);
 
+	///填充数据
+	void FullData(const std::string &data);
+	void FullData(const ByteArray &data);
+
 	const ByteArray &data() const { return data_; }
     const unsigned char *pdata() const { return &(data_[0]);}
     bool IsFull() const {return data_.size() >= data_size();}

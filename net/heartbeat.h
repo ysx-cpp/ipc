@@ -23,10 +23,10 @@ public:
     explicit Heartbeat(boost::asio::io_context &ioc);
 
 public:
-	void PingSecond5(boost::function<void()> handler);
-	void CheckPing();
+	void Ping(boost::function<void()> handler);
+	void StartTimer();
+	void UpdateTimer();
 	void TimerHandle(const boost::system::error_code &ec);
-	void Tick10s();
 	void Stop() { stopped_ = true; }
 	bool Stopped() const { return stopped_; }
 

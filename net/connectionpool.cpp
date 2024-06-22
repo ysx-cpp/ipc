@@ -34,12 +34,12 @@ int ConnectionPool::OnDisconnect(ConnectionPtr /*connection*/)
 	return 0;
 }
 
-ConnectionPtr ConnectionPool::CreateConnection(boost::asio::io_context &ioc)
+ConnectionPtr ConnectionPool::CreateConnection(boost::asio::io_context &ioc, ConnectionPool *connection_pool)
 {
-	return std::make_shared<Connection>(ioc);
+	return std::make_shared<Connection>(ioc, connection_pool);
 }
 
-ConnectionPtr ConnectionPool::CreateConnectionSsl(boost::asio::io_context &ioc)
+ConnectionPtr ConnectionPool::CreateConnectionSSL(boost::asio::io_context &ioc, ConnectionPool *connection_pool)
 {
 #if 0
 	ssl::context ctx(ssl::context::sslv23);
@@ -58,7 +58,7 @@ ConnectionPtr ConnectionPool::CreateConnectionSsl(boost::asio::io_context &ioc)
 	ssl::stream<ip::tcp::socket> sock(ioc, ctx);
 	return boost::make_shared<Connection>(std::move(sock));
 #else
-	return CreateConnection(ioc);
+	return CreateConnection(ioc, connection_pool);
 #endif
 }
 

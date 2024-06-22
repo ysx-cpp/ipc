@@ -89,6 +89,11 @@ public:
         return static_cast<int>(socket_.native_handle());
     }
 
+    bool Connected() const 
+    {
+        return socket_.is_open();
+    }
+
 protected:
     friend class TcpServer;
     friend class UdpServer;

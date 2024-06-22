@@ -23,18 +23,18 @@ clinet_timer_(ioc)
 {
 }
 
-void Heartbeat::PingSecond5(boost::function<void()> handler)
+void Heartbeat::Ping(boost::function<void()> handler)
 {
 	auto lamb = [=](const boost::system::error_code &ec) { 
 		handler(); 
-		PingSecond5(handler);
+		Ping(handler);
 	};
 
     clinet_timer_.expires_from_now(boost::posix_time::seconds(5));
     clinet_timer_.async_wait(lamb);
 }
 
-void Heartbeat::CheckPing()
+void Heartbeat::StartTimer()
 {
 	try
 	{
@@ -51,13 +51,7 @@ void Heartbeat::CheckPing()
 	}
 }
 
-void Heartbeat::TimerHandle(const boost::system::error_code &ec)
-{
-	if (!ec) 
-		this->Stop();
-}
-
-void Heartbeat::Tick10s()
+void Heartbeat::UpdateTimer()
 {
 	if (!Stopped())
 	{
@@ -75,6 +69,11 @@ void Heartbeat::Tick10s()
 			std::cerr << "Unknown error" << std::endl;
 		}
 	}
+}
+
+void Heartbeat::TimerHandle(const boost::system::error_code &ec)
+{
+	if (!ec) this->Stop();
 }
 
 } // namespace net

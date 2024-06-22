@@ -29,8 +29,9 @@ protected:
 	virtual void OnSendData(const std::size_t& write_bytes) = 0;
 	virtual int OnConnect(ConnectionPtr connection) = 0;
 	virtual int OnDisconnect(ConnectionPtr connection) = 0;
-	ConnectionPtr CreateConnection(boost::asio::io_context &ioc);
-	ConnectionPtr CreateConnectionSsl(boost::asio::io_context &ioc);
+
+	ConnectionPtr CreateConnection(boost::asio::io_context &ioc, ConnectionPool *connection_pool);
+	ConnectionPtr CreateConnectionSSL(boost::asio::io_context &ioc, ConnectionPool *connection_pool);
 	void AddConnection(ConnectionPtr connection);
 	void RemoveConnection(ConnectionPtr connection);
 	void RemoveAllConnection();
