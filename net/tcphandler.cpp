@@ -54,7 +54,7 @@ void TcpHandler::WriteSomeHandler(const boost::system::error_code &ec, const std
 {
 	if (ec || !write_bytes)
 	{
-		std::cerr << "ERROR write_bytes:" << write_bytes << std::endl;
+		LOGERR("ERROR write_bytes:" << write_bytes);
 		return Disconnect();
 	}
 

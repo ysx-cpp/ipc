@@ -58,7 +58,7 @@ void TcpServer::DoAccept()
 void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_code &ec)
 {  
     int fd = connection->socketfd();
-    std::cout << "OnAccept error_code:" << ec << " fd:" << fd << std::endl;
+    std::cout << __FUNCTION__ << "|OnAccept error_code:" << ec << " fd:" << fd << std::endl;
     if (ec)
     {
         std::cout << "delete session" << std::endl;    

@@ -65,9 +65,13 @@ void Connection::SendHeartBeat()
 void Connection::OnHeartbeat()
 {
 	if (heartbeat_->Stopped())
+	{
 		Close();
+	}
 	else
+	{
 		heartbeat_->UpdateTimer();
+	}
 }
 
 bool Connection::Connect(const std::string &host, unsigned short port)
@@ -80,10 +84,13 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 
 void Connection::SendData(Package& pkg)
 {
-	pkg.set_seq(send_seq_);
-	pkg.set_verify(GenerateVerify(pkg.data()));
-	pkg.Encode(pkg.data());
-    WriteSome(pkg.data());
+	if (Connected())
+	{
+		pkg.set_seq(send_seq_);
+		pkg.set_verify(GenerateVerify(pkg.data()));
+		pkg.Encode(pkg.data());
+    	WriteSome(pkg.data());
+	}
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()
@@ -98,13 +105,13 @@ void Connection::Complete(const ByteArrayPtr data)
 
 	if (package->seq() != recv_seq_)
 	{
-		std::cerr << "ERROR seq:" << package->seq() << std::endl;
+		LOGERR("ERROR seq:" << package->seq());
 		// return;
 	}
 
 	if (!CheckVerify(package->data(), package->verify()))
 	{
-		std::cerr << "ERROR verify:" << package->verify() << std::endl;
+		LOGERR("ERROR verify:" << package->verify());
 		// return;
 	}
 
@@ -134,7 +141,6 @@ uint64_t Connection::GenerateVerify(const ByteArray &data)
 
 void Connection::Disconnect()
 {
-	Close();
 	heartbeat_->Stop();
 	this->Stop();
 }

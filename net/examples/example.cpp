@@ -62,11 +62,17 @@ public:
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-        std::cerr << data->pdata() << " seq:" << data->seq() << std::endl;
+        std::cout << __FUNCTION__ << data->pdata() << " seq:" << data->seq() << std::endl;
 
         Package pkg;
         pkg.set_cmd(0);
         pkg.FullData("Hello client!");
+        connection = GetConnection(connection); 
+        // if (!connection)
+        // {
+        //     std::cout << __FUNCTION__ << "|disconnect" << std::endl;
+        //     return -1;
+        // }
         connection->SendData(pkg);
         return 0;
     }

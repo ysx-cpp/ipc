@@ -18,6 +18,9 @@
 namespace ipc {
 namespace net {
 
+#define LOGERR(fmt) \
+std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << fmt << std::endl;
+
 template<class T>
 class SocketHandler :
 	private boost::noncopyable,
@@ -144,7 +147,7 @@ public:
 
     void Close()
     {
-        std::cout << "close fd:" << socketfd() << std::endl;
+        LOGERR("close fd:" << socketfd());
         if (socket_.is_open())
         {
             boost::system::error_code ec;
