@@ -26,6 +26,8 @@ stopped_(false)
 
 void Heartbeat::Ping(boost::function<void()> handler)
 {
+	if (Stopped()) return;
+
 	auto lamb = [=](const boost::system::error_code &ec) { 
 		handler(); 
 		Ping(handler);
@@ -54,21 +56,20 @@ void Heartbeat::StartTimer()
 
 void Heartbeat::UpdateTimer()
 {
-	if (!Stopped())
+	if (Stopped()) return;
+
+	try
 	{
-		try
-		{
-			server_timer_.expires_at(server_timer_.expires_at() + boost::posix_time::seconds(this->expire()));
-			server_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, this, placeholders::error));
-		}
-		catch (const boost::system::system_error &e)
-		{
-			std::cerr << e.what() << std::endl;
-		}
-		catch (...)
-		{
-			std::cerr << "Unknown error" << std::endl;
-		}
+		server_timer_.expires_at(server_timer_.expires_at() + boost::posix_time::seconds(this->expire()));
+		server_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, this, placeholders::error));
+	}
+	catch (const boost::system::system_error &e)
+	{
+		std::cerr << e.what() << std::endl;
+	}
+	catch (...)
+	{
+		std::cerr << "Unknown error" << std::endl;
 	}
 }
 

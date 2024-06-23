@@ -101,13 +101,13 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 	pkg.Encode(data);
     WriteSome(pkg.data());
 
-	std::string stringmsg1(data.begin(), data.end());
-	LOGERR("ERROR verify1:" << pkg.verify() << " data1:" << stringmsg1 << " size1:" << data.size());
+	// std::string stringmsg1(data.begin(), data.end());
+	// LOGERR("ERROR verify1:" << pkg.verify() << " data1:" << stringmsg1 << " size1:" << data.size());
 
-	Package pkg2;
-	pkg2.Decode(pkg.data());
-	std::string stringmsg2(pkg2.data().begin(), pkg2.data().end());
-	LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
+	// Package pkg2;
+	// pkg2.Decode(pkg.data());
+	// std::string stringmsg2(pkg2.data().begin(), pkg2.data().end());
+	// LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
 }
 
 std::shared_ptr<Connection> Connection::ShaerdSelf()
@@ -123,26 +123,26 @@ void Connection::Complete(const ByteArrayPtr data)
 	if (package->seq() != recv_seq_)
 	{
 		LOGERR("ERROR seq:" << package->seq());
-		// return;
+		return;
 	}
 
 	if (!CheckVerify(package->data(), package->verify()))
 	{
 		unsigned long long verify = GenerateVerify(package->data());
 		LOGERR("ERROR verify:" << package->verify() << " data verify:" << verify << " data:" << std::string(package->data().begin(), package->data().end()));
-		// return;
+		return;
 	}
 
 	OnHeartbeat();
 
-	++recv_seq_;
+	++recv_seq_; //正常情况tcp对端发送成功这里就必然会收到
     if (connction_pool_)
         connction_pool_->OnReceveData(package, std::dynamic_pointer_cast<Connection>(shared_from_this()));
 }
 
 void Connection::Successfully(const std::size_t& write_bytes)
 {
-	++send_seq_;
+	++send_seq_; //这里表示发送成功的字节数，write_bytes等于发送的字节数，tcp已经确保对端已收到了这么多个字节
 	if (connction_pool_)
 		connction_pool_->OnSendData(write_bytes);
 }
