@@ -72,7 +72,7 @@ void Connection::OnHeartbeat()
 {
 	if (heartbeat_->Stopped())
 	{
-		this->Stop();
+		Disconnect();
 	}
 	else
 	{
