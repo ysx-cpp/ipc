@@ -41,9 +41,9 @@ protected:
 	virtual int OnDisconnect() {return 0;}
 
 private:
-    void Complete(const ByteArrayPtr data) override;
-	void Successfully(const std::size_t& write_bytes) override;
-	void Shutdown() override;
+    void Complete(const ByteArrayPtr data) override final;
+	void Successfully(const std::size_t& write_bytes) override  final;
+	void Shutdown() override final;
 
 private:
 	void SendPackageReply();
