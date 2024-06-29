@@ -49,7 +49,20 @@ protected:
         std::cout << msg << std::endl;
         return 0;
     }
-
+    void OnSendData(const std::size_t& write_bytes) override
+    {
+        std::cout << __FUNCTION__ << "|OnSendData write_bytes:" << write_bytes << std::endl;
+    }
+    int OnConnect() override
+    {
+        std::cout << __FUNCTION__ << "|OnConnect"<< std::endl;
+        return 0;
+    }
+	int OnDisconnect() override
+    {
+        std::cout << __FUNCTION__ << "|OnDisconnect" << std::endl;
+        return 0;
+    }
 private:
 	std::string host_;
 	uint16_t port_;
@@ -69,22 +82,22 @@ public:
 
         Package pkg;
         pkg.set_cmd(0);
-        if (connection->Connected())
+        if (connection)
             connection->SendData(pkg, "Hello client!");
         return 0;
     }
 	void OnSendData(const std::size_t& write_bytes, ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnSendData" << std::endl;
+        std::cout << __FUNCTION__ << "|OnSendData write_bytes:" << write_bytes << std::endl;
     }
 	int OnConnect(ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnConnect" << std::endl;
+        std::cout << __FUNCTION__ << "|OnConnect:" << connection << std::endl;
         return 0;
     }
 	int OnDisconnect(ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnDisconnect" << std::endl;
+        std::cout << __FUNCTION__ << "|OnDisconnect:" << connection  << std::endl;
         return 0;
     }
 };
