@@ -19,21 +19,6 @@ namespace net {
 
 using namespace boost::asio;
 
-int ConnectionPool::OnReceveData(const PackagePtr, ConnectionPtr)
-{
-    return 0;
-}
-
-int ConnectionPool::OnConnect(ConnectionPtr /*connection*/)
-{
-	return 0;
-}
-
-int ConnectionPool::OnDisconnect(ConnectionPtr /*connection*/)
-{
-	return 0;
-}
-
 ConnectionPtr ConnectionPool::CreateConnection(boost::asio::io_context &ioc, ConnectionPool *connection_pool)
 {
 	return std::make_shared<Connection>(ioc, connection_pool);

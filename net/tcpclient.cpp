@@ -28,14 +28,14 @@ void TcpClient::CreateConnect(const std::string &host, uint16_t port, int timeou
     option_.timeout_ms = timeout;
 }
 
-void TcpClient::Send(const std::string &msg)
+void TcpClient::SendPackage(PackagePtr package, const std::string &msg)
 {
     if (!Connected())
     {
         if (!Connect(option_.host, option_.port))
         {
             timer_.expires_from_now(boost::posix_time::milliseconds(option_.timeout_ms));
-            timer_.async_wait(boost::bind(&TcpClient::Send, this, msg));
+            timer_.async_wait(boost::bind(&TcpClient::SendPackage, this, package, msg));
 
             std::cerr << "connect " << option_.host << ":" << option_.port << " timeout" << std::endl;
             return;
@@ -45,15 +45,7 @@ void TcpClient::Send(const std::string &msg)
             Start();
         }
     }
-    std::cout << "Ping:" << option_.host << " port:" << option_.port << std::endl;
-
-    Package package;
-    SendData(package, msg);
-}
-
-void TcpClient::Disconnect()
-{
-    Connection::Disconnect();
+    SendData(*package, msg);
 }
 
 } // namespace net

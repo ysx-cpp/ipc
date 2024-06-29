@@ -36,7 +36,7 @@ protected:
 
     virtual void Complete(const ByteArrayPtr data) = 0;
     virtual void Successfully(const std::size_t &write_bytes) = 0;
-    virtual void Disconnect() = 0;
+    virtual void Shutdown() = 0;
 
 private:
     boost::asio::streambuf recv_buff_;

@@ -28,25 +28,35 @@ public:
 	bool Connect(const std::string& host, unsigned short port);
 	void SendData(Package& pkg, const std::string &data);
 	void SendData(Package& pkg, const ByteArray &data);
+
+public:
 	void StartHeartbeat();
-	void SendHeartBeat();
+	void SendHeartbeat();
 	void OnHeartbeat();
 
 protected:
-	std::shared_ptr<Connection> ShaerdSelf();
-    void Complete(const ByteArrayPtr data) override;
-	void Disconnect() override;
+	virtual int OnReceveData(const PackagePtr package) {return 0;}
+	virtual void OnSendData(const std::size_t& write_bytes) {}
+	virtual int OnConnect() {return 0;}
+	virtual int OnDisconnect() {return 0;}
 
 private:
+    void Complete(const ByteArrayPtr data) override;
 	void Successfully(const std::size_t& write_bytes) override;
+	void Shutdown() override;
+
+private:
+	void SendPackageReply();
+	void OnPackageReply(PackagePtr package);
 	bool CheckVerify(const ByteArray &data, uint64_t verify);
 	uint64_t GenerateVerify(const ByteArray &data);
 
 private:
+	std::shared_ptr<Connection> ShaerdSelf();
     ConnectionPool *connction_pool_;
 	std::unique_ptr<Heartbeat> heartbeat_;
-	std::uint64_t send_seq_ = 0;
-	std::uint64_t recv_seq_ = 0;
+	std::atomic<uint64_t> send_seq_;
+	std::atomic<uint64_t> recv_seq_;
 };
 using ConnectionPtr = std::shared_ptr<Connection>;
 

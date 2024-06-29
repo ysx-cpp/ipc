@@ -25,10 +25,9 @@ struct ConnectOption
 class TcpClient : public Connection
 {
 public:
-    TcpClient(boost::asio::io_context &ioc);
+    explicit TcpClient(boost::asio::io_context &ioc);
     void CreateConnect(const std::string &host, uint16_t port, int timeout = 200);
-    void Send(const std::string &msg);
-    void Disconnect() override;
+    void SendPackage(PackagePtr package, const std::string &msg);
 
 private:
     boost::asio::io_context &ioc_;

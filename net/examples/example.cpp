@@ -27,9 +27,11 @@ public:
         std::string strmsg("Hello server!");
         std::cout << strmsg << std::endl;
 
-        Package pkg;
-        SendData(pkg, strmsg);
-        SendHeartBeat();
+        PackagePtr pkg = std::make_shared<Package>();
+        pkg->set_cmd(10000);
+        SendPackage(pkg, strmsg);
+
+        SendHeartbeat();
     }
 
     void set_host(const std::string &host) { host_ = host; };
@@ -38,12 +40,14 @@ public:
     uint16_t port() const { return port_; }
 
 protected:
-    void Complete(const ByteArrayPtr data) override
+    int OnReceveData(const PackagePtr package) override
     {
-        if (data == nullptr) return;
+        if (package == nullptr) 
+            return 0;
 
-        std::string msg(data->begin(), data->end());
+        std::string msg(package->data().begin(), package->data().end());
         std::cout << msg << std::endl;
+        return 0;
     }
 
 private:
@@ -69,15 +73,18 @@ public:
             connection->SendData(pkg, "Hello client!");
         return 0;
     }
-	void OnSendData(const std::size_t& write_bytes) override
+	void OnSendData(const std::size_t& write_bytes, ConnectionPtr connection) override
     {
+        std::cout << __FUNCTION__ << "|OnSendData" << std::endl;
     }
 	int OnConnect(ConnectionPtr connection) override
     {
+        std::cout << __FUNCTION__ << "|OnConnect" << std::endl;
         return 0;
     }
 	int OnDisconnect(ConnectionPtr connection) override
     {
+        std::cout << __FUNCTION__ << "|OnDisconnect" << std::endl;
         return 0;
     }
 };
@@ -98,7 +105,7 @@ int main(int argc, char *argv[])
         boost::asio::io_context ioc;
         TestTcpClient client(ioc);
         client.CreateConnect(host, port);
-        client.Connect(host, port);
+        // client.Connect(host, port);
         client.TestPing();
         ioc.run();
     }

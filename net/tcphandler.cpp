@@ -54,8 +54,8 @@ void TcpHandler::WriteSomeHandler(const boost::system::error_code &ec, const std
 {
 	if (ec || !write_bytes)
 	{
-		LOGERR("ERROR write_bytes:" << write_bytes);
-		return Disconnect();
+		NET_LOGERR("ERROR write_bytes:" << write_bytes);
+		return Shutdown();
 	}
 
 	send_buff_.consume(write_bytes);
@@ -120,8 +120,12 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	}
 	catch (const boost::system::system_error &e)
 	{
-		LOGERR(e.what());
-		Disconnect();
+		NET_LOGERR(e.what());
+		Shutdown();
+	}
+	catch (...)
+	{
+		NET_LOGERR("Unknown error");
 	}
 }
 
