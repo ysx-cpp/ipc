@@ -28,7 +28,7 @@ enum class PackageCommand
 Connection::Connection(boost::asio::io_context &ioc) :
 TcpHandler(ioc),
 connction_pool_(nullptr),
-heartbeat_(new Heartbeat(ioc)),
+heartbeat_(std::make_shared<Heartbeat>(ioc)),
 send_seq_(0),
 recv_seq_(0)
 {
@@ -37,7 +37,7 @@ recv_seq_(0)
 Connection::Connection(boost::asio::io_context &ioc, ConnectionPool *connction_pool) :
 TcpHandler(ioc),
 connction_pool_(connction_pool),
-heartbeat_(new Heartbeat(ioc)),
+heartbeat_(std::make_shared<Heartbeat>(ioc)),
 send_seq_(0),
 recv_seq_(0)
 {
@@ -110,11 +110,13 @@ void Connection::StartHeartbeat()
 
 void Connection::SendHeartbeat()
 {
-	heartbeat_->Ping([&]() {
-		Package pkg;
-		pkg.set_cmd(0);
-		SendData(pkg, "ping");
-	});
+	heartbeat_->Ping(ShaerdSelf());
+	// auto pself = ShaerdSelf();
+	// heartbeat_->Ping([pself]() {
+	// 	Package pkg;
+	// 	pkg.set_cmd(0);
+	// 	pself->SendData(pkg, "ping");
+	// });
 }
 
 void Connection::OnHeartbeat()
@@ -123,7 +125,7 @@ void Connection::OnHeartbeat()
 	{
 		Shutdown();
 	}
-	else
+	else if (connction_pool_)
 	{
 		heartbeat_->UpdateTimer();
 	}

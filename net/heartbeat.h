@@ -17,13 +17,15 @@
 namespace ipc {
 namespace net {
 
+class Connection;
 class Heartbeat : public boost::enable_shared_from_this<Heartbeat>
 {
 public:
     explicit Heartbeat(boost::asio::io_context &ioc);
 
 public:
-	void Ping(boost::function<void()> handler);
+	// void Ping(boost::function<void()> handler);
+	void Ping(std::shared_ptr<Connection> connection);
 	void StartTimer();
 	void UpdateTimer();
 	void TimerHandle(const boost::system::error_code &ec);

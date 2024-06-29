@@ -24,14 +24,28 @@ public:
 
     void TestPing()
     {
-        std::string strmsg("Hello server!");
-        std::cout << strmsg << std::endl;
+        try
+        {
+            std::string strmsg("Hello server!");
+            std::cout << __FUNCTION__ << "|" << strmsg << std::endl;
 
-        PackagePtr pkg = std::make_shared<Package>();
-        pkg->set_cmd(10000);
-        SendPackage(pkg, strmsg);
-
-        SendHeartbeat();
+            PackagePtr pkg = std::make_shared<Package>();
+            pkg->set_cmd(10000);
+            SendPackage(pkg, strmsg);
+            SendHeartbeat();
+        }
+        catch (const boost::system::system_error &e)
+        {
+            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|"  << e.what() << std::endl;
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|"  << e.what() << std::endl;
+        }
+        catch (...)
+        {
+            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "Unknown error" << std::endl;
+        }
     }
 
     void set_host(const std::string &host) { host_ = host; };
@@ -97,6 +111,8 @@ public:
     }
 	int OnDisconnect(ConnectionPtr connection) override
     {
+        if (connection)
+            connection->Stop();
         std::cout << __FUNCTION__ << "|OnDisconnect"  << std::endl;
         return 0;
     }
@@ -116,10 +132,16 @@ int main(int argc, char *argv[])
     if (strcmp(argv[1], "client") == 0)
     {
         boost::asio::io_context ioc;
-        TestTcpClient client(ioc);
-        client.CreateConnect(host, port);
-        // client.Connect(host, port);
-        client.TestPing();
+        auto client = std::make_shared<TestTcpClient>(ioc);
+        client->CreateConnect(host, port);
+        client->Connect(host, port);
+
+        // std::cout << "Put in 'Enter' continue:";
+        // std::string in;
+        // std::cin >> in;
+
+        client->TestPing();
+        client->Start();
         ioc.run();
     }
     else if (strcmp(argv[1], "server") == 0)

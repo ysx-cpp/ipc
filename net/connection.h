@@ -10,18 +10,18 @@
 
 #include <memory>
 #include "tcphandler.h"
-#include "heartbeat.h"
 
 namespace ipc {
 namespace net {
 
+class Heartbeat;
 class ConnectionPool;
 class Connection : public TcpHandler
 {
 public:
 	explicit Connection(boost::asio::io_context &ioc);
 	explicit Connection(boost::asio::io_context &ioc, ConnectionPool *connction_pool);
-	~Connection() = default;
+	~Connection() override = default;
 
 	void Start();
     void Stop();
@@ -54,7 +54,7 @@ private:
 private:
 	std::shared_ptr<Connection> ShaerdSelf();
     ConnectionPool *connction_pool_;
-	std::unique_ptr<Heartbeat> heartbeat_;
+	std::shared_ptr<Heartbeat> heartbeat_;
 	std::atomic<uint64_t> send_seq_;
 	std::atomic<uint64_t> recv_seq_;
 };
