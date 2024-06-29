@@ -97,7 +97,7 @@ public:
     }
 	int OnDisconnect(ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnDisconnect:" << connection  << std::endl;
+        std::cout << __FUNCTION__ << "|OnDisconnect"  << std::endl;
         return 0;
     }
 };
