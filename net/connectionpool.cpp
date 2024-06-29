@@ -59,7 +59,6 @@ void ConnectionPool::RemoveConnection(ConnectionPtr connection)
 	boost::recursive_mutex::scoped_lock rlock(mutex_);
 	if (connection_pool_.find(connection) != connection_pool_.end())
 	{
-		this->OnDisconnect(connection);
 		connection_pool_.erase(connection);
 	}
 }

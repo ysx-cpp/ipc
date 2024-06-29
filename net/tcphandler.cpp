@@ -121,7 +121,7 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	catch (const boost::system::system_error &e)
 	{
 		NET_LOGERR(e.what());
-		if (shared_from_this()) Shutdown();
+		Shutdown();
 	}
 	catch (...)
 	{

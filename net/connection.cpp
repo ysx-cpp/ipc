@@ -180,13 +180,15 @@ void Connection::Successfully(const std::size_t& write_bytes)
 
 void Connection::Shutdown()
 {
-	heartbeat_->Stop();
-	this->Stop();
-
 	if (connction_pool_)
+	{
+		heartbeat_->Stop();
 		connction_pool_->OnDisconnect(ShaerdSelf());
+	}
 	else
+	{
 		OnDisconnect();
+	}
 }
 
 void Connection::SendPackageReply()
