@@ -120,9 +120,12 @@ void Connection::SendHeartbeat()
 
 void Connection::OnHeartbeat()
 {
+	if (!Connected())
+		return;
+
 	if (heartbeat_->Stopped())
 	{
-		Shutdown();
+		impl_.Close();
 	}
 	else if (connction_pool_)
 	{
@@ -183,7 +186,6 @@ void Connection::Shutdown()
 {
 	if (connction_pool_)
 	{
-		heartbeat_->Stop();
 		connction_pool_->OnDisconnect(ShaerdSelf());
 	}
 	else
