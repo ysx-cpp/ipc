@@ -5,6 +5,7 @@
 #include <functional>
 #include "../tcpclient.h"
 #include "../tcpserver.h"
+#include "../logdefine.h"
 
 using ipc::net::TcpClient;
 using ipc::net::TcpServer;
@@ -36,15 +37,15 @@ public:
         }
         catch (const boost::system::system_error &e)
         {
-            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|"  << e.what() << std::endl;
+            NET_LOGERR(e.what());
         }
         catch (const std::exception &e)
         {
-            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|"  << e.what() << std::endl;
+            NET_LOGERR(e.what());
         }
         catch (...)
         {
-            std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "Unknown error" << std::endl;
+            NET_LOGERR("Unknown error");
         }
     }
 
@@ -65,16 +66,16 @@ protected:
     }
     void OnSendData(const std::size_t& write_bytes) override
     {
-        std::cout << __FUNCTION__ << "|OnSendData write_bytes:" << write_bytes << std::endl;
+        NET_LOGERR("OnSendData write_bytes:" << write_bytes);
     }
     int OnConnect() override
     {
-        std::cout << __FUNCTION__ << "|OnConnect"<< std::endl;
+        NET_LOGERR("OnConnect");
         return 0;
     }
 	int OnDisconnect() override
     {
-        std::cout << __FUNCTION__ << "|OnDisconnect" << std::endl;
+        NET_LOGERR("OnDisconnect");
         return 0;
     }
 private:
@@ -92,7 +93,7 @@ public:
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << " |data:" << data->pdata() << "| seq:" << data->seq() << std::endl;
+         NET_LOGERR("data:" << data->pdata() << "| seq:" << data->seq());
 
         Package pkg;
         pkg.set_cmd(0);
@@ -102,18 +103,18 @@ public:
     }
 	void OnSendData(const std::size_t& write_bytes, ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnSendData write_bytes:" << write_bytes << std::endl;
+        NET_LOGERR("OnSendData write_bytes:" << write_bytes)
     }
 	int OnConnect(ConnectionPtr connection) override
     {
-        std::cout << __FUNCTION__ << "|OnConnect:" << connection << std::endl;
+        NET_LOGERR("OnConnect:" << connection);
         return 0;
     }
 	int OnDisconnect(ConnectionPtr connection) override
     {
         if (connection)
             connection->Stop();
-        std::cout << __FUNCTION__ << "|OnDisconnect"  << std::endl;
+        NET_LOGERR("OnDisconnect");
         return 0;
     }
 };
@@ -122,7 +123,7 @@ int main(int argc, char *argv[])
 {
     if (argc != 4)
     {
-        std::cerr << "param error!" << std::endl;
+        NET_LOGERR("param error!");
         return __LINE__;
     }
 
@@ -151,7 +152,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        std::cerr << "Param error! please input client or server." << std::endl;
+        NET_LOGERR("Param error! please input client or server." );
         return __LINE__;
     }
         

@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/asio/placeholders.hpp>
 #include "connection.h"
+#include "logdefine.h"
 
 namespace ipc {
 namespace net {
@@ -19,8 +20,8 @@ using namespace boost::asio;
 using namespace boost::posix_time;
 
 Heartbeat::Heartbeat(boost::asio::io_context &ioc) :
-server_timer_(ioc),
-clinet_timer_(ioc),
+request_timer_(ioc),
+reply_timer_(ioc),
 stopped_(false)
 {
 }
@@ -29,118 +30,113 @@ void Heartbeat::Ping(std::shared_ptr<Connection> connection, const boost::system
 {
 	if (!connection)
 	{
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "connection is nullptr" << std::endl;
+		NET_LOGERR("connection is nullptr");
 		return;
 	}
 
 	if (Stopped()) 
 	{
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "stoped" << std::endl;
+		NET_LOGERR("Heartbeat Stopped");
 		return;
 	}
 
-    clinet_timer_.expires_from_now(boost::posix_time::seconds(5));
-    clinet_timer_.async_wait(boost::bind(&Heartbeat::Ping, shared_from_this(), connection, placeholders::error));
+	if (!connection->Connected())
+	{
+		NET_LOGERR("Disconnected!");
+		return;
+	}
+
+    request_timer_.expires_from_now(boost::posix_time::seconds(5));
+    request_timer_.async_wait(boost::bind(&Heartbeat::Ping, shared_from_this(), connection, placeholders::error));
 }
 
 void Heartbeat::Ping(std::shared_ptr<Connection> connection)
 {
-	try
+	if (!connection)
+	{
+		NET_LOGERR("connection is nullptr");
+		return;
+	}
+
+	if (Stopped())
+	{
+		NET_LOGERR("Heartbeat Stopped");
+		return;
+	}
+
+	if (!connection->Connected())
+	{
+		NET_LOGERR("Disconnected!");
+		return;
+	}
+
+	auto pself = shared_from_this();
+	auto lamb = [pself, connection](const boost::system::error_code &ec)
 	{
 		if (!connection)
 		{
-			std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "connection is nullptr" << std::endl;
+			NET_LOGERR("connection is nullptr");
+			return;
+		}
+		if (!connection->Connected())
+		{
+			NET_LOGERR("Disconnected!");
 			return;
 		}
 
-		if (Stopped())
-		{
-			std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "stoped" << std::endl;
-			return;
-		}
+		Package pkg;
+		pkg.set_cmd(0);
+		connection->SendData(pkg, "ping");
 
-		auto pself = shared_from_this();
-		auto lamb = [pself, connection](const boost::system::error_code &ec)
-		{
-			if (connection)
-			{
-				Package pkg;
-				pkg.set_cmd(0);
-				connection->SendData(pkg, "ping");
-			}
+		if (pself)
+			pself->Ping(connection);
+	};
 
-			if (pself)
-				pself->Ping(connection);
-		};
-
-		clinet_timer_.expires_from_now(boost::posix_time::seconds(5));
-		clinet_timer_.async_wait(lamb);
-	}
-	catch (const boost::system::system_error &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-	catch (...)
-	{
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "Unknown error" << std::endl;
-	}
+	request_timer_.expires_from_now(boost::posix_time::seconds(5));
+	request_timer_.async_wait(lamb);
 }
 
 void Heartbeat::StartTimer()
 {
-	try
-	{
-		server_timer_.expires_from_now(boost::posix_time::seconds(this->expire()));
-		// server_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, this, placeholders::error));
-
-		auto pself = shared_from_this();
-		auto lamb = [pself](const boost::system::error_code &ec)
-		{
-			if (pself)
-				pself->TimerHandle(ec);
-		};
-		server_timer_.async_wait(lamb);
-	}
-	catch (const boost::system::system_error &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-	catch (...)
-	{
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "Unknown error" << std::endl;
-	}
+	reply_timer_.expires_from_now(boost::posix_time::seconds(this->expire()));
+	reply_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, shared_from_this(), placeholders::error));
 }
 
 void Heartbeat::UpdateTimer()
 {
-	if (Stopped()) return;
+	if (Stopped()) 
+	{
+		NET_LOGERR("Heartbeat Stopped");
+		return;
+	}
+	last_ping_ = boost::posix_time::second_clock::local_time();
 
-	try
-	{
-		server_timer_.expires_at(server_timer_.expires_at() + boost::posix_time::seconds(this->expire()));
-		server_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, this, placeholders::error));
-
-		auto pself = shared_from_this();
-		auto lamb = [pself](const boost::system::error_code &ec)
-		{
-			if (pself)
-				pself->TimerHandle(ec);
-		};
-		server_timer_.async_wait(lamb);
-	}
-	catch (const boost::system::system_error &e)
-	{
-		std::cerr << e.what() << std::endl;
-	}
-	catch (...)
-	{
-		std::cerr << __FILE__ << ":" << __LINE__ << ":" << __FUNCTION__ << "|" << "Unknown error" << std::endl;
-	}
+	// reply_timer_.expires_at(reply_timer_.expires_at() + boost::posix_time::seconds(this->expire()));
+	// reply_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, shared_from_this(), placeholders::error));
 }
 
 void Heartbeat::TimerHandle(const boost::system::error_code &ec)
 {
-	if (!ec) this->Stop();
+	if (!ec) 
+	{
+		NET_LOGERR("ec error message:" << ec.message());
+		return;
+	}
+
+	if (Stopped()) 
+	{
+		NET_LOGERR("Heartbeat Stopped");
+		return;
+	}
+	
+	auto now = boost::posix_time::second_clock::local_time();
+	if ((now - last_ping_) > boost::posix_time::seconds(this->expire()))
+	{
+		NET_LOGERR("Heartbeat time out");
+		return Stop();
+	}
+	reply_timer_.expires_from_now(boost::posix_time::seconds(this->expire()));
+	reply_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, shared_from_this(), placeholders::error));
 }
 
 } // namespace net
