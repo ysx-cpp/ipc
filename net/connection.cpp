@@ -58,6 +58,7 @@ void Connection::Stop()
 {
 	if (connction_pool_)
 	{
+		heartbeat_->Stop();
 		connction_pool_->RemoveConnection(ShaerdSelf());
 	}
 	else
