@@ -1,111 +1,100 @@
 /*
- * @file socketwrapper.h
+ * @file socketsettings.h
  * @author Songxi Yang
  * @mail ysx-cpp@gmail.com
  * @github https://github.com/ysx-cpp
  * @date Oct 08 2019
  */
-#ifndef NET_SOCKET_WRAPPER_HPP
-#define NET_SOCKET_WRAPPER_HPP
+#ifndef NET_SOCKET_SETTINGS_HPP
+#define NET_SOCKET_SETTINGS_HPP
 
 #include <iostream>
-#include <memory>
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
 #include <boost/noncopyable.hpp>
 #include "logdefine.h"
 
 namespace ipc {
 namespace net {
 
-template<class T>
-class SocketHandler :
-	private boost::noncopyable,
-	public std::enable_shared_from_this<SocketHandler<T>>
+template<typename T>
+class SocketSettings : private boost::noncopyable
 {
 public:
-    explicit SocketHandler(boost::asio::io_context &ioc)
+    explicit SocketSettings(boost::asio::io_context &ioc)
         : socket_(ioc)
     {
     }
 
-    template <typename ContextType, typename Tp>
-    SocketHandler(ContextType &ioc, boost::asio::ip::basic_endpoint<Tp> &&ep)
+    explicit SocketSettings(T &socket)
+        : socket_(socket)
+    {
+    }
+
+    template <typename Tp>
+    SocketSettings(boost::asio::io_context &ioc, boost::asio::ip::basic_endpoint<Tp> &&ep)
         : socket_(ioc, std::move(ep))
     {
     }
 
-    virtual ~SocketHandler()
+    virtual ~SocketSettings()
     {
         Close();
     }
 
     void SetSocketReuse(bool reuse)
     {
-        typename T::reuse_address option(reuse);
-        socket_.set_option(option);
+        typename T::reuse_address ra(reuse);
+        socket_.set_option(ra);
     }
 
     void SetSendBuffSize(size_t buff_size)
     {
-        // typename T::send_buffer_size option(static_cast<int>(buff_size));
-        boost::asio::socket_base::receive_buffer_size option(static_cast<int>(buff_size));
-        socket_.set_option(option);
+        typename T::send_buffer_size sbs(static_cast<int>(buff_size));
+        socket_.set_option(sbs);
     }
 
-    template <class Tp>
-    size_t GetSendBuffSize(Tp &&protocol)
-    {
-        typename T::send_buffer_size option;
-        socket_.get_option(option);
-
-        return option.size(protocol);
-    }
-    
     size_t GetSendBuffSize()
     {
-        typename T::send_buffer_size option;
-        socket_.get_option(option);
+        typename T::send_buffer_size sbs;
+        socket_.get_option(sbs);
 
-        return option.value();
+        std::cout << "send_buffer_size= " << sbs.value() << std::endl;
+
+        return sbs.value();
     }
 
     void SetReciveBuffSize(size_t buff_size)
     {
-        typename T::receive_buffer_size option(static_cast<int>(buff_size));
-        socket_.set_option(option);
-    }
-
-    template <class Tp>
-    size_t GetReciveBuffSize(Tp &&protocol)
-    {
-        typename T::receive_buffer_size option;
-        socket_.get_option(option);
-
-        return option.size(protocol);
+        typename T::receive_buffer_size rbs(static_cast<int>(buff_size));
+        socket_.set_option(rbs);
     }
 
     size_t GetReciveBuffSize()
     {
         typename T::receive_buffer_size rbs;
         socket_.get_option(rbs);
+    
+        std::cout << "send_buffer_size= " << rbs.value() << std::endl;
 
         return rbs.value();
     }
 
     std::string LocalAddress() const
     {
-        auto &endpoint = socket_.local_endpoint();
+        auto endpoint = socket_.local_endpoint();
         return endpoint.address().to_string() + ":" + std::to_string(endpoint.port());
     }
 
     std::string PeerAddress() const
     {
-        auto &endpoint = socket_.remote_endpoint();
+        auto endpoint = socket_.remote_endpoint();
         return endpoint.address().to_string() + ":" + std::to_string(endpoint.port());
     }
 
-    int socketfd()
+    int GetSocketFD()
     {
         return static_cast<int>(socket_.native_handle());
     }
@@ -113,6 +102,18 @@ public:
     bool Connected() const 
     {
         return socket_.is_open();
+    }
+    
+    void Close()
+    {
+        NET_LOGERR("close fd:" << GetSocketFD());
+        if (socket_.is_open())
+        {
+            boost::system::error_code ec;
+            socket_.close(ec);
+            if (!ec)
+                socket_.shutdown(T::shutdown_both, ec);
+        }
     }
 
     int CheckErrorCode(const boost::system::error_code &ec)
@@ -142,26 +143,14 @@ public:
         return ec.value();
     }
 
-    void Close()
-    {
-        NET_LOGERR("close fd:" << socketfd());
-        if (socket_.is_open())
-        {
-            boost::system::error_code ec;
-            socket_.close(ec);
-            if (!ec)
-                socket_.shutdown(T::shutdown_both, ec);
-        }
-    }
-
 protected:
+    friend class TcpHandler;
+    friend class Connection;
     friend class TcpServer;
-    friend class UdpServer;
-    friend class IcmpServer;
     T socket_;
 };
-
+    
 } // namespace net
 } // namespace ipc
 
-#endif // NET_SOCKET_WRAPPER_HPP
+#endif // NET_SOCKET_SETTINGS_HPP

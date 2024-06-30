@@ -11,6 +11,7 @@
 #include <boost/bind.hpp>
 #include <boost/regex.hpp>
 #include "heartbeat.h"
+#include "logdefine.h"
 
 namespace ipc {
 namespace net {
@@ -18,7 +19,7 @@ namespace net {
 using namespace boost::asio;
 
 TcpHandler::TcpHandler(boost::asio::io_context &ioc)
-	: SocketHandler(ioc)
+	: impl_(ioc)
 {
 }
 
@@ -34,18 +35,17 @@ void TcpHandler::Read()
 
 void TcpHandler::WriteSome(const ByteArray &data)
 {
+	if (!impl_.Connected())
+		return;
+
 	if (data.size() > send_buff_.max_size())
 		return;
 
 	boost::asio::mutable_buffer buffer = send_buff_.prepare(data.size());
 	std::copy(data.cbegin(), data.cend(), static_cast<unsigned char *>(buffer.data()));
 
-	auto shared_from_this = std::dynamic_pointer_cast<TcpHandler>(this->shared_from_this());
-	if (shared_from_this == nullptr) 
-		return;
-
-	socket_.async_write_some(buffer,
-							 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this,
+	impl_.socket_.async_write_some(buffer,
+							 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this(),
 										 boost::asio::placeholders::error,
 										 boost::asio::placeholders::bytes_transferred));
 
@@ -67,12 +67,11 @@ void TcpHandler::WriteSomeHandler(const boost::system::error_code &ec, const std
 
 	if (send_buff_.size() > 0)
 	{
-		auto shared_from_this = std::dynamic_pointer_cast<TcpHandler>(this->shared_from_this());
-		if (shared_from_this == nullptr) 
+		if (!impl_.Connected())
 			return;
 
-		socket_.async_write_some(send_buff_.prepare(send_buff_.size()),
-								 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this,
+		impl_.socket_.async_write_some(send_buff_.prepare(send_buff_.size()),
+								 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this(),
 											 boost::asio::placeholders::error,
 											 boost::asio::placeholders::bytes_transferred));
 	}
@@ -88,7 +87,7 @@ void TcpHandler::ReadSome()
 	if (shared_from_this == nullptr) 
 		return;
 
-	socket_.async_read_some(recv_buff_.prepare(GetReciveBuffSize()),
+	impl_.socket_.async_read_some(recv_buff_.prepare(impl_.GetReciveBuffSize()),
 							boost::bind(&TcpHandler::ReadSomeHandler, shared_from_this,
 										boost::asio::placeholders::error,
 										boost::asio::placeholders::bytes_transferred));
@@ -105,7 +104,7 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 {
 	try
 	{
-		CheckErrorCode(ec);
+		impl_.CheckErrorCode(ec);
 		if (!ec && read_bytes)
 		{
 			size_t min_size = sizeof(Head);
@@ -142,38 +141,16 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 	}
 }
 
-//
-//class MatchWhitespace
-//{
-//	
-//public:
-//	explicit MatchWhitespace(char c) : c_(c) {}
-//
-//	template <typename Iterator>
-//	std::pair<Iterator, bool> operator()(Iterator begin, Iterator end) const
-//	{
-//		Iterator i = begin;
-//		while (i != end)
-//			if (c_ == *i++)
-//				return std::make_pair(i, true);
-//		return std::make_pair(i, false);
-//	}
-//
-//private:
-//	char c_;
-//};
-
 void TcpHandler::ReadUntil(const std::string& string_regex)
 {
-	auto shared_from_this = std::dynamic_pointer_cast<TcpHandler>(this->shared_from_this());
-	if (shared_from_this == nullptr) 
+	if (!impl_.Connected())
 		return;
 
 	boost::asio::streambuf recv_buf;
-	boost::asio::async_read_until(socket_,
+	boost::asio::async_read_until(impl_.socket_,
 								  recv_buf,
 								  boost::regex(string_regex),
-								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this,
+								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this(),
 											  boost::asio::placeholders::error,
 											  boost::asio::placeholders::bytes_transferred));
 }

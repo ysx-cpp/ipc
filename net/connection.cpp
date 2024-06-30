@@ -15,6 +15,8 @@
 #include <boost/functional/hash.hpp>
 #include "connectionpool.h"
 #include "heartbeat.h"
+#include "package.h"
+#include "logdefine.h"
 
 namespace ipc {
 namespace net {
@@ -60,7 +62,7 @@ void Connection::Stop()
 	}
 	else
 	{
-		Close();
+		impl_.Close();
 	}
 }
 
@@ -68,7 +70,7 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 {
 	boost::system::error_code ec;
 	boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(host), port);
-	socket_.connect(ep, ec);
+	impl_.socket_.connect(ep, ec);
 	return !ec;
 }
 

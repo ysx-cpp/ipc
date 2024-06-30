@@ -28,6 +28,7 @@ public:
 	bool Connect(const std::string& host, unsigned short port);
 	void SendData(Package& pkg, const std::string &data);
 	void SendData(Package& pkg, const ByteArray &data);
+	bool Connected() const {return impl_.Connected();}
 
 public:
 	void StartHeartbeat();
