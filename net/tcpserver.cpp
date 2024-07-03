@@ -52,7 +52,7 @@ void TcpServer::DoAccept()
 {
     auto connection = CreateConnection(app_.io_context(), this);
     connection->StartHeartbeat();
-    acceptor_.async_accept(connection->impl_.socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
+    acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
 }
 
 void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_code &ec)

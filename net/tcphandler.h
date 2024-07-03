@@ -43,6 +43,7 @@ protected:
 
 protected:
     friend class TcpServer;
+    TcpSocket socket_;
     SocketSettings<TcpSocket> impl_;
 
 private:

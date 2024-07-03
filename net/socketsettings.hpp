@@ -23,19 +23,8 @@ template<typename T>
 class SocketSettings : private boost::noncopyable
 {
 public:
-    explicit SocketSettings(boost::asio::io_context &ioc)
-        : socket_(ioc)
-    {
-    }
-
     explicit SocketSettings(T &socket)
         : socket_(socket)
-    {
-    }
-
-    template <typename Tp>
-    SocketSettings(boost::asio::io_context &ioc, boost::asio::ip::basic_endpoint<Tp> &&ep)
-        : socket_(ioc, std::move(ep))
     {
     }
 
@@ -143,11 +132,8 @@ public:
         return ec.value();
     }
 
-protected:
-    friend class TcpHandler;
-    friend class Connection;
-    friend class TcpServer;
-    T socket_;
+private:
+    T &socket_;
 };
     
 } // namespace net

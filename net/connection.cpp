@@ -70,7 +70,7 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 {
 	boost::system::error_code ec;
 	boost::asio::ip::tcp::endpoint ep(boost::asio::ip::address::from_string(host), port);
-	impl_.socket_.connect(ep, ec);
+	socket_.connect(ep, ec);
 	return !ec;
 }
 
