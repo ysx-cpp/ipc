@@ -15,12 +15,12 @@ namespace shm {
 using namespace boost::interprocess;
 
 MessageQueue::MessageQueue(const std::string & name, unsigned int max_num_msg)
-	: mq_(create_only, name.c_str(), max_num_msg, MAX_MSG_SIZE)
+	: mq_(open_or_create, name.c_str(), max_num_msg, MAX_MSG_SIZE)
 {
 }
 
 MessageQueue::MessageQueue(const std::string & name)
-    : mq_(create_only, name.c_str(), 1, MAX_MSG_SIZE)
+    : mq_(open_or_create, name.c_str(), 1, MAX_MSG_SIZE)
 {
 }
 
