@@ -8,7 +8,6 @@
 #ifndef NET_TCPSERVER_H
 #define NET_TCPSERVER_H
 
-#include <set>
 #include "connectionpool.h"
 #include "application.h"
 

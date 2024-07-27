@@ -35,7 +35,7 @@ protected:
     void ReadSomeHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
 
     void ReadUntil(const std::string& string_regex);
-    void ReadUntilHandler(const boost::system::error_code &ec, const std::size_t &read_bytes);
+    void ReadUntilHandler(const std::string& string_regex, const boost::system::error_code &ec, const std::size_t &read_bytes);
     
     virtual void Complete(const ByteArrayPtr data) = 0;
     virtual void Successfully(const std::size_t &write_bytes) = 0;
@@ -43,6 +43,7 @@ protected:
 
 protected:
     friend class TcpServer;
+    friend class HttpServer;
     TcpSocket socket_;
     SocketSettings<TcpSocket> impl_;
 

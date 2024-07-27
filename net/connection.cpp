@@ -51,7 +51,7 @@ void Connection::Start()
     if (connction_pool_)
     connction_pool_->AddConnection(ShaerdSelf());
 
-    ReadSome();
+    // ReadSome();
 }
 
 void Connection::Stop()

@@ -58,7 +58,7 @@ void TcpServer::DoAccept()
 void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_code &ec)
 {  
     int fd = connection->impl_.GetSocketFD();
-    std::cout << __FUNCTION__ << "|OnAccept error_code:" << ec << " fd:" << fd << std::endl;
+    NET_LOGERR("ACCEPT SUCC error_code:" << ec << " fd:" << fd);
     if (ec)
     {
         std::cout << "delete session" << std::endl;    
@@ -68,6 +68,7 @@ void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_co
 
     //Start recive
     connection->Start();
+    connection->ReadSome();
 }
 
 } // namespace net

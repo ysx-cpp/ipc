@@ -151,13 +151,36 @@ void TcpHandler::ReadUntil(const std::string& string_regex)
 	boost::asio::async_read_until(socket_,
 								  recv_buf,
 								  boost::regex(string_regex),
-								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this(),
+								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this(), string_regex,
 											  boost::asio::placeholders::error,
 											  boost::asio::placeholders::bytes_transferred));
 }
 
-void TcpHandler::ReadUntilHandler(const boost::system::error_code &/*ec*/, const std::size_t &/*read_bytes*/)
+void TcpHandler::ReadUntilHandler(const std::string& string_regex, const boost::system::error_code &ec, const std::size_t &read_bytes)
 {
+	try
+	{
+		impl_.CheckErrorCode(ec);
+		if (!ec && read_bytes)
+		{
+			recv_buff_.commit(read_bytes);
+			boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
+			ByteArrayPtr data = std::make_shared<ByteArray>();
+			data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + read_bytes);
+			Complete(data);
+			recv_buff_.consume(read_bytes);
+		}
+		ReadUntil(string_regex);
+	}
+	catch (const boost::system::system_error &e)
+	{
+		NET_LOGERR(e.what());
+		Shutdown();
+	}
+	catch (...)
+	{
+		NET_LOGERR("Unknown error");
+	}
 }
 
 } // namespace net
