@@ -147,9 +147,8 @@ void TcpHandler::ReadUntil(const std::string& string_regex)
 	if (!impl_.Connected())
 		return;
 
-	boost::asio::streambuf recv_buf;
 	boost::asio::async_read_until(socket_,
-								  recv_buf,
+								  recv_buff_,
 								  boost::regex(string_regex),
 								  boost::bind(&TcpHandler::ReadUntilHandler, shared_from_this(), string_regex,
 											  boost::asio::placeholders::error,
@@ -163,12 +162,18 @@ void TcpHandler::ReadUntilHandler(const std::string& string_regex, const boost::
 		impl_.CheckErrorCode(ec);
 		if (!ec && read_bytes)
 		{
+			// std::istream is(&recv_buff_);
+        	// std::string msg;
+        	// std::getline(is, msg);
+
 			recv_buff_.commit(read_bytes);
-			boost::asio::streambuf::const_buffers_type buff = recv_buff_.data();
+    		std::istream istrm(&recv_buff_);
+    		std::string msg; 
+    		istrm >> msg;
+
 			ByteArrayPtr data = std::make_shared<ByteArray>();
-			data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + read_bytes);
+			data->assign(msg.begin(), msg.end());
 			Complete(data);
-			recv_buff_.consume(read_bytes);
 		}
 		ReadUntil(string_regex);
 	}
