@@ -3,13 +3,16 @@
 #include <string>
 #include <boost/asio/spawn.hpp>
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/version.hpp>
 #include "connection.h"
 
 namespace ipc {
 namespace net {
 
-using boost::asio::ip::tcp;
-using boost::asio::ip::address;
+namespace asio = boost::asio;
+namespace beast = boost::beast;         // from <boost/beast.hpp>
+namespace http = beast::http;           // from <boost/beast/http.hpp>
 
 class Session : public Connection
 {
@@ -36,7 +39,7 @@ public:
 
 HttpServer::HttpServer(const std::string &host, unsigned short port) : 
 app_(ApplicationSingle::instance()),
-acceptor_(app_.io_context(), tcp::endpoint(address::from_string(host), port))
+acceptor_(app_.io_context(), asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port))
 // acceptor_(app_.io_context(), tcp::endpoint(tcp::v4(), port))
 {
 }
@@ -84,26 +87,47 @@ void HttpServer::OnAcceptConnection(ConnectionPtr connection,  const boost::syst
 int HttpServer::OnReceveData(const PackagePtr package, ConnectionPtr connection)
 {
     boost::asio::spawn(io_context(), [this, connection, package](boost::asio::yield_context yield) mutable {
-        std::string msg(package->data().begin(), package->data().end());
-        HandleRequest(msg, connection);
+        // 创建一个空的buffer
+        beast::flat_buffer buffer;
+
+        // 将原始数据放入buffer
+        asio::buffer_copy(buffer.prepare(package->data().size()), boost::asio::buffer(package->data()));
+        buffer.commit(package->data().size());
+
+        // 创建一个HTTP请求对象
+        http::request<http::string_body> req;
+
+        // 创建HTTP解析器
+        http::request_parser<http::string_body> parser(req);
+
+        // 解析buffer中的数据
+        beast::error_code ec;
+        parser.put(buffer.data(), ec);
+
+        try
+        {
+            if (!ec) HandleRequest(req, connection);
+            else NET_LOGERR("parser.put: " << ec.message() << "\n");
+        }
+        catch (std::exception &e)
+        {
+            NET_LOGERR("Exception in handling request: " << e.what() << "\n");
+        }
     });
 
     return 0;
 }
 
-void HttpServer::HandleRequest(const std::string &data, ConnectionPtr connection)
+void HttpServer::HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, ConnectionPtr connection)
 {
     try
     {
         boost::system::error_code ec;
-        boost::asio::streambuf request;
-        ///boost::asio::async_read_until(connection->socket_, request, "\r\n\r\n");
-
         if (!ec)
         {
-            std::istream request_stream(&request);
-            std::string method, path, http_version;
-            request_stream >> method >> path >> http_version;
+            // std::istream request_stream(&request);
+            // std::string method, path, http_version;
+            // request_stream >> method >> path >> http_version;
 
             std::string response =
                 "HTTP/1.1 200 OK\r\n"
@@ -127,6 +151,28 @@ void HttpServer::HandleRequest(const std::string &data, ConnectionPtr connection
     {
         NET_LOGERR("Exception in handling request: " << e.what() << "\n");
     }
+}
+
+void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::string_body> &res, ConnectionPtr connection)
+{
+    // ByteArray msg(res.begin(), res.end());
+    ByteArray msg;
+    connection->Write(msg);
+    connection->Stop();
+}
+
+void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::empty_body> &res, ConnectionPtr connection)
+{
+    ByteArray msg;
+    connection->Write(msg);
+    connection->Stop();
+}
+
+void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::file_body> &res, ConnectionPtr connection)
+{
+    ByteArray msg;
+    connection->Write(msg);
+    connection->Stop();
 }
 
 } // namespace net

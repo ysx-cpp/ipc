@@ -9,6 +9,7 @@
 #define NET_HTTP_SERVER_H
 
 #include <boost/asio.hpp>
+#include <boost/beast/http.hpp>
 #include "connectionpool.h"
 #include "application.h"
 
@@ -36,7 +37,10 @@ public:
 	int OnConnect(ConnectionPtr connection) override {return 0;}
 	int OnDisconnect(ConnectionPtr connection) override {return 0;}
 
-    virtual void HandleRequest(const std::string &data, ConnectionPtr connection);
+    virtual void HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, ConnectionPtr connection);
+    void HandleResponse(const boost::beast::http::response<boost::beast::http::string_body> &res, ConnectionPtr connection);
+    void HandleResponse(const boost::beast::http::response<boost::beast::http::empty_body> &res, ConnectionPtr connection);
+    void HandleResponse(const boost::beast::http::response<boost::beast::http::file_body> &res, ConnectionPtr connection);
 
 private:
     void AcceptConnection();
