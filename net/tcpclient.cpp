@@ -30,22 +30,33 @@ void TcpClient::CreateConnect(const std::string &host, uint16_t port, int timeou
 
 void TcpClient::SendPackage(PackagePtr package, const std::string &msg)
 {
-    if (!Connected())
+    try
     {
-        if (!Connect(option_.host, option_.port))
+        if (!Connected())
         {
-            timer_.expires_from_now(boost::posix_time::milliseconds(option_.timeout_ms));
-            timer_.async_wait(boost::bind(&TcpClient::SendPackage, this, package, msg));
+            if (!Connect(option_.host, option_.port))
+            {
+                timer_.expires_from_now(boost::posix_time::milliseconds(option_.timeout_ms));
+                timer_.async_wait(boost::bind(&TcpClient::SendPackage, this, package, msg));
 
-            std::cerr << "connect " << option_.host << ":" << option_.port << " timeout" << std::endl;
-            return;
+                std::cerr << "connect " << option_.host << ":" << option_.port << " timeout" << std::endl;
+                return;
+            }
+            else
+            {
+                Start();
+            }
         }
-        else 
-        {
-            Start();
-        }
+        SendData(*package, msg);
     }
-    SendData(*package, msg);
+    catch (const std::exception &e)
+    {
+        NET_LOGERR(e.what());
+    }
+    catch (...)
+    {
+        NET_LOGERR("Unknown error");
+    }
 }
 
 } // namespace net

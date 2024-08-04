@@ -30,24 +30,6 @@ MessageQueue::~MessageQueue()
 
 size_t MessageQueue::Send(const std::string & data)
 {
-    size_t send_leng = 0;
-    auto max_msg_size = static_cast<int>(mq_.get_max_msg_size());
-	auto first = data.begin();
-	for (unsigned int i = 0; i < mq_.get_num_msg(); ++i)
-	{
-        auto leng = std::min<int>(max_msg_size, static_cast<int>(data.end() - first));
-		if (leng == 0)
-			break;
-
-        std::string tmp(first, first + leng);
-        first += leng;
-		send_leng += DoSend(tmp);
-	}
-	return send_leng;
-}
-
-size_t MessageQueue::DoSend(const std::string & data)
-{
 	auto leng = (data.size());
 	try
 	{

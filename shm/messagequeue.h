@@ -25,7 +25,6 @@ public:
 	size_t Receive(std::string &data);
 
 private:
-	size_t DoSend(const std::string &data);
 	size_t DoReceive(std::string &data);
 	
 private:

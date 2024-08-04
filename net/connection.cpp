@@ -21,12 +21,6 @@
 namespace ipc {
 namespace net {
 
-enum class PackageCommand
-{
-	HEARTBEAT = 0,			// 心跳
-	PACKAGE_REPLY = 1,		// 数据包回应
-};
-
 Connection::Connection(boost::asio::io_context &ioc) :
 TcpHandler(ioc),
 connction_pool_(nullptr),
@@ -43,7 +37,6 @@ heartbeat_(new Heartbeat(ioc)),
 send_seq_(0),
 recv_seq_(0)
 {
-
 }
 
 void Connection::Start()
@@ -83,8 +76,8 @@ void Connection::SendData(Package& pkg, const std::string &data)
 {
 	switch (static_cast<PackageCommand>(pkg.cmd()))
 	{
-	case PackageCommand::HEARTBEAT:
-	case PackageCommand::PACKAGE_REPLY:
+	case PackageCommand::NET_HEARTBEAT:
+	case PackageCommand::NET_PACKAGE_REPLY:
 		break;
 	default:
 		pkg.set_verify(GenerateVerify(data));
@@ -95,14 +88,6 @@ void Connection::SendData(Package& pkg, const std::string &data)
 	pkg.set_data_size(data.size());
 	pkg.Encode(data);
     WriteSome(pkg.data());
-
-	// std::string stringmsg(data.begin(), data.end());
-	// NET_LOGERR("INFO verify:" << pkg.verify() << " cmd:" << pkg.cmd() << " data:" << stringmsg << " size:" << data.size());
-
-	// Package pkg2;
-	// pkg2.Decode(pkg.data());
-	// std::string stringmsg2(pkg2.data().begin(), pkg2.data().end());
-	// LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
 }
 
 void Connection::Complete(const std::string &data)
@@ -115,11 +100,11 @@ void Connection::Complete(const std::string &data)
 
 	switch (static_cast<PackageCommand>(package->cmd()))
 	{
-	case PackageCommand::HEARTBEAT:
+	case PackageCommand::NET_HEARTBEAT:
 		OnHeartbeat();
 		IncrRecvSeq();
 		return;
-	case PackageCommand::PACKAGE_REPLY:
+	case PackageCommand::NET_PACKAGE_REPLY:
 		IncrSendSeq(package);
 		return;
 	default:
@@ -148,14 +133,12 @@ void Connection::Complete(const std::string &data)
 
 void Connection::StartHeartbeat()
 {
-	if (connction_pool_) heartbeat_->StartTimer();
-}
+	if (connction_pool_)
+	{
+		heartbeat_->StartTimer();
+	}
 
-void Connection::SendHeartbeat()
-{
 	heartbeat_->Ping(ShaerdSelf());
-	// boost::system::error_code ec;
-	// heartbeat_->Ping(ShaerdSelf(), ec);
 }
 
 void Connection::OnHeartbeat()
@@ -202,7 +185,7 @@ void Connection::IncrRecvSeq()
 {
 	++recv_seq_;
 	Package pkg;
-	pkg.set_cmd(static_cast<uint16_t>(PackageCommand::PACKAGE_REPLY));
+	pkg.set_cmd(static_cast<uint16_t>(PackageCommand::NET_PACKAGE_REPLY));
 	pkg.set_seq(recv_seq_);
 	SendData(pkg, "reply");
 	NET_LOGERR("INFO pkg.req:" << pkg.seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);

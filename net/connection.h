@@ -14,6 +14,12 @@
 namespace ipc {
 namespace net {
 
+enum class PackageCommand
+{
+	NET_HEARTBEAT = 0,			// 心跳
+	NET_PACKAGE_REPLY = 1,		// 数据包回应
+};
+
 class Heartbeat;
 class ConnectionPool;
 class Connection : public TcpHandler
@@ -35,18 +41,17 @@ protected:
 	virtual void OnSendData(const std::size_t& write_bytes) {}
 	virtual int OnConnect() {return 0;}
 	virtual int OnDisconnect() {return 0;}
-    void Complete(const std::string &data) override;
-
-protected:
-	void StartHeartbeat();
-	void SendHeartbeat();
-	void OnHeartbeat();
 
 protected:
 	std::shared_ptr<Connection> ShaerdSelf();
     ConnectionPool *connction_pool_;
 
 private:
+	void StartHeartbeat();
+	void OnHeartbeat();
+
+private:
+    void Complete(const std::string &data) override final;
 	void Successfully(const std::size_t& write_bytes) override  final;
 	void Shutdown() override final;
 
