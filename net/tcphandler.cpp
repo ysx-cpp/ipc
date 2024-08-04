@@ -44,6 +44,7 @@ void TcpHandler::WriteSome(const ByteArray &data)
 
 	boost::asio::mutable_buffer buffer = send_buff_.prepare(data.size());
 	std::copy(data.cbegin(), data.cend(), static_cast<unsigned char *>(buffer.data()));
+	// boost::asio::buffer_copy(buffer, boost::asio::buffer(data));
 
 	socket_.async_write_some(buffer,
 							 boost::bind(&TcpHandler::WriteSomeHandler, shared_from_this(),

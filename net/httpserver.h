@@ -36,7 +36,7 @@ public:
 	int OnConnect(ConnectionPtr connection) override {return 0;}
 	int OnDisconnect(ConnectionPtr connection) override {return 0;}
 
-    virtual void HandleRequest(const std::string &data, ConnectionPtr connection);
+    virtual void HandleRequest(const PackagePtr package, ConnectionPtr connection);
 
 private:
     void AcceptConnection();

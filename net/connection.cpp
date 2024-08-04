@@ -144,6 +144,33 @@ void Connection::Complete(const ByteArrayPtr data)
 		OnReceveData(package);
 }
 
+void Connection::StartHeartbeat()
+{
+	if (connction_pool_) heartbeat_->StartTimer();
+}
+
+void Connection::SendHeartbeat()
+{
+	heartbeat_->Ping(ShaerdSelf());
+	// boost::system::error_code ec;
+	// heartbeat_->Ping(ShaerdSelf(), ec);
+}
+
+void Connection::OnHeartbeat()
+{
+	if (!Connected())
+		return;
+
+	if (heartbeat_->Stopped())
+	{
+		impl_.Close();
+	}
+	else if (connction_pool_)
+	{
+		heartbeat_->UpdateTimer();
+	}
+}
+
 std::shared_ptr<Connection> Connection::ShaerdSelf()
 {
 	return std::dynamic_pointer_cast<Connection>(shared_from_this());
@@ -166,33 +193,6 @@ void Connection::Shutdown()
 	else
 	{
 		OnDisconnect();
-	}
-}
-
-void Connection::StartHeartbeat()
-{
-	heartbeat_->StartTimer();
-}
-
-void Connection::SendHeartbeat()
-{
-	heartbeat_->Ping(ShaerdSelf());
-	// boost::system::error_code ec;
-	// heartbeat_->Ping(ShaerdSelf(), ec);
-}
-
-void Connection::OnHeartbeat()
-{
-	if (!Connected())
-		return;
-
-	if (heartbeat_->Stopped())
-	{
-		impl_.Close();
-	}
-	else if (connction_pool_)
-	{
-		heartbeat_->UpdateTimer();
 	}
 }
 

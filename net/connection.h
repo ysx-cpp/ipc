@@ -38,17 +38,17 @@ protected:
     void Complete(const ByteArrayPtr data) override;
 
 protected:
+	void StartHeartbeat();
+	void SendHeartbeat();
+	void OnHeartbeat();
+
+protected:
 	std::shared_ptr<Connection> ShaerdSelf();
     ConnectionPool *connction_pool_;
 
 private:
 	void Successfully(const std::size_t& write_bytes) override  final;
 	void Shutdown() override final;
-
-private:
-	void StartHeartbeat();
-	void SendHeartbeat();
-	void OnHeartbeat();
 
 private:
 	void IncrRecvSeq();
