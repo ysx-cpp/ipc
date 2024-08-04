@@ -3,8 +3,25 @@
 #include <string>
 #include <boost/asio/spawn.hpp>
 
+#include "connection.h"
+
 namespace ipc {
 namespace net {
+
+class Session : public Connection
+{
+public:
+    explicit Session(boost::asio::io_context &ioc, ConnectionPool *connction_pool) :
+    Connection(ioc, connction_pool)
+    {
+    }
+
+    int VerifyPackage(const PackagePtr package) override
+    {
+        OnHeartbeat();
+        return 0;
+    }
+};
 
 using boost::asio::ip::tcp;
 using boost::asio::ip::address;
@@ -36,7 +53,8 @@ void HttpServer::Stop()
 void HttpServer::AcceptConnection()
 {
     boost::system::error_code ec;
-    auto connection = CreateConnection(app_.io_context(), this);
+    auto connection = std::make_shared<Session>(app_.io_context(), this);
+    connection->StartHeartbeat();
     acceptor_.async_accept(connection->socket_, boost::bind(&HttpServer::OnAcceptConnection, this, connection, boost::placeholders::_1));
 }
 

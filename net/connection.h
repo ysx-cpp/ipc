@@ -40,6 +40,7 @@ protected:
 	virtual void OnSendData(const std::size_t& write_bytes) {}
 	virtual int OnConnect() {return 0;}
 	virtual int OnDisconnect() {return 0;}
+	virtual int VerifyPackage(const PackagePtr package);
 
 private:
     void Complete(const ByteArrayPtr data) override final;
@@ -47,8 +48,8 @@ private:
 	void Shutdown() override final;
 
 private:
-	void SendPackageReply();
-	void OnPackageReply(PackagePtr package);
+	void IncrRecvSeq();
+	void IncrSendSeq(const PackagePtr package);
 	bool CheckVerify(const ByteArray &data, uint64_t verify);
 	uint64_t GenerateVerify(const ByteArray &data);
 

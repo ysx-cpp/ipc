@@ -132,38 +132,48 @@ void Connection::OnHeartbeat()
 	}
 }
 
-void Connection::Complete(const ByteArrayPtr data)
+int Connection::VerifyPackage(const PackagePtr package)
 {
-	auto package = std::make_shared<Package>();
-	package->Decode(*data);
-
-	std::string stringmsg(package->data().begin(), package->data().end());
-	NET_LOGERR("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
-
 	switch (static_cast<PackageCommand>(package->cmd()))
 	{
 	case PackageCommand::HEARTBEAT:
 		OnHeartbeat();
-		SendPackageReply();
-		return;
+		IncrRecvSeq();
+		return 1;
 	case PackageCommand::PACKAGE_REPLY:
-		OnPackageReply(package);
-		return;
+		IncrSendSeq(package);
+		return 2;
 	default:
-		SendPackageReply();
+		IncrRecvSeq();
 		break;
 	}
 
 	if (package->seq() + 1 != recv_seq_)
 	{
 		NET_LOGERR("ERROR send_seq:" << package->seq() + 1 << " rev_sqe:" << recv_seq_);
-		return;
+		return -1;
 	}
 
 	if (!CheckVerify(package->data(), package->verify()))
 	{
 		unsigned long long verify = GenerateVerify(package->data());
 		NET_LOGERR("ERROR verify:" << package->verify() << " data verify:" << verify << " data:" << std::string(package->data().begin(), package->data().end()));
+		return -1;
+	}
+
+	return 0;
+}
+
+void Connection::Complete(const ByteArrayPtr data)
+{
+	auto package = std::make_shared<Package>();
+	package->Decode(*data);
+
+	std::string stringmsg(package->data().begin(), package->data().end());
+	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
+
+	if (VerifyPackage(package) != 0)
+	{
 		return;
 	}
 
@@ -193,7 +203,7 @@ void Connection::Shutdown()
 	}
 }
 
-void Connection::SendPackageReply()
+void Connection::IncrRecvSeq()
 {
 	++recv_seq_;
 	Package pkg;
@@ -201,7 +211,7 @@ void Connection::SendPackageReply()
 	SendData(pkg, "reply");
 }
 
-void Connection::OnPackageReply(PackagePtr package)
+void Connection::IncrSendSeq(const PackagePtr package)
 {
 	++send_seq_;
 	NET_LOGERR("INFO send_seq:" << package->seq() << " rev_seq:" << recv_seq_);
