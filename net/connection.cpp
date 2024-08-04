@@ -51,18 +51,16 @@ void Connection::Start()
     if (connction_pool_)
     connction_pool_->AddConnection(ShaerdSelf());
 
-    // ReadSome();
+	StartHeartbeat();
 }
 
 void Connection::Stop()
 {
+	heartbeat_->Stop();
+	impl_.Close();
 	if (connction_pool_)
 	{
 		connction_pool_->RemoveConnection(ShaerdSelf());
-	}
-	else
-	{
-		impl_.Close();
 	}
 }
 
@@ -105,6 +103,72 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 	// LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
 }
 
+void Connection::Complete(const ByteArrayPtr data)
+{
+	auto package = std::make_shared<Package>();
+	package->Decode(*data);
+
+	std::string stringmsg(package->data().begin(), package->data().end());
+	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
+
+	switch (static_cast<PackageCommand>(package->cmd()))
+	{
+	case PackageCommand::HEARTBEAT:
+		OnHeartbeat();
+		IncrRecvSeq();
+		return;
+	case PackageCommand::PACKAGE_REPLY:
+		IncrSendSeq(package);
+		return;
+	default:
+		IncrRecvSeq();
+		break;
+	}
+
+	if (package->seq() + 1 != recv_seq_)
+	{
+		NET_LOGERR("ERROR send_seq:" << package->seq() + 1 << " rev_sqe:" << recv_seq_);
+		return;
+	}
+
+	unsigned long long verify = GenerateVerify(package->data());
+	if (package->verify() != verify)
+	{
+		NET_LOGERR("ERROR verify:" << package->verify() << " data verify:" << verify << " data:" << std::string(package->data().begin(), package->data().end()));
+		return;
+	}
+
+    if (connction_pool_)
+        connction_pool_->OnReceveData(package, ShaerdSelf());
+	else
+		OnReceveData(package);
+}
+
+std::shared_ptr<Connection> Connection::ShaerdSelf()
+{
+	return std::dynamic_pointer_cast<Connection>(shared_from_this());
+}
+
+void Connection::Successfully(const std::size_t& write_bytes)
+{
+	if (connction_pool_)
+		connction_pool_->OnSendData(write_bytes, ShaerdSelf());
+	else
+		OnSendData(write_bytes);
+}
+
+void Connection::Shutdown()
+{
+	if (connction_pool_)
+	{
+		connction_pool_->OnDisconnect(ShaerdSelf());
+	}
+	else
+	{
+		OnDisconnect();
+	}
+}
+
 void Connection::StartHeartbeat()
 {
 	heartbeat_->StartTimer();
@@ -132,77 +196,6 @@ void Connection::OnHeartbeat()
 	}
 }
 
-int Connection::VerifyPackage(const PackagePtr package)
-{
-	switch (static_cast<PackageCommand>(package->cmd()))
-	{
-	case PackageCommand::HEARTBEAT:
-		OnHeartbeat();
-		IncrRecvSeq();
-		return 1;
-	case PackageCommand::PACKAGE_REPLY:
-		IncrSendSeq(package);
-		return 2;
-	default:
-		IncrRecvSeq();
-		break;
-	}
-
-	if (package->seq() + 1 != recv_seq_)
-	{
-		NET_LOGERR("ERROR send_seq:" << package->seq() + 1 << " rev_sqe:" << recv_seq_);
-		return -1;
-	}
-
-	if (!CheckVerify(package->data(), package->verify()))
-	{
-		unsigned long long verify = GenerateVerify(package->data());
-		NET_LOGERR("ERROR verify:" << package->verify() << " data verify:" << verify << " data:" << std::string(package->data().begin(), package->data().end()));
-		return -1;
-	}
-
-	return 0;
-}
-
-void Connection::Complete(const ByteArrayPtr data)
-{
-	auto package = std::make_shared<Package>();
-	package->Decode(*data);
-
-	std::string stringmsg(package->data().begin(), package->data().end());
-	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
-
-	if (VerifyPackage(package) != 0)
-	{
-		return;
-	}
-
-    if (connction_pool_)
-        connction_pool_->OnReceveData(package, ShaerdSelf());
-	else
-		OnReceveData(package);
-}
-
-void Connection::Successfully(const std::size_t& write_bytes)
-{
-	if (connction_pool_)
-		connction_pool_->OnSendData(write_bytes, ShaerdSelf());
-	else
-		OnSendData(write_bytes);
-}
-
-void Connection::Shutdown()
-{
-	if (connction_pool_)
-	{
-		connction_pool_->OnDisconnect(ShaerdSelf());
-	}
-	else
-	{
-		OnDisconnect();
-	}
-}
-
 void Connection::IncrRecvSeq()
 {
 	++recv_seq_;
@@ -217,19 +210,9 @@ void Connection::IncrSendSeq(const PackagePtr package)
 	NET_LOGERR("INFO send_seq:" << package->seq() << " rev_seq:" << recv_seq_);
 }
 
-bool Connection::CheckVerify(const ByteArray &data, uint64_t verify)
-{
-	return GenerateVerify(data) == verify;
-}
-
 uint64_t Connection::GenerateVerify(const ByteArray &data)
 {
 	return boost::hash_value<ByteArray>(data);
-}
-
-std::shared_ptr<Connection> Connection::ShaerdSelf()
-{
-	return std::dynamic_pointer_cast<Connection>(shared_from_this());
 }
 
 } // namespace net

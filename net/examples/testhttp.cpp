@@ -20,8 +20,7 @@ int main(int argc, char *argv[])
     if (strcmp(argv[1], "client") == 0)
     {
         try {
-            host.append(":").append(argv[3]);
-            HttpClient client(host, "./");
+            HttpClient client(host, "/");
             client.SendRequest();
             client.Run();
         } catch (std::exception& e) {

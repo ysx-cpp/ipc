@@ -24,6 +24,7 @@ request_timer_(ioc),
 reply_timer_(ioc),
 stopped_(false)
 {
+	last_ping_ = boost::posix_time::second_clock::local_time();
 }
 
 void Heartbeat::Ping(std::shared_ptr<Connection> connection, const boost::system::error_code &ec)
@@ -117,26 +118,28 @@ void Heartbeat::UpdateTimer()
 
 void Heartbeat::TimerHandle(const boost::system::error_code &ec)
 {
-	if (!ec) 
-	{
-		NET_LOGERR("ec error message:" << ec.message());
-		return;
-	}
-
 	if (Stopped()) 
 	{
-		NET_LOGERR("Heartbeat Stopped");
+		NET_LOGERR("Heartbeat Stopped ec error message:" << ec.message());
 		return;
 	}
 	
 	auto now = boost::posix_time::second_clock::local_time();
 	if ((now - last_ping_) > boost::posix_time::seconds(this->expire()))
 	{
-		NET_LOGERR("Heartbeat time out");
+		NET_LOGERR("Heartbeat time out ec error message:" << ec.message());
 		return Stop();
 	}
 	reply_timer_.expires_from_now(boost::posix_time::seconds(this->expire()));
 	reply_timer_.async_wait(boost::bind(&Heartbeat::TimerHandle, shared_from_this(), placeholders::error));
+}
+
+void Heartbeat::Stop()
+{
+	boost::system::error_code ec;
+	stopped_ = true;
+	reply_timer_.cancel(ec);
+	request_timer_.cancel(ec);
 }
 
 } // namespace net

@@ -30,9 +30,7 @@ public:
 	void UpdateTimer();
 	void TimerHandle(const boost::system::error_code &ec);
 	bool Stopped() const { return stopped_; }
-
-private:
-	void Stop() { stopped_ = true; }
+	void Stop();
 
 private:
 	int expire() const { return 10; }

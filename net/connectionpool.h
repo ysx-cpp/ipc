@@ -21,6 +21,7 @@ namespace net {
 class ConnectionPool : private boost::noncopyable
 {
     friend class Connection;
+    friend class Session;
 protected:
 	ConnectionPool() = default;
 	virtual ~ConnectionPool() = default;
