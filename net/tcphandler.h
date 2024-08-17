@@ -37,7 +37,7 @@ protected:
     void ReadUntil(const std::string& string_regex);
     void ReadUntilHandler(const std::string& string_regex, const boost::system::error_code &ec, const std::size_t &read_bytes);
     
-    virtual void Complete(const ByteArrayPtr data) = 0;
+    virtual void Complete(const std::string &data) = 0;
     virtual void Successfully(const std::size_t &write_bytes) = 0;
     virtual void Shutdown() = 0;
 

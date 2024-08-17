@@ -52,6 +52,7 @@ void Connection::Start()
     connction_pool_->AddConnection(ShaerdSelf());
 
 	StartHeartbeat();
+	Read();
 }
 
 void Connection::Stop()
@@ -72,13 +73,13 @@ bool Connection::Connect(const std::string &host, unsigned short port)
 	return !ec;
 }
 
-void Connection::SendData(Package& pkg, const std::string &data)
+void Connection::SendData(Package& pkg, const ByteArray &data)
 {
-	ByteArray array(data.begin(), data.end());
+	std::string array(data.begin(), data.end());
 	SendData(pkg, array);
 }
 
-void Connection::SendData(Package& pkg, const ByteArray &data)
+void Connection::SendData(Package& pkg, const std::string &data)
 {
 	switch (static_cast<PackageCommand>(pkg.cmd()))
 	{
@@ -91,6 +92,7 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 	}
 
 	pkg.set_seq(send_seq_);
+	pkg.set_data_size(data.size());
 	pkg.Encode(data);
     WriteSome(pkg.data());
 
@@ -103,10 +105,10 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 	// LOGERR("ERROR verify2:" << GenerateVerify(pkg2.data()) << " data2:" << stringmsg2 << " size2:" << pkg2.data().size());
 }
 
-void Connection::Complete(const ByteArrayPtr data)
+void Connection::Complete(const std::string &data)
 {
 	auto package = std::make_shared<Package>();
-	package->Decode(*data);
+	package->Decode(data);
 
 	std::string stringmsg(package->data().begin(), package->data().end());
 	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
@@ -201,18 +203,26 @@ void Connection::IncrRecvSeq()
 	++recv_seq_;
 	Package pkg;
 	pkg.set_cmd(static_cast<uint16_t>(PackageCommand::PACKAGE_REPLY));
+	pkg.set_seq(recv_seq_);
 	SendData(pkg, "reply");
+	NET_LOGERR("INFO pkg.req:" << pkg.seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
 }
 
 void Connection::IncrSendSeq(const PackagePtr package)
 {
 	++send_seq_;
-	NET_LOGERR("INFO send_seq:" << package->seq() << " rev_seq:" << recv_seq_);
+	NET_LOGERR("INFO pkg.seq:" << package->seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
 }
 
-uint64_t Connection::GenerateVerify(const ByteArray &data)
+uint64_t Connection::GenerateVerify(const std::string &data) const
 {
-	return boost::hash_value<ByteArray>(data);
+	return boost::hash_value<std::string>(data);
+}
+
+uint64_t Connection::GenerateVerify(const ByteArray &data) const
+{
+	std::string str(data.begin(), data.end());
+	return GenerateVerify(str);
 }
 
 } // namespace net

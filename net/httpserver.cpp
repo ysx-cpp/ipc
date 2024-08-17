@@ -3,44 +3,91 @@
 #include <string>
 #include <boost/asio/spawn.hpp>
 
-#include <boost/beast/core.hpp>
-#include <boost/beast/version.hpp>
-#include "connection.h"
-
 namespace ipc {
 namespace net {
 
 namespace asio = boost::asio;
 namespace beast = boost::beast;         // from <boost/beast.hpp>
 namespace http = beast::http;           // from <boost/beast/http.hpp>
+using boost::asio::ip::tcp;
 
-class Session : public Connection
+Session::Session(boost::asio::io_context &ioc, HttpServer *server) :
+    server_(server), stream_(ioc)
 {
-public:
-    explicit Session(boost::asio::io_context &ioc, ConnectionPool *connction_pool) :
-    Connection(ioc, connction_pool)
+}
+
+void Session::DoRead()
+{
+    req_ = {};
+
+    // Set the timeout.
+    stream_.expires_after(std::chrono::seconds(30));
+
+    // Read a request
+    http::async_read(stream_, buffer_, req_,
+                     beast::bind_front_handler(
+                         &Session::OnRead,
+                         shared_from_this()));
+}
+
+void Session::OnRead(const boost::system::error_code &ec, const std::size_t &bytes_transferred)
+{
+    boost::ignore_unused(bytes_transferred);
+
+    // This means they closed the session
+    if (ec == http::error::end_of_stream)
+        return Close();
+
+    if (ec)
     {
+        NET_LOGERR("error message: " << ec.message() << "\n");
+        return;
     }
 
-    void Complete(const ByteArrayPtr data) override
+    // boost::asio::spawn(server_->io_context(), [this](boost::asio::yield_context yield) mutable {
+        if (server_)
+            server_->HandleRequest(req_, shared_from_this());
+    // });
+}
+
+void Session::OnWrite(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred)
+{
+	boost::ignore_unused(bytes_transferred);
+
+    if (ec)
     {
-        auto package = std::make_shared<Package>();
-        package->FullData(*data);
-
-        std::string stringmsg(package->data().begin(), package->data().end());
-        NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
-
-        if (connction_pool_)
-            connction_pool_->OnReceveData(package, ShaerdSelf());
-        else
-            OnReceveData(package);
+        NET_LOGERR("Exception in handling request: " << ec.message() << "\n");
+        return;
     }
-};
 
-HttpServer::HttpServer(const std::string &host, unsigned short port) : 
-app_(ApplicationSingle::instance()),
-acceptor_(app_.io_context(), asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port))
-// acceptor_(app_.io_context(), tcp::endpoint(tcp::v4(), port))
+    if (!keep_alive)
+	{
+		// This means we should close the connection, usually because
+		// the response indicated the "Connection: close" semantic.
+		return Close();
+	}
+
+	// We're done with the response so delete it
+    res_ = nullptr;
+
+	// Read another request
+	DoRead();
+}
+
+void Session::Close()
+{
+    // Send a TCP shutdown
+	beast::error_code ec;
+	stream_.socket().shutdown(tcp::socket::shutdown_send, ec);
+
+	// At this point the connection is closed gracefully
+}
+
+//////////////////////////////////////////////////////////////
+//class HttpServer
+HttpServer::HttpServer(boost::asio::io_context &ioc, const std::string &host, unsigned short port) : 
+    io_context_(ioc), acceptor_(ioc, asio::ip::tcp::endpoint(asio::ip::address::from_string(host), port))
+    // acceptor_(app_.io_context(), tcp::endpoint(tcp::v4(), port))
 {
 }
 
@@ -51,74 +98,76 @@ HttpServer::~HttpServer()
 void HttpServer::Start()
 {
     AcceptConnection();
-    app_.Run();
 }
 
 void HttpServer::Stop()
 {
     acceptor_.cancel();
     acceptor_.close();
-    RemoveAllConnection();
+    //RemoveAllConnection();
 }
 
 void HttpServer::AcceptConnection()
 {
     boost::system::error_code ec;
-    auto connection = std::make_shared<Session>(app_.io_context(), this);
-    acceptor_.async_accept(connection->socket_, boost::bind(&HttpServer::OnAcceptConnection, this, connection, boost::placeholders::_1));
+    auto session = std::make_shared<Session>(io_context_, this);
+    acceptor_.async_accept(session->socket(), boost::bind(&HttpServer::OnAcceptConnection, this, session, boost::placeholders::_1));
 }
 
-void HttpServer::OnAcceptConnection(ConnectionPtr connection,  const boost::system::error_code &ec)
+void HttpServer::OnAcceptConnection(SessionPtr session,  const boost::system::error_code &ec)
 {
-    int fd = connection->impl_.GetSocketFD();
+    int fd = session->socket().native_handle();
     NET_LOGERR("ACCEPT SUCC error_code:" << ec << " fd:" << fd);
     if (ec)
     {
         std::cout << "delete session" << std::endl;    
-        return connection->Stop();
+        return session->Close();
     }
     AcceptConnection();
 
     //Start recive
-    connection->Start();
-    connection->ReadUntil("\r\n\r\n");
+    session->DoRead();
 }
 
-int HttpServer::OnReceveData(const PackagePtr package, ConnectionPtr connection)
-{
-    boost::asio::spawn(io_context(), [this, connection, package](boost::asio::yield_context yield) mutable {
-        // 创建一个空的buffer
-        beast::flat_buffer buffer;
+// int HttpServer::OnReceveData(const PackagePtr package, ConnectionPtr session)
+// {
+//     // boost::asio::spawn(io_context(), [this, session, package](boost::asio::yield_context yield) mutable {
+//         // 创建一个空的buffer
+//         beast::flat_buffer buffer;
 
-        // 将原始数据放入buffer
-        asio::buffer_copy(buffer.prepare(package->data().size()), boost::asio::buffer(package->data()));
-        buffer.commit(package->data().size());
+//         // 将原始数据放入buffer
+//         asio::buffer_copy(buffer.prepare(package->data().size()), boost::asio::buffer(package->data()));
+//         buffer.commit(package->data().size());
 
-        // 创建一个HTTP请求对象
-        http::request<http::string_body> req;
+//         // 创建一个HTTP请求对象
+//         http::request<http::string_body> req;
 
-        // 创建HTTP解析器
-        http::request_parser<http::string_body> parser(req);
+//         // 创建HTTP解析器
+//         http::request_parser<http::string_body> parser(req);
 
-        // 解析buffer中的数据
-        beast::error_code ec;
-        parser.put(buffer.data(), ec);
+//         // 解析buffer中的数据
+//         beast::error_code ec;
+//         parser.put(buffer.data(), ec);
 
-        try
-        {
-            if (!ec) HandleRequest(req, connection);
-            else NET_LOGERR("parser.put: " << ec.message() << "\n");
-        }
-        catch (std::exception &e)
-        {
-            NET_LOGERR("Exception in handling request: " << e.what() << "\n");
-        }
-    });
+//         std::string debugstring(package->data().begin(), package->data().end());
+//         NET_LOGERR("debugstring: " << debugstring << "\n");
 
-    return 0;
-}
+//         try
+//         {
+//             if (ec) NET_LOGERR("parser.put: " << ec.message() << "\n");
 
-void HttpServer::HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, ConnectionPtr connection)
+//             HandleRequest(req, session);
+//         }
+//         catch (std::exception &e)
+//         {
+//             NET_LOGERR("Exception in handling request: " << e.what() << "\n");
+//         }
+//     // });
+
+//     return 0;
+// }
+
+void HttpServer::HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, SessionPtr session)
 {
     try
     {
@@ -136,43 +185,17 @@ void HttpServer::HandleRequest(const boost::beast::http::request<boost::beast::h
                 "Connection: close\r\n\r\n"
                 "Hello, world!";
 
-            ByteArray msg(response.begin(), response.end());
-            connection->Write(msg);
-            connection->Stop();
-
-            // boost::asio::async_write(connection->socket_, boost::asio::buffer(response), yield[ec]);
-            // boost::asio::async_write(connection->socket_, boost::asio::buffer(response), [connection](const boost::system::error_code &ec, const std::size_t &write_bytes) {
-            //     NET_LOGERR("Response messge success wirte bytes:" << write_bytes);
-            //     if (connection) connection->Stop();
-            // });
+            // boost::asio::async_write(session->socket(), boost::asio::buffer(response), yield[ec]);
+            boost::asio::async_write(session->socket(), boost::asio::buffer(response), [session](const boost::system::error_code &ec, const std::size_t &write_bytes) {
+                NET_LOGERR("Response messge success wirte bytes:" << write_bytes);
+                if (session) session->Close();
+            });
         }
     }
     catch (std::exception &e)
     {
         NET_LOGERR("Exception in handling request: " << e.what() << "\n");
     }
-}
-
-void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::string_body> &res, ConnectionPtr connection)
-{
-    // ByteArray msg(res.begin(), res.end());
-    ByteArray msg;
-    connection->Write(msg);
-    connection->Stop();
-}
-
-void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::empty_body> &res, ConnectionPtr connection)
-{
-    ByteArray msg;
-    connection->Write(msg);
-    connection->Stop();
-}
-
-void HttpServer::HandleResponse(const boost::beast::http::response<boost::beast::http::file_body> &res, ConnectionPtr connection)
-{
-    ByteArray msg;
-    connection->Write(msg);
-    connection->Stop();
 }
 
 } // namespace net

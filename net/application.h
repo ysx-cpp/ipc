@@ -5,8 +5,8 @@
  * @github https://github.com/ysx-cpp
  * @date Oct 08 2019
  */
-#ifndef NET_REACTOR_H
-#define NET_REACTOR_H
+#ifndef NET_APPLICATION_H
+#define NET_APPLICATION_H
 
 #include <memory>
 #include <boost/noncopyable.hpp>
@@ -21,26 +21,24 @@ namespace net {
 class Application : private boost::noncopyable
 {
 public:
-	Application() : io_context_(std::make_shared<boost::asio::io_context>()) {}
+	Application() = default;
 	~Application() = default;
+
     void Run();
     void RunThreadPool();
     void RunThreads(const int &thread_num);
 
-	boost::asio::io_context &io_context() 
-	{ return *io_context_; }
-
-	std::shared_ptr<boost::asio::io_context> &io_context_shared()
-	{ return io_context_; }
-
+	boost::asio::io_context &io_context() { return io_context_; }
     static void Signalhandle(const boost::system::error_code& err, int signal);
 
 private:
-	std::shared_ptr<boost::asio::io_context> io_context_;
+	boost::asio::io_context io_context_;
     boost::thread_group thread_group_;
 };
+
 using ApplicationSingle = boost::detail::thread::singleton<Application>;
 
 } // namespace net
 } // namespace ipc
-#endif // NET_REACTOR_H
+
+#endif //NET_APPLICATION_H

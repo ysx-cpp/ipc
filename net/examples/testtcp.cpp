@@ -28,7 +28,7 @@ public:
         try
         {
             std::string strmsg("Hello server!");
-            std::cout << __FUNCTION__ << "|" << strmsg << std::endl;
+            NET_LOGINFO(strmsg);
 
             PackagePtr pkg = std::make_shared<Package>();
             pkg->set_cmd(10000);
@@ -87,13 +87,14 @@ private:
 class TestTcpServer : public TcpServer
 {
 public:
-    TestTcpServer(const std::string &host, unsigned short port) : TcpServer(host, port)
+    TestTcpServer(boost::asio::io_context &ioc, const std::string &host, unsigned short port) : 
+        TcpServer(ioc, host, port)
     {
     }
 
     int OnReceveData(const PackagePtr data, ConnectionPtr connection) override
     {
-         NET_LOGERR("data:" << data->pdata() << "| seq:" << data->seq());
+        NET_LOGERR("data:" << data->pdata() << "| seq:" << data->seq());
 
         Package pkg;
         pkg.set_cmd(0);
@@ -129,10 +130,10 @@ int main(int argc, char *argv[])
 
     std::string host = argv[2];
     unsigned short port = std::stod(argv[3]);
+    boost::asio::io_context ioc;
 
     if (strcmp(argv[1], "client") == 0)
     {
-        boost::asio::io_context ioc;
         auto client = std::make_shared<TestTcpClient>(ioc);
         client->CreateConnect(host, port);
         client->Connect(host, port);
@@ -147,8 +148,9 @@ int main(int argc, char *argv[])
     }
     else if (strcmp(argv[1], "server") == 0)
     {
-        TestTcpServer server(host, port);
+        TestTcpServer server(ioc, host, port);
         server.Start();
+        ioc.run();
     }
     else
     {

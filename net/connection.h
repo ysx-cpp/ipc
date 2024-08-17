@@ -26,8 +26,8 @@ public:
 	void Start();
     void Stop();
 	bool Connect(const std::string& host, unsigned short port);
-	void SendData(Package& pkg, const std::string &data);
 	void SendData(Package& pkg, const ByteArray &data);
+	void SendData(Package& pkg, const std::string &data);
 	bool Connected() const {return impl_.Connected();}
 
 protected:
@@ -35,7 +35,7 @@ protected:
 	virtual void OnSendData(const std::size_t& write_bytes) {}
 	virtual int OnConnect() {return 0;}
 	virtual int OnDisconnect() {return 0;}
-    void Complete(const ByteArrayPtr data) override;
+    void Complete(const std::string &data) override;
 
 protected:
 	void StartHeartbeat();
@@ -53,7 +53,8 @@ private:
 private:
 	void IncrRecvSeq();
 	void IncrSendSeq(const PackagePtr package);
-	uint64_t GenerateVerify(const ByteArray &data);
+	uint64_t GenerateVerify(const std::string &data) const;
+	uint64_t GenerateVerify(const ByteArray &data) const;
 
 private:
 	std::shared_ptr<Heartbeat> heartbeat_;

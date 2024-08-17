@@ -26,7 +26,7 @@ void Application::Run()
 	{
 		boost::asio::signal_set sigset(this->io_context(), SIGINT, SIGTERM);
 		sigset.async_wait(Application::Signalhandle);
-		io_context_->run();
+		io_context_.run();
         std::cout << "thread id: " << boost::this_thread::get_id() << std::endl;
 	}
 	catch (boost::system::system_error &e)

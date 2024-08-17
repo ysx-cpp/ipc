@@ -122,8 +122,8 @@ void TcpHandler::ReadSomeHandler(const boost::system::error_code &ec, const std:
 					buff = recv_buff_.data();
 					if (recv_buff_.size() >= packet_size)
 					{
-						ByteArrayPtr data = std::make_shared<ByteArray>();
-						data->assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
+						std::string data;
+						data.assign(boost::asio::buffers_begin(buff), boost::asio::buffers_begin(buff) + packet_size);
 						Complete(data);
 						recv_buff_.consume(packet_size);
 					}
@@ -169,11 +169,8 @@ void TcpHandler::ReadUntilHandler(const std::string& string_regex, const boost::
 
 			recv_buff_.commit(read_bytes);
     		std::istream istrm(&recv_buff_);
-    		std::string msg; 
-    		istrm >> msg;
-
-			ByteArrayPtr data = std::make_shared<ByteArray>();
-			data->assign(msg.begin(), msg.end());
+    		std::string data; 
+    		istrm >> data;
 			Complete(data);
 		}
 		ReadUntil(string_regex);

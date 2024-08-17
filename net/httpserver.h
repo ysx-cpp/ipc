@@ -13,41 +13,75 @@
 #include "connectionpool.h"
 #include "application.h"
 
+#include <boost/beast/core.hpp>
+#include <boost/beast/version.hpp>
+
 namespace ipc {
 namespace net {
 
-class HttpServer  : public ConnectionPool
+class HttpServer; 
+class Session : public std::enable_shared_from_this<Session>
 {
 public:
-    explicit HttpServer(const std::string &host, unsigned short port);
-    ~HttpServer() override;
+    explicit Session(boost::asio::io_context &ioc, HttpServer *server);
+
+    void Close();
+    void DoRead();
+    boost::asio::ip::tcp::socket &socket() {return stream_.socket();}
+
+    template <bool isRequest, class Body, class Fields>
+    void DoWirte(boost::beast::http::message<isRequest, Body, Fields> &&rsp)
+    {
+        // The lifetime of the message has to extend
+		// for the duration of the async operation so
+		// we use a shared_ptr to manage it.
+		auto sp = std::make_shared< boost::beast::http::message<isRequest, Body, Fields> >(std::move(rsp));
+
+		// Store a type-erased version of the shared
+		// pointer in the class to keep it alive.
+		res_ = sp;
+
+		// Write the response
+		boost::beast::http::async_write(stream_, *sp,
+			boost::beast::bind_front_handler(
+				&Session::OnWrite,
+				shared_from_this(),
+				sp->need_eof()));
+    }
+
+private:
+    void OnRead(const boost::system::error_code &ec, const std::size_t &bytes_transferred);
+    void OnWrite(bool keep_alive, boost::system::error_code ec, std::size_t bytes_transferred);
+
+private:
+    HttpServer *server_;
+    boost::beast::tcp_stream stream_;
+	boost::beast::flat_buffer buffer_;
+	boost::beast::http::request<boost::beast::http::string_body> req_;
+    std::shared_ptr<void> res_;
+};
+using SessionPtr = std::shared_ptr<Session>;
+
+//////////////////////////////////////////////////////////////
+//class HttpServer
+class HttpServer : private boost::noncopyable
+{
+public:
+    HttpServer(boost::asio::io_context &ioc, const std::string &host, unsigned short port);
+    ~HttpServer();
     
     void Start();
-    void StartThreadPool();
     void Stop();
 
-    boost::asio::io_context &io_context() 
-    { return app_.io_context(); }
-
-    std::shared_ptr<boost::asio::io_context> &io_context_shared() 
-    { return app_.io_context_shared(); }
-
-    int OnReceveData(const PackagePtr package, ConnectionPtr connection) override;
-    void OnSendData(const std::size_t& write_bytes, ConnectionPtr connection) override {}
-	int OnConnect(ConnectionPtr connection) override {return 0;}
-	int OnDisconnect(ConnectionPtr connection) override {return 0;}
-
-    virtual void HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, ConnectionPtr connection);
-    void HandleResponse(const boost::beast::http::response<boost::beast::http::string_body> &res, ConnectionPtr connection);
-    void HandleResponse(const boost::beast::http::response<boost::beast::http::empty_body> &res, ConnectionPtr connection);
-    void HandleResponse(const boost::beast::http::response<boost::beast::http::file_body> &res, ConnectionPtr connection);
+    boost::asio::io_context &io_context() { return io_context_; }
+    virtual void HandleRequest(const boost::beast::http::request<boost::beast::http::string_body> &req, SessionPtr session);
 
 private:
     void AcceptConnection();
-    void OnAcceptConnection(ConnectionPtr connection,  const boost::system::error_code &ec);
+    void OnAcceptConnection(SessionPtr session,  const boost::system::error_code &ec);
 
 private:
-    Application &app_;
+    boost::asio::io_context &io_context_;
     boost::asio::ip::tcp::acceptor acceptor_;
 };
 

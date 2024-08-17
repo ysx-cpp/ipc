@@ -19,8 +19,9 @@ namespace shm {
 
 class AsyncMessageQueue
 {
-	using ReceiveHandle = std::function<void(const std::string &data)>;
 public:
+	using ReceiveHandle = std::function<int(const std::string &data)>;
+
 	AsyncMessageQueue(boost::asio::io_context &io_context, const std::string &queue_name);
 	~AsyncMessageQueue();
 

@@ -18,9 +18,9 @@ namespace net {
 using namespace std;
 using namespace boost::asio;
 
-TcpServer::TcpServer(const std::string & host, unsigned short port) : 
-app_(ApplicationSingle::instance()),
-acceptor_(app_.io_context(), ip::tcp::endpoint(ip::address::from_string(host), port))
+TcpServer::TcpServer(boost::asio::io_context &ioc, const std::string & host, unsigned short port) : 
+    io_context_(ioc),
+    acceptor_(ioc, ip::tcp::endpoint(ip::address::from_string(host), port))
 {
 }
 
@@ -32,13 +32,6 @@ TcpServer::~TcpServer()
 void TcpServer::Start()
 {
     DoAccept();
-    app_.Run();
-}
-
-void TcpServer::StartThreadPool()
-{
-    DoAccept();
-    app_.RunThreadPool();
 }
 
 void TcpServer::Stop()
@@ -50,7 +43,7 @@ void TcpServer::Stop()
 
 void TcpServer::DoAccept()
 {
-    auto connection = CreateConnection(app_.io_context(), this);
+    auto connection = CreateConnection(io_context_, this);
     acceptor_.async_accept(connection->socket_, boost::bind(&TcpServer::OnAccept, this, connection, boost::placeholders::_1));
 }
 
@@ -67,7 +60,6 @@ void TcpServer::OnAccept(ConnectionPtr connection, const boost::system::error_co
 
     //Start recive
     connection->Start();
-    connection->ReadSome();
 }
 
 } // namespace net
