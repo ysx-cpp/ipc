@@ -21,7 +21,7 @@ if (TESTS)
 	add_definitions(-std=c++11 -g -pipe -fPIC -Wall -Wuninitialized -Wpessimizing-move)
 	
 	#find_package(Boost REQUIRED)
-	set(_BOOST_LIBRARIES_ boost_system boost_thread boost_filesystem boost_coroutine boost_regex z rt ssl crypto pthread)
+	set(_BOOST_LIBRARIES_ boost_system boost_thread boost_filesystem boost_coroutine boost_context boost_regex z rt ssl crypto pthread)
 	message("${PROJECT_NAME} ${Boost_LIBRARIES} ${_BOOST_LIBRARIES_}")
 
 	if (TEST_TCP)

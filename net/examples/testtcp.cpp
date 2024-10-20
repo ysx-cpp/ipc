@@ -5,6 +5,7 @@
 #include <functional>
 #include "../tcpclient.h"
 #include "../tcpserver.h"
+#include "../rpcclient.h"
 #include "../logdefine.h"
 
 using ipc::net::TcpClient;
@@ -33,7 +34,6 @@ public:
             PackagePtr pkg = std::make_shared<Package>();
             pkg->set_cmd(10000);
             SendPackage(pkg, strmsg);
-            SendHeartbeat();
         }
         catch (const boost::system::system_error &e)
         {
@@ -132,15 +132,15 @@ int main(int argc, char *argv[])
     unsigned short port = std::stod(argv[3]);
     boost::asio::io_context ioc;
 
+    std::cout << "Put in 'Enter' continue:";
+    std::string in;
+    std::cin >> in;
+
     if (strcmp(argv[1], "client") == 0)
     {
         auto client = std::make_shared<TestTcpClient>(ioc);
         client->CreateConnect(host, port);
         client->Connect(host, port);
-
-        // std::cout << "Put in 'Enter' continue:";
-        // std::string in;
-        // std::cin >> in;
 
         client->TestPing();
         client->Start();
@@ -150,6 +150,19 @@ int main(int argc, char *argv[])
     {
         TestTcpServer server(ioc, host, port);
         server.Start();
+        ioc.run();
+    }
+    else if (strcmp(argv[1], "rpc") == 0)
+    {
+        auto client = std::make_shared<ipc::net::RpcClient>(ioc);
+        client->CreateConnect(host, port);
+        client->Connect(host, port);
+
+        std::string rsp;
+        client->Request("1001:RPC request", rsp);
+        NET_LOGINFO("rsp:" << rsp);
+
+        client->Start();
         ioc.run();
     }
     else

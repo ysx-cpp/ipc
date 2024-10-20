@@ -133,11 +133,11 @@ void Connection::Complete(const std::string &data)
 
 void Connection::StartHeartbeat()
 {
-	if (connction_pool_) heartbeat_->StartTimer();
-}
+	if (connction_pool_)
+	{
+		heartbeat_->StartTimer();
+	}
 
-void Connection::SendHeartbeat()
-{
 	heartbeat_->Ping(ShaerdSelf());
 }
 
