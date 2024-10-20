@@ -97,7 +97,7 @@ public:
         NET_LOGERR("data:" << data->pdata() << "| seq:" << data->seq());
 
         Package pkg;
-        pkg.set_cmd(0);
+        pkg.set_cmd(1001);
         if (connection)
             connection->SendData(pkg, "Hello client!");
         return 0;
@@ -158,9 +158,15 @@ int main(int argc, char *argv[])
         client->CreateConnect(host, port);
         client->Connect(host, port);
 
-        std::string rsp;
-        client->Request("1001:RPC request", rsp);
-        NET_LOGINFO("rsp:" << rsp);
+        using ipc::net::RpcContext;
+        RpcContext ctx;
+        ctx.cmd = 1001;
+        ctx.req = "RPC request";
+        ctx.call = [](const std::string &rsp) {
+            NET_LOGINFO("rsp:" << rsp);
+            return 0;
+        };
+        client->AsyncRequest(ctx);
 
         client->Start();
         ioc.run();
