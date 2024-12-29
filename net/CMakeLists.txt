@@ -5,10 +5,10 @@ project("net")
 aux_source_directory(. SRCS)
 
 if(WIN32)
+	include_directories(${THIRD_PARTY_DIR}/boost/include)
+	link_directories(${THIRD_PARTY_DIR}/boost/lib)
+	
 	file(GLOB HEADER *.h*)
-
-	include_directories(${PROJECT_SOURCE_DIR}/windowsinc)
-	link_directories(${PROJECT_SOURCE_DIR}/windowslib)
 	add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
 else(WIN32)
 	add_definitions(-Wno-implicit-fallthrough)
