@@ -28,49 +28,87 @@ MessageQueue::~MessageQueue()
 {
 }
 
-size_t MessageQueue::Send(const std::string & data)
+bool MessageQueue::TrySend(const std::string & data)
 {
-	auto leng = (data.size());
 	try
 	{
 		if (data.size() > send_buff_.max_size())
-			return leng;
+			return false;
 
-		boost::asio::mutable_buffer buffer = send_buff_.prepare(data.size());
-		std::copy(data.cbegin(), data.cend(), static_cast<unsigned char*>(buffer.data()));
-		mq_.send(buffer.data(), buffer.size(), 0);
+		if (data.size() > mq_.get_max_msg_size())
+			return false;
+
+		unsigned int priority = 0;
+		std::ostream os(&send_buff_);
+    	os << data;
+		
+		if (!mq_.try_send(send_buff_.data().data(), send_buff_.size(), priority))
+			return false;
+
 		send_buff_.consume(send_buff_.size());
 
-		return send_buff_.size();
+		return true;
 	}
 	catch (const interprocess_exception &e)
 	{
 		std::cout << e.what() << std::endl;
 	}
-	return leng;
+	return false;
+}
+
+bool MessageQueue::TryReceive(std::string &data)
+{
+	unsigned int priority;
+	boost::interprocess::message_queue::size_type received_size;
+	boost::asio::mutable_buffer buffer = recv_buff_.prepare(mq_.get_max_msg_size());
+
+	if (!mq_.try_receive(buffer.data(), mq_.get_max_msg_size(), received_size, priority))
+	{
+		std::cerr << "TryReceive error!" << std::endl;
+		return false;
+	}
+
+	recv_buff_.commit(received_size);
+	std::istream is(&recv_buff_);
+	is >> data;
+	
+	return true;
+}
+
+size_t MessageQueue::Send(const std::string & data)
+{
+	try
+	{
+		if (data.size() > send_buff_.max_size())
+			return 0;
+
+		if (data.size() > mq_.get_max_msg_size())
+			return 0;
+
+		unsigned int priority = 0;
+		boost::asio::mutable_buffer buffer = send_buff_.prepare(data.size());
+		boost::asio::buffer_copy(buffer, boost::asio::buffer(data));
+		
+		mq_.send(buffer.data(), buffer.size(), priority);
+		send_buff_.consume(send_buff_.size());
+
+		return data.size();
+	}
+	catch (const interprocess_exception &e)
+	{
+		std::cout << e.what() << std::endl;
+	}
+	return 0;
 }
 
 size_t MessageQueue::Receive(std::string & data)
 {
-    auto recvd_leng = 0u;
-	for (unsigned int i = 0; i < mq_.get_num_msg(); ++i)
-	{
-		std::string tmp;
-        recvd_leng += DoReceive(tmp);
-        if (recvd_leng > 0)
-            data.append(tmp);
-	}
-	assert(recvd_leng == data.size());
-	return recvd_leng;
-}
-
-size_t MessageQueue::DoReceive(std::string & data)
-{
 	try
 	{
-        boost::asio::mutable_buffer buffer = recv_buff_.prepare(mq_.get_max_msg_size());
-		size_t recvd_size;
 		unsigned int priority;
+		boost::interprocess::message_queue::size_type recvd_size;
+        boost::asio::mutable_buffer buffer = recv_buff_.prepare(mq_.get_max_msg_size());
+
 		mq_.receive(buffer.data(), mq_.get_max_msg_size(), recvd_size, priority);
 
 		recv_buff_.commit(recvd_size);

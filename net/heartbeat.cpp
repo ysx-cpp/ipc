@@ -86,7 +86,7 @@ void Heartbeat::Ping(std::shared_ptr<Connection> connection)
 		}
 
 		Package pkg;
-		pkg.set_cmd(static_cast<uint16_t>(PackageCommand::NET_HEARTBEAT));
+        pkg.set_cmd(static_cast<uint16_t>(NET_HEARTBEAT));
 		connection->SendData(pkg, "ping");
 
 		if (pself)

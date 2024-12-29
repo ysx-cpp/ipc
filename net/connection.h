@@ -14,11 +14,8 @@
 namespace ipc {
 namespace net {
 
-enum class PackageCommand
-{
-	NET_HEARTBEAT = 0,			// 心跳
-	NET_PACKAGE_REPLY = 1,		// 数据包回应
-};
+static const int	NET_HEARTBEAT = 0;			// 心跳
+static const int	NET_PACKAGE_REPLY = 1;		// 数据包回应
 
 class Heartbeat;
 class ConnectionPool;

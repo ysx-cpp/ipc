@@ -21,14 +21,13 @@ public:
 	MessageQueue(const std::string & name, unsigned int max_num_msg);
 	MessageQueue(const std::string & name);
 	~MessageQueue();
+	bool TrySend(const std::string &data);
+	bool TryReceive(std::string &data);
 	size_t Send(const std::string &data);
 	size_t Receive(std::string &data);
-
-private:
-	size_t DoReceive(std::string &data);
 	
 private:
-	enum { MAX_MSG_SIZE = 8192 };
+	enum { MAX_MSG_SIZE = 10 * 1024 * 1024}; //10M
 	boost::interprocess::message_queue mq_;
 	boost::asio::streambuf recv_buff_;
 	boost::asio::streambuf send_buff_;

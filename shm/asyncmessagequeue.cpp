@@ -38,17 +38,10 @@ void AsyncMessageQueue::OnAsyncReceive(ReceiveHandle handle)
 {
 	eventfd_t value;
 	eventfd_read(event_fd_, &value);
+	std::cout << "eventfd_read event id:" << value << std::endl;
 
-	// unsigned int priority;
-	// boost::interprocess::message_queue::size_type received_size;
-	// int number;
-
-	// if (message_queue_.try_receive(&number, sizeof(number), received_size, priority))
-	// {
-	// 	std::cout << "Received: " << number << std::endl;
-	// }
 	std::string data;
-	queue_.Receive(data);
+	queue_.TryReceive(data);
 
 	handle(data);
 
@@ -57,11 +50,11 @@ void AsyncMessageQueue::OnAsyncReceive(ReceiveHandle handle)
 
 void AsyncMessageQueue::AsyncSend(const std::string &data)
 {
-	queue_.Send(data);
+	queue_.TrySend(data);
 	eventfd_write(event_fd_, 1);
 }
-#endif // WIN32
+
 
 } // namespace shm
 } // namespace ipc
-
+#endif // WIN32

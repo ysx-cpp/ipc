@@ -9,7 +9,6 @@
 #define NET_TCPCLIENT_H
 
 #include "package.h"
-#include "tcphandler.h"
 #include "connection.h"
 
 namespace ipc {

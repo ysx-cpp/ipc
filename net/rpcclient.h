@@ -35,10 +35,15 @@ public:
     RpcClient(boost::asio::io_context &ioc);
     ~RpcClient() = default;
 
+    int Request(uint16_t cmd, const std::string &req, std::string &rsp);
     void AsyncRequest(const RpcContext &context);
 
 private:
 	int OnReceveData(const PackagePtr package) override final;
+    void OnSendData(const std::size_t& write_bytes)  override;
+    int OnConnect() override;
+    int OnDisconnect() override;
+
 
 private:
     std::unordered_map<uint16_t, std::queue<RpcContext>> cmd2context_;

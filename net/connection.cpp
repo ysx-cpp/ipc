@@ -74,10 +74,10 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 
 void Connection::SendData(Package& pkg, const std::string &data)
 {
-	switch (static_cast<PackageCommand>(pkg.cmd()))
+    switch (pkg.cmd())
 	{
-	case PackageCommand::NET_HEARTBEAT:
-	case PackageCommand::NET_PACKAGE_REPLY:
+    case NET_HEARTBEAT:
+    case NET_PACKAGE_REPLY:
 		break;
 	default:
 		pkg.set_verify(GenerateVerify(data));
@@ -98,13 +98,13 @@ void Connection::Complete(const std::string &data)
 	std::string stringmsg(package->data().begin(), package->data().end());
 	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
 
-	switch (static_cast<PackageCommand>(package->cmd()))
+    switch (package->cmd())
 	{
-	case PackageCommand::NET_HEARTBEAT:
+    case NET_HEARTBEAT:
 		OnHeartbeat();
 		IncrRecvSeq();
 		return;
-	case PackageCommand::NET_PACKAGE_REPLY:
+    case NET_PACKAGE_REPLY:
 		IncrSendSeq(package);
 		return;
 	default:
@@ -185,7 +185,7 @@ void Connection::IncrRecvSeq()
 {
 	++recv_seq_;
 	Package pkg;
-	pkg.set_cmd(static_cast<uint16_t>(PackageCommand::NET_PACKAGE_REPLY));
+    pkg.set_cmd(static_cast<uint16_t>(NET_PACKAGE_REPLY));
 	pkg.set_seq(recv_seq_);
 	SendData(pkg, "reply");
 	NET_LOGERR("INFO pkg.req:" << pkg.seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
@@ -199,7 +199,11 @@ void Connection::IncrSendSeq(const PackagePtr package)
 
 uint64_t Connection::GenerateVerify(const std::string &data) const
 {
-	return boost::hash_value<std::string>(data);
+#ifdef WIN32
+    return 0;
+#else
+    return boost::hash_value<std::string>(data);
+#endif
 }
 
 uint64_t Connection::GenerateVerify(const ByteArray &data) const

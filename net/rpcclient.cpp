@@ -2,8 +2,6 @@
 #include <functional>
 #include <string>
 #include <boost/asio.hpp>
-#include <iostream>
-#include <thread>
 
 namespace ipc {
 namespace net {
@@ -25,7 +23,6 @@ RpcClient::RpcClient(boost::asio::io_context &ioc) :
                 pkg->set_cmd(context.cmd);
                 SendPackage(pkg, context.req);
                 NET_LOGINFO("Step1 SendPackage:" << context.req);
-
                 yield();
 
                 NET_LOGINFO("Step3 rsp:" << context.rsp);
@@ -38,6 +35,23 @@ RpcClient::RpcClient(boost::asio::io_context &ioc) :
             NET_LOGERR(e.what());
         }
     }));
+}
+
+int RpcClient::Request(uint16_t cmd, const std::string &req, std::string &rsp)
+{
+    CoroutineType::pull_type source([&](CoroutineType::push_type& sink) {
+        RpcContext context;
+        context.cmd = cmd;
+        context.req = req;
+        context.rsp = rsp;
+        // contex.call = ;
+
+        auto &queue_ctx = cmd2context_[context.cmd];
+        queue_ctx.push(context);
+        (*source_)();
+    });
+
+    return 0;
 }
 
 void RpcClient::AsyncRequest(const RpcContext &context)
@@ -60,6 +74,21 @@ int RpcClient::OnReceveData(const PackagePtr package)
             (*source_)();
         }
     }
+    return 0;
+}
+
+void RpcClient::OnSendData(const std::size_t& write_bytes)
+{
+}
+
+int RpcClient::OnConnect()
+{
+    return 0;
+}
+
+int RpcClient::OnDisconnect()
+{
+    Stop();
     return 0;
 }
 
