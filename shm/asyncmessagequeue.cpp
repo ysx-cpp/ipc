@@ -60,8 +60,8 @@ void AsyncMessageQueue::AsyncSend(const std::string &data)
 	queue_.Send(data);
 	eventfd_write(event_fd_, 1);
 }
-#endif // WIN32
+
 
 } // namespace shm
 } // namespace ipc
-
+#endif // WIN32

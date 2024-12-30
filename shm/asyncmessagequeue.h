@@ -37,9 +37,9 @@ private:
 		boost::asio::posix::stream_descriptor stream_descriptor_;
 		MessageQueue queue_;
 };
-#endif // WIN32
+
 
 } // namespace shm
 } // namespace ipc
-
+#endif // WIN32
 #endif // ICP_ASYNC_MESSAGE_QUEUE_H
