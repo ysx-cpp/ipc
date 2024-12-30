@@ -5,8 +5,8 @@ project("net")
 aux_source_directory(. SRCS)
 
 if(WIN32)
-	include_directories(${THIRD_PARTY_DIR}/boost/include)
-	link_directories(${THIRD_PARTY_DIR}/boost/lib)
+	include_directories(${THIRD_PARTY_DIR}/include/boost-1_71)
+	link_directories(${THIRD_PARTY_DIR}/lib)
 	
 	file(GLOB HEADER *.h*)
 	add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
