@@ -5,11 +5,27 @@ project("net")
 aux_source_directory(. SRCS)
 
 if(WIN32)
-	include_directories(${THIRD_PARTY_DIR}/include/boost-1_71)
-	link_directories(${THIRD_PARTY_DIR}/lib)
+        # 查找 Boost 包
+        set(Boost_COMPILER "mgw131")
+        set(BOOST_DETECTED_TOOLSET "mgw131")
+        set(Boost_DIR ${THIRD_PARTY_DIR}/boost/lib/cmake/Boost-1.71.0)
+        set(Boost_INCLUDE_DIR ${THIRD_PARTY_DIR}/boost/include/boost-1_71)
+        set(Boost_LIBRARY_DIRS ${THIRD_PARTY_DIR}/boost/lib)
+        find_package(Boost 1.71.0 REQUIRED)
+        #find_package(Boost 1.71.0 REQUIRED COMPONENTS system filesystem thread coroutine context regex)
+        message(STATUS "Boost_INCLUDE_DIR: ${Boost_INCLUDE_DIR}")
+        message(STATUS "Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+        message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
+
+        include_directories(${Boost_INCLUDE_DIR})
+        link_directories(${Boost_LIBRARIES})
 	
 	file(GLOB HEADER *.h*)
-	add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
+        add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
+
+        # 链接 Boost 库
+        target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32 ${Boost_LIBRARIES})
 else(WIN32)
 	add_definitions(-Wno-implicit-fallthrough)
 	add_library(${PROJECT_NAME} STATIC ${SRCS})
@@ -25,9 +41,9 @@ if (TESTS)
 	message("${PROJECT_NAME} ${Boost_LIBRARIES} ${_BOOST_LIBRARIES_}")
 
 	if (TEST_TCP)
-		add_executable(${EXAMPLES} examples/testtcp.cpp)
+            add_executable(${EXAMPLES} examples/testtcp.cpp)
 	elseif(TEST_HTTP)
-		add_executable(${EXAMPLES} examples/testhttp.cpp)
+            add_executable(${EXAMPLES} examples/testhttp.cpp)
 	endif()
 
 	target_link_libraries(${EXAMPLES} ${PROJECT_NAME} ${_BOOST_LIBRARIES_})
