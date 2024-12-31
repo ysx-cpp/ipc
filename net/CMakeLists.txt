@@ -25,7 +25,7 @@ if(WIN32)
 
         # 链接 Boost 库
         target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
-        target_link_libraries(${PROJECT_NAME} PRIVATE ws2_32 ${Boost_LIBRARIES})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES} ws2_32 wsock32 bcrypt z pthread)
 else(WIN32)
 	add_definitions(-Wno-implicit-fallthrough)
 	add_library(${PROJECT_NAME} STATIC ${SRCS})
@@ -37,7 +37,7 @@ if (TESTS)
 	add_definitions(-std=c++11 -g -pipe -fPIC -Wall -Wuninitialized -Wpessimizing-move)
 	
 	#find_package(Boost REQUIRED)
-	set(_BOOST_LIBRARIES_ boost_system boost_thread boost_filesystem boost_coroutine boost_context boost_regex z rt ssl crypto pthread)
+        set(_BOOST_LIBRARIES_ boost_system boost_thread boost_filesystem boost_coroutine boost_context boost_regex z rt ssl crypto pthread)
 	message("${PROJECT_NAME} ${Boost_LIBRARIES} ${_BOOST_LIBRARIES_}")
 
 	if (TEST_TCP)
