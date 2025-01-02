@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.15)
 
-project("net")
+project(${LIBNET})
 
 aux_source_directory(. SRCS)
 
 if(WIN32)
         # vcpkg path
-        set(VCPKG_ROOT "D:/UGit/client/external/vcpkg")
+        #set(VCPKG_ROOT "D:/UGit/client/external/vcpkg")
         set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
         set(CMAKE_PREFIX_PATH ${VCPKG_ROOT}/installed/x64-windows)
 
@@ -34,10 +34,14 @@ if(WIN32)
         link_directories(${Boost_LIBRARIES})
 	
 	file(GLOB HEADER *.h*)
-        add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
+        # add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
+        add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
+        target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
         # 链接 Boost 库
-        target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
+        # target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
         target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
 
 else(WIN32)
