@@ -11,14 +11,15 @@ if(WIN32)
         set(CMAKE_PREFIX_PATH ${VCPKG_ROOT}/installed/x64-windows)
 
         # 设置编译器
-        set(CMAKE_CXX_STANDARD 17)
+        # set(CMAKE_CXX_STANDARD 17)
         set(CMAKE_POSITION_INDEPENDENT_CODE ON) 
         set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-shared")
         set(Boost_COMPILER "MSVC")
         set(BOOST_DETECTED_TOOLSET "MSVC")
 
         # boost 安装路径
-        # set(BOOST_ROOT ${CMAKE_PREFIX_PATH})
+        set(BOOST_ROOT ${CMAKE_PREFIX_PATH})
+        set(Boost_NO_SYSTEM_PATHS ON)
         # set(Boost_INCLUDE_DIR ${BOOST_ROOT}/include)
         # set(Boost_LIBRARY_DIRS ${BOOST_ROOT}/lib)
 
