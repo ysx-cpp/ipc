@@ -6,21 +6,24 @@ aux_source_directory(. SRCS)
 
 if(WIN32)
         # vcpkg path
-        set(VCPKG_DIR "F:/client/external/vcpkg")
-        set(CMAKE_TOOLCHAIN_FILE "${VCPKG_DIR}/scripts/buildsystems/vcpkg.cmake")
-        set(CMAKE_PREFIX_PATH ${VCPKG_DIR}/installed/x64-windows)
+        set(VCPKG_ROOT "D:/UGit/client/external/vcpkg")
+        set(CMAKE_TOOLCHAIN_FILE "${VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+        set(CMAKE_PREFIX_PATH ${VCPKG_ROOT}/installed/x64-windows)
 
         # 设置编译器
+        set(CMAKE_CXX_STANDARD 17)
+        set(CMAKE_POSITION_INDEPENDENT_CODE ON) 
+        set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-shared")
         set(Boost_COMPILER "MSVC")
         set(BOOST_DETECTED_TOOLSET "MSVC")
 
         # boost 安装路径
-        set(BOOST_ROOT ${CMAKE_PREFIX_PATH})
-        #set(Boost_DIR ${THIRD_PARTY_DIR}/boost/lib/cmake/Boost-1.71.0)
-        set(Boost_INCLUDE_DIR ${BOOST_ROOT}/include)
-        set(Boost_LIBRARY_DIRS ${BOOST_ROOT}/lib)
+        # set(BOOST_ROOT ${CMAKE_PREFIX_PATH})
+        # set(Boost_INCLUDE_DIR ${BOOST_ROOT}/include)
+        # set(Boost_LIBRARY_DIRS ${BOOST_ROOT}/lib)
 
         # 查找 Boost 包
+        message("VCPKG_ROOT:${VCPKG_ROOT}")
         find_package(Boost REQUIRED COMPONENTS system filesystem thread coroutine context regex)
         message(STATUS "Boost_INCLUDE_DIR: ${Boost_INCLUDE_DIR}")
         message(STATUS "Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
@@ -30,8 +33,7 @@ if(WIN32)
         link_directories(${Boost_LIBRARIES})
 	
 	file(GLOB HEADER *.h*)
-        add_library(${PROJECT_NAME} STATIC ${SRCS} ${HEADER})
-        #add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
+        add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
 
         # 链接 Boost 库
         target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
