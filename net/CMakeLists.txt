@@ -5,11 +5,32 @@ project("net")
 aux_source_directory(. SRCS)
 
 if(WIN32)
-	file(GLOB HEADER *.h*)
+        # 设置编译器
+        # set(CMAKE_CXX_STANDARD 17)
+        # set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+        # set(CMAKE_SHARED_LIBRARY_LINK_CXX_FLAGS "-shared")
+        # set(Boost_COMPILER "MSVC")
+        # set(BOOST_DETECTED_TOOLSET "MSVC")
 
-	include_directories(${PROJECT_SOURCE_DIR}/windowsinc)
-	link_directories(${PROJECT_SOURCE_DIR}/windowslib)
-	add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
+        # 查找 Boost 包
+        find_package(Boost REQUIRED COMPONENTS system filesystem thread coroutine context regex)
+        message(STATUS "Boost_INCLUDE_DIR: ${Boost_INCLUDE_DIR}")
+        message(STATUS "Boost_LIBRARY_DIRS: ${Boost_LIBRARY_DIRS}")
+        message(STATUS "Boost_LIBRARIES: ${Boost_LIBRARIES}")
+
+        # include_directories(${Boost_INCLUDE_DIR})
+        # link_directories(${Boost_LIBRARIES})
+	
+	file(GLOB HEADER *.h*)
+        add_library(${PROJECT_NAME} SHARED ${SRCS} ${HEADER})
+        # add_library(${PROJECT_NAME} ${SRCS} ${HEADER})
+
+        set_target_properties(${PROJECT_NAME} PROPERTIES OUTPUT_NAME "${PROJECT_NAME}")
+        target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+        # 链接 Boost 库
+        target_include_directories(${PROJECT_NAME} PRIVATE ${Boost_INCLUDE_DIR})
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${Boost_LIBRARIES})
 else(WIN32)
 	add_definitions(-Wno-implicit-fallthrough)
 	add_library(${PROJECT_NAME} STATIC ${SRCS})
