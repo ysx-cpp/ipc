@@ -199,11 +199,9 @@ void Connection::IncrSendSeq(const PackagePtr package)
 
 uint64_t Connection::GenerateVerify(const std::string &data) const
 {
-#ifdef WIN32
-    return 0;
-#else
-    return boost::hash_value<std::string>(data);
-#endif
+    // return boost::hash_value<std::string>(data);
+	std::hash<std::string> hash_str_fn;
+	return hash_str_fn(data);
 }
 
 uint64_t Connection::GenerateVerify(const ByteArray &data) const
