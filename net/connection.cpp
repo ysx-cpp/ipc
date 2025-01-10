@@ -17,6 +17,7 @@
 #include "heartbeat.h"
 #include "package.h"
 #include "logdefine.h"
+#include "MurmurHash3.h"
 
 namespace ipc {
 namespace net {
@@ -199,8 +200,12 @@ void Connection::IncrSendSeq(const PackagePtr package)
 
 uint64_t Connection::GenerateVerify(const std::string &data) const
 {
-    std::hash<std::string> hash_str_fn;
-    return hash_str_fn(data);
+    uint32_t hash_output;
+    MurmurHash3_x86_32(data.c_str(), data.size(), 0, &hash_output);
+    return hash_output;
+
+    // std::hash<std::string> hash_str_fn;
+    // return hash_str_fn(data);
 }
 
 uint64_t Connection::GenerateVerify(const ByteArray &data) const
