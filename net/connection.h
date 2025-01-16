@@ -15,7 +15,6 @@ namespace ipc {
 namespace net {
 
 static const int	NET_HEARTBEAT = 0;			// 心跳
-static const int	NET_PACKAGE_REPLY = 1;		// 数据包回应
 
 class Heartbeat;
 class ConnectionPool;
@@ -53,8 +52,8 @@ private:
 	void Shutdown() override final;
 
 private:
-	void IncrRecvSeq();
-	void IncrSendSeq(const PackagePtr package);
+	void IncrRecvSeq(const PackagePtr &package);
+	void IncrSendSeq(const Package &pkg);
 	uint64_t GenerateVerify(const std::string &data) const;
 	uint64_t GenerateVerify(const ByteArray &data) const;
 

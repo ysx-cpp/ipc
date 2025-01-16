@@ -47,7 +47,7 @@ void Heartbeat::Ping(std::shared_ptr<Connection> connection, const boost::system
 		return;
 	}
 
-    request_timer_.expires_from_now(boost::posix_time::seconds(5));
+    request_timer_.expires_from_now(boost::posix_time::seconds(10));
     request_timer_.async_wait(boost::bind(&Heartbeat::Ping, shared_from_this(), connection, placeholders::error));
 }
 

@@ -50,7 +50,7 @@ public:
         typename T::send_buffer_size sbs;
         socket_.get_option(sbs);
 
-        std::cout << "send_buffer_size= " << sbs.value() << std::endl;
+        NET_LOGINFO("send_buffer_size= " << sbs.value());
 
         return sbs.value();
     }
@@ -66,7 +66,7 @@ public:
         typename T::receive_buffer_size rbs;
         socket_.get_option(rbs);
     
-        std::cout << "send_buffer_size= " << rbs.value() << std::endl;
+        NET_LOGINFO("recive_buffer_size= " << rbs.value());
 
         return rbs.value();
     }

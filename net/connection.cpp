@@ -19,6 +19,9 @@
 #include "logdefine.h"
 #include "MurmurHash3.h"
 
+#define ENABLE_CHECK_SEQ
+// #define ENABLE_CHECK_VERIFY
+
 namespace ipc {
 namespace net {
 
@@ -43,7 +46,9 @@ recv_seq_(0)
 void Connection::Start()
 {
     if (connction_pool_)
-    connction_pool_->AddConnection(ShaerdSelf());
+	{
+    	connction_pool_->AddConnection(ShaerdSelf());
+	}
 
 	StartHeartbeat();
 	Read();
@@ -75,16 +80,11 @@ void Connection::SendData(Package& pkg, const ByteArray &data)
 
 void Connection::SendData(Package& pkg, const std::string &data)
 {
-    switch (pkg.cmd())
-	{
-    case NET_HEARTBEAT:
-    case NET_PACKAGE_REPLY:
-		break;
-	default:
+    if (pkg.cmd() != NET_HEARTBEAT)
 		pkg.set_verify(GenerateVerify(data));
-		break;
-	}
 
+	IncrSendSeq(pkg);
+	pkg.set_verify(GenerateVerify(data));
 	pkg.set_seq(send_seq_);
 	pkg.set_data_size(data.size());
 	pkg.Encode(data);
@@ -96,28 +96,22 @@ void Connection::Complete(const std::string &data)
 	auto package = std::make_shared<Package>();
 	package->Decode(data);
 
+	if (package->seq() != recv_seq_ + 1)
+	{
+		NET_LOGERR("ERROR send_seq:" << package->seq() << " rev_sqe:" << recv_seq_ + 1);
+		return;
+	}
+
+	IncrRecvSeq(package);
+	OnHeartbeat();
+
+	if (package->cmd() == NET_HEARTBEAT)
+    	return;
+
+#ifdef TESTS
 	std::string stringmsg(package->data().begin(), package->data().end());
 	NET_LOGINFO("INFO verify1:" << package->verify() << " cmd:" << package->cmd() << " data:" << stringmsg << " size:" << package->data().size());
-
-    switch (package->cmd())
-	{
-    case NET_HEARTBEAT:
-		OnHeartbeat();
-		IncrRecvSeq();
-		return;
-    case NET_PACKAGE_REPLY:
-		IncrSendSeq(package);
-		return;
-	default:
-		IncrRecvSeq();
-		break;
-	}
-
-	if (package->seq() + 1 != recv_seq_)
-	{
-		NET_LOGERR("ERROR send_seq:" << package->seq() + 1 << " rev_sqe:" << recv_seq_);
-		return;
-	}
+#endif
 
 	unsigned long long verify = GenerateVerify(package->data());
 	if (package->verify() != verify)
@@ -138,8 +132,10 @@ void Connection::StartHeartbeat()
 	{
 		heartbeat_->StartTimer();
 	}
-
-	heartbeat_->Ping(ShaerdSelf());
+	else
+	{
+		heartbeat_->Ping(ShaerdSelf());
+	}
 }
 
 void Connection::OnHeartbeat()
@@ -173,29 +169,21 @@ void Connection::Successfully(const std::size_t& write_bytes)
 void Connection::Shutdown()
 {
 	if (connction_pool_)
-	{
 		connction_pool_->OnDisconnect(ShaerdSelf());
-	}
-	else
-	{
+	else 
 		OnDisconnect();
-	}
 }
 
-void Connection::IncrRecvSeq()
+void Connection::IncrRecvSeq(const PackagePtr &package)
 {
 	++recv_seq_;
-	Package pkg;
-    pkg.set_cmd(static_cast<uint16_t>(NET_PACKAGE_REPLY));
-	pkg.set_seq(recv_seq_);
-	SendData(pkg, "reply");
-	NET_LOGERR("INFO pkg.req:" << pkg.seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
+	NET_LOGERR("INFO pkg.req:" << package->seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
 }
 
-void Connection::IncrSendSeq(const PackagePtr package)
+void Connection::IncrSendSeq(const Package &pkg)
 {
 	++send_seq_;
-	NET_LOGERR("INFO pkg.seq:" << package->seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
+	NET_LOGERR("INFO pkg.seq:" << pkg.seq() << " send_seq:" << send_seq_ << " rev_seq:" << recv_seq_);
 }
 
 uint64_t Connection::GenerateVerify(const std::string &data) const
@@ -203,9 +191,6 @@ uint64_t Connection::GenerateVerify(const std::string &data) const
     uint32_t hash_output;
     MurmurHash3_x86_32(data.c_str(), data.size(), 0, &hash_output);
     return hash_output;
-
-    // std::hash<std::string> hash_str_fn;
-    // return hash_str_fn(data);
 }
 
 uint64_t Connection::GenerateVerify(const ByteArray &data) const
