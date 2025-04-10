@@ -7,7 +7,7 @@
  */
 #include "connection.h"
 #include <iostream>
-#include <boost/bind.hpp>
+#include <boost/bind/bind.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/make_shared.hpp>
@@ -18,9 +18,6 @@
 #include "package.h"
 #include "logdefine.h"
 #include "MurmurHash3.h"
-
-#define ENABLE_CHECK_SEQ
-// #define ENABLE_CHECK_VERIFY
 
 namespace ipc {
 namespace net {
